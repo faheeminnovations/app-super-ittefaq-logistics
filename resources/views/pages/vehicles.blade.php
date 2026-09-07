@@ -6,7 +6,7 @@
       <div>
         <div class="eyebrow">Fleet & People</div>
         <h1>Vehicles / Fleet</h1>
-        <div class="sub">Registration, MOT, insurance & servicing</div>
+        <div class="sub">Registration, Fitness Certificate & Work Type</div>
       </div>
       <div class="d-flex gap-2">
         <button class="btn btn-outline-navy" onclick="exportVehicles()"><i class="bi bi-download me-1"></i> Export</button>
@@ -80,8 +80,8 @@
               <th>Make / Model</th>
               <th>Year</th>
               <th>VIN</th>
-              <th>MOT Expiry</th>
-              <th>Insurance Expiry</th>
+              <th>Fitness Certificate</th>
+              <th>Work Type</th>
               <th>Fuel Capacity</th>
               <th>Status</th>
               <th>Actions</th>
@@ -96,8 +96,22 @@
               <td>{{ $vehicle->make_model }}</td>
               <td>{{ $vehicle->year }}</td>
               <td><span class='mono'>{{ $vehicle->vin ?? 'N/A' }}</span></td>
-              <td>{{ \Carbon\Carbon::parse($vehicle->mot_expiry)->format('d M Y') }}</td>
-              <td>{{ \Carbon\Carbon::parse($vehicle->insurance_expiry)->format('d M Y') }}</td>
+              <td>{{ $vehicle->fitness_certificate_expiry ? \Carbon\Carbon::parse($vehicle->fitness_certificate_expiry)->format('d M Y') : 'N/A' }}</td>
+              <td>
+                @switch($vehicle->work_type)
+                  @case('company')
+                    <span class="badge bg-primary">Company</span>
+                    @break
+                  @case('private')
+                    <span class="badge bg-secondary">Private</span>
+                    @break
+                  @case('both')
+                    <span class="badge bg-success">Both</span>
+                    @break
+                  @default
+                    <span class="badge bg-secondary">N/A</span>
+                @endswitch
+              </td>
               <td>{{ $vehicle->fuel_capacity ? $vehicle->fuel_capacity . 'L' : 'N/A' }}</td>
               <td>
                 @switch($vehicle->status)
@@ -201,12 +215,16 @@
 
             <div class="row">
               <div class="col-md-6 mb-3">
-                <label for="mot_expiry" class="form-label">MOT Expiry Date</label>
-                <input type="date" class="form-control" name="mot_expiry" id="mot_expiry" required>
+                <label for="fitness_certificate_expiry" class="form-label">Fitness Certificate Expiry Date</label>
+                <input type="date" class="form-control" name="fitness_certificate_expiry" id="fitness_certificate_expiry">
               </div>
               <div class="col-md-6 mb-3">
-                <label for="insurance_expiry" class="form-label">Insurance Expiry Date</label>
-                <input type="date" class="form-control" name="insurance_expiry" id="insurance_expiry" required>
+                <label for="work_type" class="form-label">Work Type</label>
+                <select class="form-select" name="work_type" id="work_type" required>
+                  <option value="company">Company</option>
+                  <option value="private">Private</option>
+                  <option value="both">Both</option>
+                </select>
               </div>
             </div>
 
@@ -350,16 +368,14 @@ function fillVehicleForm(vehicle) {
     $('#notes').val(vehicle.notes);
     
     // Format dates for input type="date"
-    if (vehicle.mot_expiry) {
-        var motDate = new Date(vehicle.mot_expiry);
-        var formattedMot = motDate.toISOString().split('T')[0];
-        $('#mot_expiry').val(formattedMot);
+    if (vehicle.fitness_certificate_expiry) {
+        var fitnessDate = new Date(vehicle.fitness_certificate_expiry);
+        var formattedFitness = fitnessDate.toISOString().split('T')[0];
+        $('#fitness_certificate_expiry').val(formattedFitness);
     }
     
-    if (vehicle.insurance_expiry) {
-        var insuranceDate = new Date(vehicle.insurance_expiry);
-        var formattedInsurance = insuranceDate.toISOString().split('T')[0];
-        $('#insurance_expiry').val(formattedInsurance);
+    if (vehicle.work_type) {
+        $('#work_type').val(vehicle.work_type);
     }
     
     $('#vehicleModalLabel').text('Edit Vehicle');
@@ -386,8 +402,8 @@ function viewVehicle(id) {
                     </div>
                     <div class="col-md-6">
                         <h6>Compliance Details</h6>
-                        <p><strong>MOT Expiry:</strong> ${new Date(vehicle.mot_expiry).toLocaleDateString()}</p>
-                        <p><strong>Insurance Expiry:</strong> ${new Date(vehicle.insurance_expiry).toLocaleDateString()}</p>
+                        <p><strong>Fitness Certificate:</strong> ${vehicle.fitness_certificate_expiry ? new Date(vehicle.fitness_certificate_expiry).toLocaleDateString() : 'N/A'}</p>
+                        <p><strong>Work Type:</strong> ${vehicle.work_type || 'N/A'}</p>
                         <p><strong>Fuel Capacity:</strong> ${vehicle.fuel_capacity ? vehicle.fuel_capacity + 'L' : 'N/A'}</p>
                         <p><strong>Status:</strong> ${vehicle.status}</p>
                     </div>

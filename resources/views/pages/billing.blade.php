@@ -1,5 +1,13 @@
 @extends('layouts.app')
 
+@push('styles')
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+@endpush
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+@endpush
+
 @section('content')
   <div class="page-wrap">
     <div class="page-head">
@@ -10,6 +18,9 @@
       </div>
       <div class="d-flex gap-2">
         <button class="btn btn-outline-navy" onclick="exportBilling()"><i class="bi bi-download me-1"></i> Export CSV</button>
+        <button class="btn btn-outline-navy" onclick="exportExcel()"><i class="bi bi-file-earmark-excel me-1"></i> Export Excel</button>
+        <button class="btn btn-outline-navy" onclick="showImportModal()"><i class="bi bi-upload me-1"></i> Import Excel</button>
+        <button class="btn btn-outline-navy" onclick="generateInvoice()"><i class="bi bi-file-earmark-text me-1"></i> Generate Invoice</button>
         <button class="btn btn-outline-navy" onclick="showMonthlySummary()"><i class="bi bi-bar-chart me-1"></i> Monthly Summary</button>
         <button class="btn btn-navy" data-bs-toggle="modal" data-bs-target="#billingModal" onclick="resetBillingForm()"><i class="bi bi-plus-lg me-1"></i> Add Record</button>
       </div>
@@ -28,21 +39,21 @@
         <div class="stat-card">
           <div class="icon-badge" style="background:#EAF0FB;color:var(--navy-800);"><i class="bi bi-currency-rupee"></i></div>
           <div class="label">Total Rent</div>
-          <div class="value">{{ number_format($totalRent, 2) }}</div>
+          <div class="value" id="totalRent">{{ number_format($totalRent, 2) }}</div>
           <div class="delta">This month</div>
         </div>
       </div>
       <div class="col-6 col-lg-3">
         <div class="icon-badge" style="background:#EAF7EF;color:var(--success);"><i class="bi bi-check-circle"></i></div>
         <div class="label">Paid Records</div>
-        <div class="value">{{ $paidCount }}</div>
+        <div class="value" id="paidCount">{{ $paidCount }}</div>
         <div class="delta up">Completed payments</div>
       </div>
       <div class="col-6 col-lg-3">
         <div class="stat-card">
           <div class="icon-badge" style="background:#FBE9E7;color:var(--danger);"><i class="bi bi-exclamation-circle"></i></div>
           <div class="label">Pending Records</div>
-          <div class="value">{{ $pendingCount }}</div>
+          <div class="value" id="pendingCount">{{ $pendingCount }}</div>
           <div class="delta down">Awaiting payment</div>
         </div>
       </div>
@@ -50,7 +61,7 @@
         <div class="stat-card">
           <div class="icon-badge" style="background:#FFF3E0;color:var(--warning);"><i class="bi bi-wallet"></i></div>
           <div class="label">Total Dues</div>
-          <div class="value">{{ number_format($totalDues, 2) }}</div>
+          <div class="value" id="totalDues">{{ number_format($totalDues, 2) }}</div>
           <div class="delta">Outstanding amount</div>
         </div>
       </div>
@@ -105,11 +116,15 @@
                 <th>Sr</th>
                 <th>Date</th>
                 <th>Vhl No</th>
+                <th>GP#</th>
                 <th>Name</th>
                 <th>Number</th>
                 <th>Bag</th>
                 <th>Drop/Delivery Point</th>
-                <th>Km Cover</th>
+                <th>Vhl Type</th>
+                <th>Km</th>
+                <th>Rate</th>
+                <th>FRT</th>
                 <th>Rent</th>
                 <th>Advance</th>
                 <th>Advance Date</th>
@@ -125,11 +140,15 @@
                   <td>{{ $billing->formatted_sr }}</td>
                   <td>{{ $billing->formatted_date }}</td>
                   <td>{{ $billing->formatted_vehicle_no }}</td>
+                  <td>{{ $billing->formatted_gp_number }}</td>
                   <td>{{ $billing->formatted_customer_name }}</td>
                   <td>{{ $billing->formatted_contact_number }}</td>
                   <td>{{ $billing->formatted_bags }}</td>
                   <td>{{ $billing->formatted_delivery_point }}</td>
+                  <td>{{ $billing->formatted_vehicle_type }}</td>
                   <td>{{ $billing->formatted_km_covered }}</td>
+                  <td>{{ $billing->formatted_rate }}</td>
+                  <td>{{ $billing->formatted_freight }}</td>
                   <td>{{ $billing->formatted_rent_amount }}</td>
                   <td>{{ $billing->formatted_advance_amount }}</td>
                   <td>{{ $billing->formatted_advance_date }}</td>
@@ -163,82 +182,121 @@
       <div class="modal-content">
         <div class="modal-header">
           <h5 class="modal-title" id="billingModalTitle">Add Billing Record</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" onclick="resetWizardOnClose()"></button>
         </div>
         <div class="modal-body">
+          <!-- Wizard Progress -->
+          <div class="mb-4">
+            <div class="progress" style="height: 5px;">
+              <div class="progress-bar" id="wizardProgress" role="progressbar" style="width: 50%"></div>
+            </div>
+            <div class="d-flex justify-content-between mt-2">
+              <small class="text-muted">Step 1: Basic Information</small>
+              <small class="text-muted">Step 2: Billing Details</small>
+            </div>
+          </div>
+
           <form id="billingForm">
             <input type="hidden" id="billing_id">
-            <div class="row g-3">
-              <div class="col-md-2">
-                <label class="form-label">Sr <span class="text-muted">(Serial No)</span></label>
-                <input type="number" class="form-control" id="billing_sr" placeholder="1">
+            
+            <!-- Step 1: Basic Information -->
+            <div id="step1" class="wizard-step">
+              <div class="row g-3">
+                <div class="col-md-2">
+                  <label class="form-label">Sr <span class="text-muted">(Serial No)</span></label>
+                  <input type="number" class="form-control" id="billing_sr" placeholder="1">
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">Date <span class="text-danger">*</span></label>
+                  <input type="date" class="form-control" id="billing_date" required>
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">Vehicle No <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="billing_vehicle_no" placeholder="ABC-123" required>
+                </div>
+                <div class="col-md-2">
+                  <label class="form-label">GP#</label>
+                  <input type="text" class="form-control" id="billing_gp_number" placeholder="1040">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Customer Name <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="billing_customer_name" placeholder="Customer Name" required>
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Contact Number</label>
+                  <input type="text" class="form-control" id="billing_contact_number" placeholder="0300-1234567">
+                </div>
               </div>
-              <div class="col-md-2">
-                <label class="form-label">Date <span class="text-danger">*</span></label>
-                <input type="date" class="form-control" id="billing_date" required>
-              </div>
-              <div class="col-md-3">
-                <label class="form-label">Vehicle No <span class="text-danger">*</span></label>
-                <input type="text" class="form-control" id="billing_vehicle_no" placeholder="ABC-123" required>
-              </div>
-              <div class="col-md-5">
-                <label class="form-label">Customer Name <span class="text-danger">*</span></label>
-                <input type="text" class="form-control" id="billing_customer_name" placeholder="Customer Name" required>
-              </div>
-              <div class="col-md-3">
-                <label class="form-label">Contact Number</label>
-                <input type="text" class="form-control" id="billing_contact_number" placeholder="0300-1234567">
-              </div>
-              <div class="col-md-2">
-                <label class="form-label">Bags</label>
-                <input type="number" class="form-control" id="billing_bags" value="0" min="0">
-              </div>
-              <div class="col-md-4">
-                <label class="form-label">Delivery Point <span class="text-danger">*</span></label>
-                <input type="text" class="form-control" id="billing_delivery_point" placeholder="Delivery Location" required>
-              </div>
-              <div class="col-md-3">
-                <label class="form-label">Km Covered</label>
-                <input type="number" step="0.01" class="form-control" id="billing_km_covered" value="0" min="0">
-              </div>
-              <div class="col-md-2">
-                <label class="form-label">Rent (PKR) <span class="text-danger">*</span></label>
-                <input type="number" step="0.01" class="form-control" id="billing_rent" placeholder="0.00" required min="0">
-              </div>
-              <div class="col-md-2">
-                <label class="form-label">Advance (PKR)</label>
-                <input type="number" step="0.01" class="form-control" id="billing_advance" value="0" min="0">
-              </div>
-              <div class="col-md-2">
-                <label class="form-label">Advance Date</label>
-                <input type="date" class="form-control" id="billing_advance_date">
-              </div>
-              <div class="col-md-3">
-                <label class="form-label">Guarantor</label>
-                <input type="text" class="form-control" id="billing_guarantor" placeholder="Guarantor Name">
-              </div>
-              <div class="col-md-2">
-                <label class="form-label">Dues (PKR)</label>
-                <input type="number" step="0.01" class="form-control" id="billing_dues" value="0" min="0">
-              </div>
-              <div class="col-md-2">
-                <label class="form-label">Status <span class="text-danger">*</span></label>
-                <select class="form-select" id="billing_status" required>
-                  <option value="Pending">Pending</option>
-                  <option value="Paid">Paid</option>
-                  <option value="Partial">Partial</option>
-                </select>
-              </div>
-              <div class="col-md-12">
-                <label class="form-label">Billing Month <span class="text-danger">*</span></label>
-                <input type="month" class="form-control" id="billing_month" required>
+            </div>
+
+            <!-- Step 2: Billing Details -->
+            <div id="step2" class="wizard-step" style="display: none;">
+              <div class="row g-3">
+                <div class="col-md-2">
+                  <label class="form-label">Bags</label>
+                  <input type="number" class="form-control" id="billing_bags" value="0" min="0">
+                </div>
+                <div class="col-md-4">
+                  <label class="form-label">Delivery Point <span class="text-danger">*</span></label>
+                  <input type="text" class="form-control" id="billing_delivery_point" placeholder="Delivery Location" required>
+                </div>
+                <div class="col-md-2">
+                  <label class="form-label">Vehicle Type</label>
+                  <input type="text" class="form-control" id="billing_vehicle_type" placeholder="2T">
+                </div>
+                <div class="col-md-2">
+                  <label class="form-label">Km Covered</label>
+                  <input type="number" step="0.01" class="form-control" id="billing_km_covered" value="0" min="0">
+                </div>
+                <div class="col-md-2">
+                  <label class="form-label">Rate</label>
+                  <input type="number" step="0.01" class="form-control" id="billing_rate" value="0" min="0">
+                </div>
+                <div class="col-md-2">
+                  <label class="form-label">Freight</label>
+                  <input type="number" step="0.01" class="form-control" id="billing_freight" value="0" min="0">
+                </div>
+                <div class="col-md-2">
+                  <label class="form-label">Rent (PKR) <span class="text-danger">*</span></label>
+                  <input type="number" step="0.01" class="form-control" id="billing_rent" placeholder="0.00" required min="0">
+                </div>
+                <div class="col-md-2">
+                  <label class="form-label">Advance (PKR)</label>
+                  <input type="number" step="0.01" class="form-control" id="billing_advance" value="0" min="0">
+                </div>
+                <div class="col-md-2">
+                  <label class="form-label">Advance Date</label>
+                  <input type="date" class="form-control" id="billing_advance_date">
+                </div>
+                <div class="col-md-3">
+                  <label class="form-label">Guarantor</label>
+                  <input type="text" class="form-control" id="billing_guarantor" placeholder="Guarantor Name">
+                </div>
+                <div class="col-md-2">
+                  <label class="form-label">Dues (PKR)</label>
+                  <input type="number" step="0.01" class="form-control" id="billing_dues" value="0" min="0">
+                </div>
+                <div class="col-md-2">
+                  <label class="form-label">Status <span class="text-danger">*</span></label>
+                  <select class="form-select" id="billing_status" required>
+                    <option value="Pending">Pending</option>
+                    <option value="Paid">Paid</option>
+                    <option value="Partial">Partial</option>
+                  </select>
+                </div>
+                <div class="col-md-12">
+                  <label class="form-label">Billing Month <span class="text-danger">*</span></label>
+                  <input type="month" class="form-control" id="billing_month" required>
+                </div>
               </div>
             </div>
           </form>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="button" class="btn btn-primary" onclick="saveBilling()">Save Record</button>
+          <button type="button" class="btn btn-outline-primary" id="prevBtn" onclick="prevStep()" style="display: none;">Previous</button>
+          <button type="button" class="btn btn-primary" id="nextBtn" onclick="nextStep()">Next</button>
+          <button type="button" class="btn btn-success" id="submitBtn" onclick="saveBilling()" style="display: none;">Save Record</button>
         </div>
       </div>
     </div>
@@ -261,11 +319,49 @@
     </div>
   </div>
 
+  <!-- Import Modal -->
+  <div class="modal fade" id="importModal" tabindex="-1">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Import Excel File</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="alert alert-info">
+            <strong>Note:</strong> The Excel file should follow the format with columns: Sr, Date, Vhl No, GP#, Drop/Delivery Point, Vhl, Km, Rate, FRT
+          </div>
+          <form id="importForm">
+            <div class="mb-3">
+              <label class="form-label">Select Excel File</label>
+              <input type="file" class="form-control" id="import_file" accept=".xlsx,.xls,.csv" required>
+            </div>
+          </form>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="button" class="btn btn-primary" onclick="processImport()">Import</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script>
     let billingModal;
+    let currentStep = 1;
+    const totalSteps = 2;
 
     document.addEventListener('DOMContentLoaded', function() {
       billingModal = new bootstrap.Modal(document.getElementById('billingModal'));
+      
+      // Configure SweetAlert2 defaults
+      Swal.mixin({
+        customClass: {
+          confirmButton: 'btn btn-primary',
+          cancelButton: 'btn btn-secondary'
+        },
+        buttonsStyling: false
+      });
       
       // Set default billing month to current month
       document.getElementById('billing_month').value = '{{ $currentMonth }}';
@@ -278,6 +374,77 @@
       document.getElementById('billingModalTitle').textContent = 'Add Billing Record';
       document.getElementById('billing_month').value = document.getElementById('filter_month').value;
       document.getElementById('billing_date').valueAsDate = new Date();
+      
+      // Reset wizard to step 1
+      currentStep = 1;
+      updateWizardUI();
+    }
+
+    function nextStep() {
+      // Validate current step before proceeding
+      if (currentStep === 1) {
+        const date = document.getElementById('billing_date').value;
+        const vehicleNo = document.getElementById('billing_vehicle_no').value;
+        const customerName = document.getElementById('billing_customer_name').value;
+
+        if (!date || !vehicleNo || !customerName) {
+          Swal.fire({
+            icon: 'warning',
+            title: 'Missing Required Fields',
+            text: 'Please fill in all required fields (Date, Vehicle No, Customer Name)'
+          });
+          return;
+        }
+      }
+
+      if (currentStep < totalSteps) {
+        currentStep++;
+        updateWizardUI();
+      }
+    }
+
+    function prevStep() {
+      if (currentStep > 1) {
+        currentStep--;
+        updateWizardUI();
+      }
+    }
+
+    function updateWizardUI() {
+      // Hide all steps
+      document.querySelectorAll('.wizard-step').forEach(step => {
+        step.style.display = 'none';
+      });
+
+      // Show current step
+      const currentStepEl = document.getElementById(`step${currentStep}`);
+      if (currentStepEl) {
+        currentStepEl.style.display = 'block';
+      }
+
+      // Update progress bar
+      const progress = (currentStep / totalSteps) * 100;
+      const progressBar = document.getElementById('wizardProgress');
+      if (progressBar) {
+        progressBar.style.width = progress + '%';
+      }
+
+      // Update buttons
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      const submitBtn = document.getElementById('submitBtn');
+
+      if (prevBtn) prevBtn.style.display = currentStep === 1 ? 'none' : 'inline-block';
+      if (nextBtn) nextBtn.style.display = currentStep === totalSteps ? 'none' : 'inline-block';
+      if (submitBtn) submitBtn.style.display = currentStep === totalSteps ? 'inline-block' : 'none';
+    }
+
+    function resetWizardOnClose() {
+      // Reset wizard to step 1 when modal is closed
+      setTimeout(() => {
+        currentStep = 1;
+        updateWizardUI();
+      }, 300);
     }
 
     function editBilling(id) {
@@ -289,11 +456,15 @@
           document.getElementById('billing_sr').value = data.sr || '';
           document.getElementById('billing_date').value = data.date || '';
           document.getElementById('billing_vehicle_no').value = data.vehicle_no || '';
+          document.getElementById('billing_gp_number').value = data.gp_number || '';
           document.getElementById('billing_customer_name').value = data.customer_name || '';
           document.getElementById('billing_contact_number').value = data.contact_number || '';
           document.getElementById('billing_bags').value = data.bags || 0;
           document.getElementById('billing_delivery_point').value = data.delivery_point || '';
+          document.getElementById('billing_vehicle_type').value = data.vehicle_type || '';
           document.getElementById('billing_km_covered').value = data.km_covered || 0;
+          document.getElementById('billing_rate').value = data.rate || 0;
+          document.getElementById('billing_freight').value = data.freight || 0;
           document.getElementById('billing_rent').value = data.rent || 0;
           document.getElementById('billing_advance').value = data.advance || 0;
           document.getElementById('billing_advance_date').value = data.advance_date || '';
@@ -303,49 +474,71 @@
           document.getElementById('billing_month').value = data.billing_month || '';
           
           document.getElementById('billingModalTitle').textContent = 'Edit Billing Record';
+          
+          // Reset wizard to step 1 for editing
+          currentStep = 1;
+          updateWizardUI();
+          
           billingModal.show();
         })
         .catch(error => {
           console.error('Error fetching billing record:', error);
-          alert('Error loading billing record');
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Error loading billing record'
+          });
         });
     }
 
     function saveBilling() {
       const id = document.getElementById('billing_id').value;
       
-      // Get form values with proper handling
-      const sr = document.getElementById('billing_sr').value;
+      // Validate all required fields before saving
       const date = document.getElementById('billing_date').value;
       const vehicleNo = document.getElementById('billing_vehicle_no').value;
       const customerName = document.getElementById('billing_customer_name').value;
+      const deliveryPoint = document.getElementById('billing_delivery_point').value;
+      const rent = document.getElementById('billing_rent').value;
+      const status = document.getElementById('billing_status').value;
+      const billingMonth = document.getElementById('billing_month').value;
+
+      if (!date || !vehicleNo || !customerName || !deliveryPoint || !rent || !status || !billingMonth) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Missing Required Fields',
+          text: 'Please fill in all required fields'
+        });
+        return;
+      }
+      
+      // Get form values with proper handling
+      const sr = document.getElementById('billing_sr').value;
+      const gpNumber = document.getElementById('billing_gp_number').value;
       const contactNumber = document.getElementById('billing_contact_number').value;
       const bags = document.getElementById('billing_bags').value;
-      const deliveryPoint = document.getElementById('billing_delivery_point').value;
+      const vehicleType = document.getElementById('billing_vehicle_type').value;
       const kmCovered = document.getElementById('billing_km_covered').value;
-      const rent = document.getElementById('billing_rent').value;
+      const rate = document.getElementById('billing_rate').value;
+      const freight = document.getElementById('billing_freight').value;
       const advance = document.getElementById('billing_advance').value;
       const advanceDate = document.getElementById('billing_advance_date').value;
       const guarantor = document.getElementById('billing_guarantor').value;
       const dues = document.getElementById('billing_dues').value;
-      const status = document.getElementById('billing_status').value;
-      const billingMonth = document.getElementById('billing_month').value;
-
-      // Basic validation
-      if (!date || !vehicleNo || !customerName || !deliveryPoint || !rent || !status || !billingMonth) {
-        alert('Please fill in all required fields');
-        return;
-      }
 
       const formData = {
         sr: sr ? parseInt(sr) : null,
         date: date,
         vehicle_no: vehicleNo.toUpperCase(),
+        gp_number: gpNumber || null,
         customer_name: customerName,
         contact_number: contactNumber,
         bags: bags ? parseInt(bags) : 0,
         delivery_point: deliveryPoint,
+        vehicle_type: vehicleType || null,
         km_covered: kmCovered ? parseFloat(kmCovered) : 0,
+        rate: rate ? parseFloat(rate) : 0,
+        freight: freight ? parseFloat(freight) : 0,
         rent: parseFloat(rent),
         advance: advance ? parseFloat(advance) : 0,
         advance_date: advanceDate || null,
@@ -358,6 +551,16 @@
       const url = id ? `/billing/${id}` : '/billing';
       const method = id ? 'PUT' : 'POST';
 
+      // Show loading state
+      Swal.fire({
+        title: 'Saving...',
+        text: 'Please wait while we save the billing record',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
       fetch(url, {
         method: method,
         headers: {
@@ -368,38 +571,92 @@
       })
       .then(response => response.json())
       .then(data => {
+        Swal.close(); // Close loading state
         if (data.success) {
           billingModal.hide();
+          // Reset wizard to step 1 for next use
+          currentStep = 1;
+          updateWizardUI();
           filterBillings();
-          alert(data.message);
+          Swal.fire({
+            icon: 'success',
+            title: 'Success',
+            text: data.message
+          });
         } else {
-          alert('Error: ' + (data.message || JSON.stringify(data)));
+          console.error('Validation errors:', data.errors);
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: data.message || 'An error occurred'
+          });
         }
       })
       .catch(error => {
+        Swal.close(); // Close loading state
         console.error('Error:', error);
-        alert('Error saving billing record: ' + error.message);
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Error saving billing record: ' + error.message
+        });
       });
     }
 
     function deleteBilling(id) {
-      if (confirm('Are you sure you want to delete this billing record?')) {
-        fetch(`/billing/${id}`, {
-          method: 'DELETE',
-          headers: {
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-          }
-        })
-        .then(response => response.json())
-        .then(data => {
-          if (data.success) {
-            filterBillings();
-            alert(data.message);
-          } else {
-            alert('Error deleting record');
-          }
-        });
-      }
+      Swal.fire({
+        title: 'Are you sure?',
+        text: 'You want to delete this billing record?',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, delete it!'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          // Show loading state
+          Swal.fire({
+            title: 'Deleting...',
+            text: 'Please wait while we delete the billing record',
+            allowOutsideClick: false,
+            didOpen: () => {
+              Swal.showLoading();
+            }
+          });
+
+          fetch(`/billing/${id}`, {
+            method: 'DELETE',
+            headers: {
+              'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+            }
+          })
+          .then(response => response.json())
+          .then(data => {
+            Swal.close(); // Close loading state
+            if (data.success) {
+              filterBillings();
+              Swal.fire({
+                icon: 'success',
+                title: 'Deleted!',
+                text: data.message
+              });
+            } else {
+              Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Error deleting record'
+              });
+            }
+          })
+          .catch(error => {
+            Swal.close(); // Close loading state
+            console.error('Error:', error);
+            Swal.fire({
+              icon: 'error',
+              title: 'Error',
+              text: 'Error deleting record: ' + error.message
+            });
+          });
+        }
+      });
     }
 
     function filterBillings() {
@@ -428,12 +685,20 @@
         return response.json();
       })
       .then(data => {
-        updateBillingTable(data.billings);
-        updateSummaryStats(data);
+        if (data.billings) {
+          updateBillingTable(data.billings);
+        }
+        if (data.totalRent !== undefined) {
+          updateSummaryStats(data);
+        }
       })
       .catch(error => {
         console.error('Error filtering billings:', error);
-        alert('Error filtering billings: ' + error.message);
+        Swal.fire({
+          icon: 'error',
+          title: 'Error',
+          text: 'Error filtering billings: ' + error.message
+        });
       });
     }
 
@@ -464,11 +729,15 @@
             <td>${sr}</td>
             <td>${date}</td>
             <td>${vehicleNo}</td>
+            <td>${billing.gp_number || '-'}</td>
             <td>${customerName}</td>
             <td>${contactNumber}</td>
             <td>${bags}</td>
             <td>${deliveryPoint}</td>
+            <td>${billing.vehicle_type || '-'}</td>
             <td>${kmCovered}</td>
+            <td>${billing.rate || 0}</td>
+            <td>${billing.freight || 0}</td>
             <td>${rent}</td>
             <td>${advance}</td>
             <td>${advanceDate}</td>
@@ -491,16 +760,25 @@
 
     function updateSummaryStats(data) {
       // Update the summary statistics in the stat cards
-      document.querySelector('.stat-card:nth-child(1) .value').textContent = Number(data.totalRent).toFixed(2);
-      document.querySelector('.stat-card:nth-child(2) .value').textContent = data.paidCount;
-      document.querySelector('.stat-card:nth-child(3) .value').textContent = data.pendingCount;
-      document.querySelector('.stat-card:nth-child(4) .value').textContent = Number(data.totalDues).toFixed(2);
+      const totalRentEl = document.getElementById('totalRent');
+      const paidCountEl = document.getElementById('paidCount');
+      const pendingCountEl = document.getElementById('pendingCount');
+      const totalDuesEl = document.getElementById('totalDues');
+
+      if (totalRentEl) totalRentEl.textContent = Number(data.totalRent).toFixed(2);
+      if (paidCountEl) paidCountEl.textContent = data.paidCount;
+      if (pendingCountEl) pendingCountEl.textContent = data.pendingCount;
+      if (totalDuesEl) totalDuesEl.textContent = Number(data.totalDues).toFixed(2);
     }
 
     function exportBilling() {
       const month = document.getElementById('filter_month').value;
       if (!month) {
-        alert('Please select a billing month first');
+        Swal.fire({
+          icon: 'warning',
+          title: 'Select Month',
+          text: 'Please select a billing month first'
+        });
         return;
       }
       
@@ -589,6 +867,134 @@
           
           new bootstrap.Modal(document.getElementById('summaryModal')).show();
         });
+    }
+
+    function exportExcel() {
+      const month = document.getElementById('filter_month').value;
+      
+      if (!month) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Select Month',
+          text: 'Please select a billing month first'
+        });
+        return;
+      }
+
+      Swal.fire({
+        title: 'Enter Invoice Number',
+        input: 'text',
+        inputValue: '0000',
+        showCancelButton: true,
+        confirmButtonText: 'Export'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          const invoiceNumber = result.value;
+          // Create a temporary link to trigger download
+          const link = document.createElement('a');
+          link.href = `/billing/export-excel?month=${month}&invoice_number=${invoiceNumber}`;
+          link.download = `SIMG_DEPALPUR_${month}.xlsx`;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }
+      });
+      
+      // Create a temporary link to trigger download
+      const link = document.createElement('a');
+      link.href = `/billing/export-excel?month=${month}&invoice_number=${invoiceNumber}`;
+      link.download = `SIMG_DEPALPUR_${month}.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+
+    function showImportModal() {
+      new bootstrap.Modal(document.getElementById('importModal')).show();
+    }
+
+    function processImport() {
+      const fileInput = document.getElementById('import_file');
+      const file = fileInput.files[0];
+      
+      if (!file) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Select File',
+          text: 'Please select a file to import'
+        });
+        return;
+      }
+      
+      const formData = new FormData();
+      formData.append('excel_file', file);
+      
+      fetch('/billing/import-excel', {
+        method: 'POST',
+        headers: {
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: formData
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          Swal.fire({
+            icon: 'success',
+            title: 'Import Successful',
+            text: data.message
+          });
+          if (data.errors && data.errors.length > 0) {
+            Swal.fire({
+              icon: 'warning',
+              title: 'Import with Warnings',
+              text: 'Some rows had errors:\n' + data.errors.join('\n')
+            });
+          }
+          bootstrap.Modal.getInstance(document.getElementById('importModal')).hide();
+          filterBillings();
+        } else {
+          Swal.fire({
+            icon: 'error',
+            title: 'Import Failed',
+            text: data.message
+          });
+        }
+      })
+      .catch(error => {
+        Swal.fire({
+          icon: 'error',
+          title: 'Import Error',
+          text: 'Error importing file: ' + error.message
+        });
+      });
+    }
+
+    function generateInvoice() {
+      const month = document.getElementById('filter_month').value;
+      
+      if (!month) {
+        Swal.fire({
+          icon: 'warning',
+          title: 'Select Month',
+          text: 'Please select a billing month first'
+        });
+        return;
+      }
+
+      Swal.fire({
+        title: 'Enter Invoice Number',
+        input: 'text',
+        inputValue: '0000',
+        showCancelButton: true,
+        confirmButtonText: 'Generate Invoice'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          const invoiceNumber = result.value;
+          // Open invoice in new tab
+          window.open(`/billing/generate-invoice?month=${month}&invoice_number=${invoiceNumber}`, '_blank');
+        }
+      });
     }
   </script>
 @endsection

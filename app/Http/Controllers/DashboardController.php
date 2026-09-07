@@ -107,7 +107,7 @@ class DashboardController extends Controller
             // Revenue from invoices for this month
             $monthlyRevenue = \App\Models\Invoice::whereYear('invoice_date', $monthDate->year)
                 ->whereMonth('invoice_date', $monthDate->month)
-                ->sum('amount');
+                ->sum('total_amount');
             
             // Revenue from billing records for this month (fallback for revenue data)
             $monthlyBillingRevenue = \App\Models\Billing::whereYear('date', $monthDate->year)

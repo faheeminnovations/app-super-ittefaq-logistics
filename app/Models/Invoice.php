@@ -9,51 +9,65 @@ class Invoice extends Model
 {
     protected $fillable = [
         'invoice_number',
-        'customer_id',
-        'amount',
-        'vat',
-        'due_date',
-        'status',
         'invoice_date',
-        'paid_date',
+        'billing_month',
+        'billing_year',
+        'billing_month_number',
+        'service_provider_name',
+        'service_provider_address',
+        'service_provider_ntn',
+        'service_provider_strn',
+        'client_name',
+        'client_address',
+        'client_ntn',
+        'client_strn',
+        'warehouse',
+        'gl_number',
+        'business_area',
+        'subtotal',
+        'tax_rate',
+        'tax_amount',
+        'total_amount',
+        'amount_in_words',
+        'status',
         'notes',
+        'verified_by',
+        'verified_at',
     ];
 
     protected $casts = [
-        'amount' => 'decimal:2',
-        'vat' => 'decimal:2',
-        'due_date' => 'date',
+        'subtotal' => 'decimal:2',
+        'tax_rate' => 'decimal:2',
+        'tax_amount' => 'decimal:2',
+        'total_amount' => 'decimal:2',
         'invoice_date' => 'date',
-        'paid_date' => 'date',
+        'verified_at' => 'datetime',
+        'billing_year' => 'integer',
+        'billing_month_number' => 'integer',
     ];
 
-    public function customer()
+    /**
+     * Relationship with Trip Logs
+     */
+    public function tripLogs()
     {
-        return $this->belongsTo(Customer::class);
+        return $this->hasMany(TripLog::class);
     }
 
     /**
-     * Get formatted amount with currency
+     * Get formatted subtotal with currency
      */
-    public function getFormattedAmountAttribute()
+    public function getFormattedSubtotalAttribute()
     {
-        return CurrencyHelper::formatCurrency($this->amount);
+        return CurrencyHelper::formatCurrency($this->subtotal);
     }
 
     /**
-     * Get formatted VAT with currency
+     * Get formatted tax amount with currency
      */
-    public function getFormattedVatAttribute()
+    public function getFormattedTaxAmountAttribute()
     {
-        return CurrencyHelper::formatCurrency($this->vat);
-    }
-
-    /**
-     * Get total amount including VAT
-     */
-    public function getTotalAmountAttribute()
-    {
-        return $this->amount + $this->vat;
+        return CurrencyHelper::formatCurrency($this->tax_amount);
     }
 
     /**
@@ -62,5 +76,27 @@ class Invoice extends Model
     public function getFormattedTotalAmountAttribute()
     {
         return CurrencyHelper::formatCurrency($this->total_amount);
+    }
+
+    /**
+     * Calculate invoice totals from trip logs
+     */
+    public function calculateTotals()
+    {
+        $this->subtotal = $this->tripLogs()->sum('frt');
+        $this->tax_amount = $this->subtotal * ($this->tax_rate / 100);
+        $this->total_amount = $this->subtotal + $this->tax_amount;
+        $this->save();
+    }
+
+    /**
+     * Mark invoice as verified
+     */
+    public function markAsVerified($verifiedBy)
+    {
+        $this->verified_by = $verifiedBy;
+        $this->verified_at = now();
+        $this->status = 'sent';
+        $this->save();
     }
 }

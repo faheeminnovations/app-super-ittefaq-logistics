@@ -14,9 +14,14 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Skip AdminUserSeeder if admin user already exists
+        if (!\App\Models\User::where('email', 'admin@ittefaq.com')->exists()) {
+            $this->call([
+                \Database\Seeders\AdminUserSeeder::class,
+            ]);
+        }
+
         $this->call([
-            \Database\Seeders\PermissionSeeder::class,
-            \Database\Seeders\UserSeeder::class,
             \Database\Seeders\CustomerSeeder::class,
         ]);
     }

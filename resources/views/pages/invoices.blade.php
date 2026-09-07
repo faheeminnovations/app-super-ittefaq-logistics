@@ -33,35 +33,35 @@
       <div class="col-6 col-lg-3">
         <div class="stat-card">
           <div class="icon-badge" style="background:#EAF7EF;color:var(--success);"><i class="bi bi-check-circle"></i></div>
-          <div class="label">Paid</div>
-          <div class="value">{{ $paidInvoices ?? 0 }}</div>
-          <div class="delta up"><i class="bi bi-arrow-up-short"></i> Collected</div>
+          <div class="label">Sent</div>
+          <div class="value">{{ $sentInvoices ?? 0 }}</div>
+          <div class="delta up"><i class="bi bi-arrow-up-short"></i> Sent to client</div>
         </div>
       </div>
       <div class="col-6 col-lg-3">
         <div class="stat-card">
           <div class="icon-badge" style="background:#FFF3E0;color:var(--warn);"><i class="bi bi-hourglass-split"></i></div>
-          <div class="label">Unpaid</div>
-          <div class="value">{{ $unpaidInvoices ?? 0 }}</div>
-          <div class="delta down"><i class="bi bi-arrow-down-short"></i> Outstanding</div>
+          <div class="label">Draft</div>
+          <div class="value">{{ $draftInvoices ?? 0 }}</div>
+          <div class="delta down"><i class="bi bi-arrow-down-short"></i> Pending verification</div>
         </div>
       </div>
       <div class="col-6 col-lg-3">
         <div class="stat-card">
           <div class="icon-badge" style="background:#FBE9E7;color:var(--danger);"><i class="bi bi-exclamation-triangle"></i></div>
-          <div class="label">Overdue</div>
-          <div class="value">{{ $overdueInvoices ?? 0 }}</div>
-          <div class="delta down"><i class="bi bi-arrow-down-short"></i> Action required</div>
+          <div class="label">Paid</div>
+          <div class="value">{{ $paidInvoices ?? 0 }}</div>
+          <div class="delta down"><i class="bi bi-arrow-down-short"></i> Payment received</div>
         </div>
       </div>
     </div>
     
     <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
       <span class="badge-status badge-pending" style="cursor:pointer;" onclick="filterByStatus('all')">All</span> 
-      <span class="badge-status badge-delivered" style="cursor:pointer;" onclick="filterByStatus('paid')">Paid</span> 
-      <span class="badge-status badge-transit" style="cursor:pointer;" onclick="filterByStatus('unpaid')">Unpaid</span> 
-      <span class="badge-status badge-delayed" style="cursor:pointer;" onclick="filterByStatus('overdue')">Overdue</span> 
-      <span class="badge-status badge-pending" style="cursor:pointer;" onclick="filterByStatus('cancelled')">Cancelled</span> 
+      <span class="badge-status badge-transit" style="cursor:pointer;" onclick="filterByStatus('draft')">Draft</span> 
+      <span class="badge-status badge-delivered" style="cursor:pointer;" onclick="filterByStatus('sent')">Sent</span> 
+      <span class="badge-status badge-success" style="cursor:pointer;" onclick="filterByStatus('paid')">Paid</span> 
+      <span class="badge-status badge-delayed" style="cursor:pointer;" onclick="filterByStatus('cancelled')">Cancelled</span> 
     </div>
     
     <div class="panel">
@@ -76,10 +76,11 @@
           <thead>
             <tr>
               <th>Invoice #</th>
-              <th>Customer</th>
-              <th>Amount</th>
-              <th>VAT</th>
-              <th>Due Date</th>
+              <th>Billing Month</th>
+              <th>Client</th>
+              <th>Subtotal</th>
+              <th>Tax Amount</th>
+              <th>Total Amount</th>
               <th>Status</th>
               <th>Actions</th>
             </tr>
@@ -89,20 +90,21 @@
               @foreach($invoices as $invoice)
             <tr>
               <td><span class='mono fw-semibold'>{{ $invoice->invoice_number }}</span></td>
-              <td>{{ $invoice->customer ? $invoice->customer->name : 'N/A' }}</td>
-              <td>{{ $invoice->formatted_amount }}</td>
-              <td>{{ $invoice->formatted_vat }}</td>
-              <td>{{ \Carbon\Carbon::parse($invoice->due_date)->format('d M Y') }}</td>
+              <td>{{ $invoice->billing_month }}</td>
+              <td>{{ $invoice->client_name ?? 'N/A' }}</td>
+              <td>{{ \App\Helpers\CurrencyHelper::formatCurrency($invoice->subtotal) }}</td>
+              <td>{{ \App\Helpers\CurrencyHelper::formatCurrency($invoice->tax_amount) }}</td>
+              <td><strong>{{ \App\Helpers\CurrencyHelper::formatCurrency($invoice->total_amount) }}</strong></td>
               <td>
                 @switch($invoice->status)
+                  @case('draft')
+                    <span class="badge-status badge-transit">Draft</span>
+                    @break
+                  @case('sent')
+                    <span class="badge-status badge-delivered">Sent</span>
+                    @break
                   @case('paid')
-                    <span class="badge-status badge-delivered">Paid</span>
-                    @break
-                  @case('unpaid')
-                    <span class="badge-status badge-transit">Unpaid</span>
-                    @break
-                  @case('overdue')
-                    <span class="badge-status badge-delayed">Overdue</span>
+                    <span class="badge-status badge-success">Paid</span>
                     @break
                   @case('cancelled')
                     <span class="badge-status badge-pending">Cancelled</span>
@@ -119,6 +121,11 @@
                   <button type="button" class="btn btn-outline-info" onclick="viewInvoice({{ $invoice->id }})" title="View">
                     <i class="bi bi-eye"></i>
                   </button>
+                  @if($invoice->status === 'draft')
+                  <button type="button" class="btn btn-outline-success" onclick="calculateTotals({{ $invoice->id }})" title="Calculate Totals">
+                    <i class="bi bi-calculator"></i>
+                  </button>
+                  @endif
                   <button type="button" class="btn btn-outline-danger" onclick="deleteInvoice({{ $invoice->id }})" title="Delete">
                     <i class="bi bi-trash"></i>
                   </button>
@@ -127,7 +134,7 @@
             </tr>
             @endforeach
             @else
-            <tr><td colspan="7" class="text-center">No invoices found</td></tr>
+            <tr><td colspan="8" class="text-center">No invoices found</td></tr>
             @endisset
           </tbody>
         </table>
@@ -158,35 +165,45 @@
                 <input type="text" class="form-control" name="invoice_number" id="invoice_number" required>
               </div>
               <div class="col-md-6 mb-3">
-                <label for="customer_id" class="form-label">Customer</label>
-                <select class="form-select" name="customer_id" id="customer_id" required>
-                  <option value="">Select Customer</option>
-                  @foreach($customers ?? [] as $customer)
-                    <option value="{{ $customer->id }}">{{ $customer->name }}</option>
-                  @endforeach
-                </select>
-              </div>
-            </div>
-
-            <div class="row">
-              <div class="col-md-6 mb-3">
-                <label for="amount" class="form-label">Amount</label>
-                <input type="number" step="0.01" class="form-control" name="amount" id="amount" required>
-              </div>
-              <div class="col-md-6 mb-3">
-                <label for="vat" class="form-label">VAT</label>
-                <input type="number" step="0.01" class="form-control" name="vat" id="vat" required>
-              </div>
-            </div>
-
-            <div class="row">
-              <div class="col-md-6 mb-3">
                 <label for="invoice_date" class="form-label">Invoice Date</label>
                 <input type="date" class="form-control" name="invoice_date" id="invoice_date" required>
               </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label for="billing_month" class="form-label">Billing Month</label>
+                <input type="text" class="form-control" name="billing_month" id="billing_month" placeholder="e.g., May-2026" required>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label for="billing_year" class="form-label">Year</label>
+                <input type="number" class="form-control" name="billing_year" id="billing_year" required>
+              </div>
+              <div class="col-md-4 mb-3">
+                <label for="billing_month_number" class="form-label">Month Number</label>
+                <input type="number" class="form-control" name="billing_month_number" id="billing_month_number" min="1" max="12" required>
+              </div>
+            </div>
+
+            <div class="row">
               <div class="col-md-6 mb-3">
-                <label for="due_date" class="form-label">Due Date</label>
-                <input type="date" class="form-control" name="due_date" id="due_date" required>
+                <label for="client_name" class="form-label">Client Name</label>
+                <input type="text" class="form-control" name="client_name" id="client_name" value="Bayer Pakistan (Pvt.) Ltd.">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="warehouse" class="form-label">Warehouse</label>
+                <input type="text" class="form-control" name="warehouse" id="warehouse" value="Depalpur">
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="gl_number" class="form-label">GL Number</label>
+                <input type="text" class="form-control" name="gl_number" id="gl_number" value="4022265">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="tax_rate" class="form-label">Tax Rate (%)</label>
+                <input type="number" step="0.01" class="form-control" name="tax_rate" id="tax_rate" value="16">
               </div>
             </div>
 
@@ -194,15 +211,11 @@
               <div class="col-md-6 mb-3">
                 <label for="status" class="form-label">Status</label>
                 <select class="form-select" name="status" id="status" required>
-                  <option value="unpaid">Unpaid</option>
+                  <option value="draft">Draft</option>
+                  <option value="sent">Sent</option>
                   <option value="paid">Paid</option>
-                  <option value="overdue">Overdue</option>
                   <option value="cancelled">Cancelled</option>
                 </select>
-              </div>
-              <div class="col-md-6 mb-3">
-                <label for="paid_date" class="form-label">Paid Date</label>
-                <input type="date" class="form-control" name="paid_date" id="paid_date">
               </div>
             </div>
 
@@ -248,7 +261,7 @@ $(document).ready(function() {
         lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
         order: [[0, 'desc']],
         columnDefs: [
-            { orderable: false, targets: 6 } // Actions column
+            { orderable: false, targets: 7 } // Actions column
         ],
         language: {
             search: "_INPUT_",
@@ -325,13 +338,15 @@ function editInvoice(id) {
 function fillInvoiceForm(invoice) {
     $('#invoice_id').val(invoice.id);
     $('#invoice_number').val(invoice.invoice_number);
-    $('#customer_id').val(invoice.customer_id);
-    $('#amount').val(invoice.amount);
-    $('#vat').val(invoice.vat);
     $('#invoice_date').val(invoice.invoice_date);
-    $('#due_date').val(invoice.due_date);
+    $('#billing_month').val(invoice.billing_month);
+    $('#billing_year').val(invoice.billing_year);
+    $('#billing_month_number').val(invoice.billing_month_number);
+    $('#client_name').val(invoice.client_name);
+    $('#warehouse').val(invoice.warehouse);
+    $('#gl_number').val(invoice.gl_number);
+    $('#tax_rate').val(invoice.tax_rate);
     $('#status').val(invoice.status);
-    $('#paid_date').val(invoice.paid_date);
     $('#notes').val(invoice.notes);
     
     $('#invoiceModalLabel').text('Edit Invoice');
@@ -346,23 +361,69 @@ function viewInvoice(id) {
         },
         success: function(data) {
             var invoice = data.invoice || data;
+            var tripLogs = invoice.trip_logs || [];
+            var tripLogsHtml = '';
+            
+            if (tripLogs.length > 0) {
+                tripLogsHtml = `
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <h6>Trip Details (${tripLogs.length} trips)</h6>
+                            <div class="table-responsive">
+                                <table class="table table-sm table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>Sr</th>
+                                            <th>Date</th>
+                                            <th>Vehicle</th>
+                                            <th>Delivery Point</th>
+                                            <th>KM</th>
+                                            <th>Rate</th>
+                                            <th>FRT</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${tripLogs.map(function(trip) {
+                                            return `
+                                                <tr>
+                                                    <td>${trip.sr}</td>
+                                                    <td>${trip.date}</td>
+                                                    <td>${trip.vehicle_no}</td>
+                                                    <td>${trip.delivery_point.substring(0, 30)}...</td>
+                                                    <td>${trip.km}</td>
+                                                    <td>${trip.rate}</td>
+                                                    <td>${trip.frt}</td>
+                                                </tr>
+                                            `;
+                                        }).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+            
             var html = `
                 <div class="row">
                     <div class="col-md-6">
                         <h6>Invoice Information</h6>
                         <p><strong>Invoice Number:</strong> ${invoice.invoice_number}</p>
-                        <p><strong>Customer:</strong> ${invoice.customer ? invoice.customer.name : 'N/A'}</p>
+                        <p><strong>Billing Month:</strong> ${invoice.billing_month}</p>
                         <p><strong>Invoice Date:</strong> ${invoice.invoice_date}</p>
-                        <p><strong>Due Date:</strong> ${invoice.due_date}</p>
+                        <p><strong>Client:</strong> ${invoice.client_name || 'N/A'}</p>
+                        <p><strong>Warehouse:</strong> ${invoice.warehouse || 'N/A'}</p>
                     </div>
                     <div class="col-md-6">
-                        <h6>Payment Details</h6>
-                        <p><strong>Amount:</strong> PKR ${parseFloat(invoice.amount).toFixed(2)}</p>
-                        <p><strong>VAT:</strong> PKR ${parseFloat(invoice.vat).toFixed(2)}</p>
+                        <h6>Financial Details</h6>
+                        <p><strong>Subtotal:</strong> PKR ${parseFloat(invoice.subtotal).toFixed(2)}</p>
+                        <p><strong>Tax Rate:</strong> ${invoice.tax_rate}%</p>
+                        <p><strong>Tax Amount:</strong> PKR ${parseFloat(invoice.tax_amount).toFixed(2)}</p>
+                        <p><strong>Total Amount:</strong> <strong>PKR ${parseFloat(invoice.total_amount).toFixed(2)}</strong></p>
                         <p><strong>Status:</strong> ${invoice.status}</p>
-                        <p><strong>Paid Date:</strong> ${invoice.paid_date || 'N/A'}</p>
                     </div>
                 </div>
+                ${tripLogsHtml}
                 <div class="row mt-3">
                     <div class="col-12">
                         <h6>Notes</h6>
@@ -400,9 +461,27 @@ function deleteInvoice(id) {
 function filterByStatus(status) {
     var table = $('#invoicesTable').DataTable();
     if (status === 'all') {
-        table.column(5).search('').draw();
+        table.column(6).search('').draw();
     } else {
-        table.column(5).search(status).draw();
+        table.column(6).search(status).draw();
+    }
+}
+
+function calculateTotals(id) {
+    if (confirm('Calculate invoice totals from trip logs?')) {
+        $.ajax({
+            url: '/invoices/' + id + '/calculate',
+            type: 'POST',
+            headers: {
+                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+            },
+            success: function(response) {
+                location.reload();
+            },
+            error: function() {
+                alert('Error calculating invoice totals');
+            }
+        });
     }
 }
 

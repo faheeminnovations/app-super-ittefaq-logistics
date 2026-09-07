@@ -5,9 +5,17 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use App\Models\Billing;
+use App\Services\ExcelImportService;
 
 class ImportController extends Controller
 {
+    protected $excelImportService;
+    
+    public function __construct(ExcelImportService $excelImportService)
+    {
+        $this->excelImportService = $excelImportService;
+    }
+    
     public function process(Request $request)
     {
         $request->validate([
@@ -47,6 +55,49 @@ class ImportController extends Controller
             
         } catch (\Exception $e) {
             \Log::error('Import error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Error processing import: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+    
+    /**
+     * Process new Excel format with 2 sheets
+     */
+    public function processNewFormat(Request $request)
+    {
+        $request->validate([
+            'import_file' => 'required|mimes:xlsx,xls|max:10240', // Max 10MB
+        ]);
+
+        try {
+            // Get the uploaded file
+            $file = $request->file('import_file');
+            $filePath = $file->getPathname();
+            
+            \Log::info('New format Excel file uploaded: ' . $file->getClientOriginalName());
+            
+            // Use the new Excel import service
+            $result = $this->excelImportService->importNewFormat($filePath);
+            
+            if ($result['success']) {
+                return response()->json([
+                    'success' => true,
+                    'message' => $result['message'],
+                    'invoice_id' => $result['invoice']->id,
+                    'invoice_number' => $result['invoice']->invoice_number,
+                    'trip_count' => $result['trip_count']
+                ]);
+            } else {
+                return response()->json([
+                    'success' => false,
+                    'message' => $result['message']
+                ], 400);
+            }
+            
+        } catch (\Exception $e) {
+            \Log::error('New format import error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
                 'message' => 'Error processing import: ' . $e->getMessage()
