@@ -34,11 +34,7 @@
                 <td>
                     <a href="{{ route($table . '.show', [$item->id]) }}" class="btn btn-sm btn-outline-secondary">View</a>
                     <a href="{{ route($table . '.edit', [$item->id]) }}" class="btn btn-sm btn-outline-primary">Edit</a>
-                    <form action="{{ route($table . '.destroy', [$item->id]) }}" method="POST" style="display:inline-block">
-                        @csrf
-                        @method('DELETE')
-                        <button class="btn btn-sm btn-danger" onclick="return confirm('Delete?')">Delete</button>
-                    </form>
+                    <button class="btn btn-sm btn-danger" onclick="deleteCrudItem('{{ $table }}', {{ $item->id }})">Delete</button>
                 </td>
             </tr>
         @endforeach
@@ -47,3 +43,46 @@
 
 {{ $items->links() }}
 @endsection
+
+@push('scripts')
+<script>
+function deleteCrudItem(table, id) {
+    Swal.fire({
+        title: 'Are you sure?',
+        text: 'You will not be able to recover this item!',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: '/' + table + '/' + id,
+                type: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    Swal.fire(
+                        'Deleted!',
+                        'Item has been deleted.',
+                        'success'
+                    ).then(() => {
+                        location.reload();
+                    });
+                },
+                error: function(xhr) {
+                    var message = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Error deleting item';
+                    Swal.fire(
+                        'Error!',
+                        message,
+                        'error'
+                    );
+                }
+            });
+        }
+    });
+}
+</script>
+@endpush

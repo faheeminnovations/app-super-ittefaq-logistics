@@ -99,8 +99,21 @@ class ExpenseController extends Controller
     public function destroy(string $id)
     {
         $expense = Expense::findOrFail($id);
-        $expense->delete();
-        return redirect()->route('expenses.index')->with('success', 'Expense deleted successfully.');
+
+        try {
+            $expense->delete();
+
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => true, 'message' => 'Expense deleted successfully.']);
+            }
+
+            return redirect()->route('expenses.index')->with('success', 'Expense deleted successfully.');
+        } catch (\Illuminate\Database\QueryException $e) {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Cannot delete expense due to database constraints.'], 400);
+            }
+            return redirect()->route('expenses.index')->with('error', 'Cannot delete expense due to database constraints.');
+        }
     }
 
     public function export(Request $request)

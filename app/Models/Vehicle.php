@@ -19,16 +19,38 @@ class Vehicle extends Model
         'vin',
         'notes',
         'vehicle_category',
+        'route_permit',
+        'token_tax',
+        'insurance',
     ];
 
     protected $casts = [
         'fitness_certificate_expiry' => 'date',
+        'route_permit' => 'date',
+        'token_tax' => 'date',
+        'insurance' => 'date',
         'fuel_capacity' => 'decimal:2',
     ];
 
     public function getPlateNumberAttribute()
     {
         return $this->reg_no;
+    }
+
+    /**
+     * Relationship with trips
+     */
+    public function trips(): HasMany
+    {
+        return $this->hasMany(\App\Models\Trip::class);
+    }
+
+    /**
+     * Relationship with maintenance records
+     */
+    public function maintenance(): HasMany
+    {
+        return $this->hasMany(\App\Models\Maintenance::class);
     }
 
     /**

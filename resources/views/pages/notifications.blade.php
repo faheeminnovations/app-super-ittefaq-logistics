@@ -291,29 +291,50 @@ function markAllAsRead() {
 }
 
 function deleteNotification(id) {
-    if (!confirm('Are you sure you want to delete this notification?')) {
-        return;
-    }
-    
-    fetch('{{ route("notifications.delete") }}', {
-        method: 'DELETE',
-        headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
-        },
-        body: JSON.stringify({ notification_id: id })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            loadNotifications();
-        } else {
-            alert('Error deleting notification');
+    Swal.fire({
+        title: 'Are you sure?',
+        text: 'You will not be able to recover this notification!',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            fetch('{{ route("notifications.delete") }}', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                },
+                body: JSON.stringify({ notification_id: id })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    Swal.fire(
+                        'Deleted!',
+                        'Notification has been deleted.',
+                        'success'
+                    );
+                    loadNotifications();
+                } else {
+                    Swal.fire(
+                        'Error!',
+                        'Error deleting notification',
+                        'error'
+                    );
+                }
+            })
+            .catch(error => {
+                console.error('Error deleting notification:', error);
+                Swal.fire(
+                    'Error!',
+                    'Error deleting notification',
+                    'error'
+                );
+            });
         }
-    })
-    .catch(error => {
-        console.error('Error deleting notification:', error);
-        alert('Error deleting notification');
     });
 }
 </script>

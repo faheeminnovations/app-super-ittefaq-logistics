@@ -13,8 +13,8 @@
     <div class="page-head">
       <div>
         <div class="eyebrow">Professional Billing</div>
-        <h1>Breading Billing</h1>
-        <div class="sub">بائر،بریڈنگ - Breading Management</div>
+        <h1>Syngenta Breading Billing</h1>
+        <div class="sub">سینجینٹا بریڈنگ - Syngenta Breading Management</div>
       </div>
       <div class="d-flex gap-2">
         <button class="btn btn-outline-navy" onclick="window.location.href='/professional-billing'"><i class="bi bi-arrow-left me-1"></i> Back</button>
@@ -86,7 +86,7 @@
     <div class="modal-dialog modal-lg">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title">Add Breading Billing Record</h5>
+          <h5 class="modal-title">Add Syngenta Breading Billing Record</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
         </div>
         <div class="modal-body">
@@ -149,7 +149,7 @@
       billingModal = new bootstrap.Modal(document.getElementById('billingModal'));
       document.getElementById('billing_month').value = '{{ $currentMonth }}';
       document.getElementById('date').valueAsDate = new Date();
-      
+
       Swal.mixin({
         customClass: {
           confirmButton: 'btn btn-primary',
@@ -200,7 +200,7 @@
         }
       });
 
-      fetch('/professional-billing/branding/store', {
+      fetch('/professional-billing/syngenta-breading/store', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -254,7 +254,7 @@
             }
           });
 
-          fetch(`/professional-billing/branding/${id}`, {
+          fetch(`/professional-billing/syngenta-breading/${id}`, {
             method: 'DELETE',
             headers: {
               'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
@@ -292,7 +292,7 @@
 
     function filterBillings() {
       const month = document.getElementById('filter_month').value;
-      window.location.href = `/professional-billing/branding?month=${month}`;
+      window.location.href = `/professional-billing/syngenta-breading?month=${month}`;
     }
   </script>
 @endsection

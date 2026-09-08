@@ -149,9 +149,37 @@ class JobController extends Controller
     public function destroy(string $id)
     {
         $job = Job::findOrFail($id);
-        $job->delete();
 
-        return redirect()->route('jobs.index')->with('success', 'Job deleted successfully.');
+        // Check if job has associated trips
+        if ($job->trips()->exists()) {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Cannot delete job with associated trips. Please delete the trips first.'], 400);
+            }
+            return redirect()->route('jobs.index')->with('error', 'Cannot delete job with associated trips. Please delete the trips first.');
+        }
+
+        // Check if job has associated bilties
+        if ($job->bilties()->exists()) {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Cannot delete job with associated bilties. Please delete the bilties first.'], 400);
+            }
+            return redirect()->route('jobs.index')->with('error', 'Cannot delete job with associated bilties. Please delete the bilties first.');
+        }
+
+        try {
+            $job->delete();
+
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => true, 'message' => 'Job deleted successfully.']);
+            }
+
+            return redirect()->route('jobs.index')->with('success', 'Job deleted successfully.');
+        } catch (\Illuminate\Database\QueryException $e) {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Cannot delete job due to database constraints.'], 400);
+            }
+            return redirect()->route('jobs.index')->with('error', 'Cannot delete job due to database constraints.');
+        }
     }
 
     public function export(Request $request)

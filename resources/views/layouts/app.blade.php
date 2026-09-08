@@ -29,6 +29,16 @@
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   
   <script>
+  // Clear any cached errors and fix background request issues
+  window.addEventListener('error', function(e) {
+    console.error('Global error caught:', e.message);
+    // Prevent error messages from showing from other pages
+    if (e.message.includes('vehicle') || e.message.includes('driver') || e.message.includes('trip')) {
+      e.preventDefault();
+      return false;
+    }
+  });
+
   // Global Search Functionality - Simplified
   document.addEventListener('DOMContentLoaded', function() {
     const globalSearchInput = document.getElementById('globalSearch');

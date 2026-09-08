@@ -46,24 +46,40 @@ class TripController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'trip_number' => 'required|string|unique:trips,trip_number|max:50',
-            'job_number' => 'nullable|string|max:50',
-            'vehicle_id' => 'required|exists:vehicles,id',
-            'driver_id' => 'required|exists:drivers,id',
-            'pickup_time' => 'required|date',
-            'delivery_time' => 'nullable|date',
-            'status' => 'required|in:pickup,in_transit,delivered,delayed,cancelled',
-            'pickup_location' => 'nullable|string',
-            'delivery_location' => 'nullable|string',
-            'distance' => 'nullable|numeric|min:0',
-            'notes' => 'nullable|string',
-            'job_id' => 'nullable|exists:transport_jobs,id',
-        ]);
+        try {
+            $validated = $request->validate([
+                'trip_number' => 'required|string|unique:trips,trip_number|max:50',
+                'job_number' => 'nullable|string|max:50',
+                'vehicle_id' => 'required|exists:vehicles,id',
+                'driver_id' => 'required|exists:drivers,id',
+                'pickup_time' => 'required|date',
+                'delivery_time' => 'nullable|date',
+                'status' => 'required|in:pickup,in_transit,delivered,delayed,cancelled',
+                'pickup_location' => 'nullable|string',
+                'delivery_location' => 'nullable|string',
+                'distance' => 'nullable|numeric|min:0',
+                'notes' => 'nullable|string',
+                'job_id' => 'nullable|exists:transport_jobs,id',
+            ]);
 
-        Trip::create($validated);
+            Trip::create($validated);
 
-        return redirect()->route('trips.index')->with('success', 'Trip created successfully.');
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => true, 'message' => 'Trip created successfully.']);
+            }
+
+            return redirect()->route('trips.index')->with('success', 'Trip created successfully.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'errors' => $e->errors()], 422);
+            }
+            return redirect()->back()->withErrors($e->errors())->withInput();
+        } catch (\Exception $e) {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Error creating trip: ' . $e->getMessage()], 500);
+            }
+            return redirect()->back()->with('error', 'Error creating trip: ' . $e->getMessage())->withInput();
+        }
     }
 
     /**
@@ -106,24 +122,40 @@ class TripController extends Controller
     {
         $trip = Trip::findOrFail($id);
 
-        $validated = $request->validate([
-            'trip_number' => 'required|string|unique:trips,trip_number,' . $id . '|max:50',
-            'job_number' => 'nullable|string|max:50',
-            'vehicle_id' => 'required|exists:vehicles,id',
-            'driver_id' => 'required|exists:drivers,id',
-            'pickup_time' => 'required|date',
-            'delivery_time' => 'nullable|date',
-            'status' => 'required|in:pickup,in_transit,delivered,delayed,cancelled',
-            'pickup_location' => 'nullable|string',
-            'delivery_location' => 'nullable|string',
-            'distance' => 'nullable|numeric|min:0',
-            'notes' => 'nullable|string',
-            'job_id' => 'nullable|exists:transport_jobs,id',
-        ]);
+        try {
+            $validated = $request->validate([
+                'trip_number' => 'required|string|unique:trips,trip_number,' . $id . '|max:50',
+                'job_number' => 'nullable|string|max:50',
+                'vehicle_id' => 'required|exists:vehicles,id',
+                'driver_id' => 'required|exists:drivers,id',
+                'pickup_time' => 'required|date',
+                'delivery_time' => 'nullable|date',
+                'status' => 'required|in:pickup,in_transit,delivered,delayed,cancelled',
+                'pickup_location' => 'nullable|string',
+                'delivery_location' => 'nullable|string',
+                'distance' => 'nullable|numeric|min:0',
+                'notes' => 'nullable|string',
+                'job_id' => 'nullable|exists:transport_jobs,id',
+            ]);
 
-        $trip->update($validated);
+            $trip->update($validated);
 
-        return redirect()->route('trips.index')->with('success', 'Trip updated successfully.');
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => true, 'message' => 'Trip updated successfully.']);
+            }
+
+            return redirect()->route('trips.index')->with('success', 'Trip updated successfully.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'errors' => $e->errors()], 422);
+            }
+            return redirect()->back()->withErrors($e->errors())->withInput();
+        } catch (\Exception $e) {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Error updating trip: ' . $e->getMessage()], 500);
+            }
+            return redirect()->back()->with('error', 'Error updating trip: ' . $e->getMessage())->withInput();
+        }
     }
 
     /**
@@ -132,8 +164,20 @@ class TripController extends Controller
     public function destroy(string $id)
     {
         $trip = Trip::findOrFail($id);
-        $trip->delete();
 
-        return redirect()->route('trips.index')->with('success', 'Trip deleted successfully.');
+        try {
+            $trip->delete();
+
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => true, 'message' => 'Trip deleted successfully.']);
+            }
+
+            return redirect()->route('trips.index')->with('success', 'Trip deleted successfully.');
+        } catch (\Illuminate\Database\QueryException $e) {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Cannot delete trip due to database constraints.'], 400);
+            }
+            return redirect()->route('trips.index')->with('error', 'Cannot delete trip due to database constraints.');
+        }
     }
 }

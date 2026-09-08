@@ -8,6 +8,7 @@ use App\Models\BrandingBilling;
 use App\Models\MarketingDevelopmentBilling;
 use App\Models\SprBilling;
 use App\Models\CementPakistanBilling;
+use App\Models\SyngentaBreadingBilling;
 use App\Models\OpenMarketWorkBilling;
 use App\Models\SeedSupplyBilling;
 use Carbon\Carbon;
@@ -56,7 +57,7 @@ class ProfessionalBillingController extends Controller
         }
     }
 
-    // Branding Billing
+    // Breading Billing
     public function brandingIndex()
     {
         $currentMonth = Carbon::now()->format('Y-m');
@@ -81,7 +82,7 @@ class ProfessionalBillingController extends Controller
             
             return response()->json([
                 'success' => true,
-                'message' => 'Branding billing record created successfully',
+                'message' => 'Breading billing record created successfully',
                 'billing' => $billing
             ]);
         } catch (\Exception $e) {
@@ -164,14 +165,14 @@ class ProfessionalBillingController extends Controller
         }
     }
 
-    // Cement Pakistan Billing
+    // Syngenta Billing
     public function cementPakistanIndex()
     {
         $currentMonth = Carbon::now()->format('Y-m');
         $billings = CementPakistanBilling::byMonth($currentMonth)
             ->orderBy('date')
             ->get();
-        
+
         return view('pages.cement-pakistan-billing', compact('billings', 'currentMonth'));
     }
 
@@ -189,7 +190,43 @@ class ProfessionalBillingController extends Controller
             
             return response()->json([
                 'success' => true,
-                'message' => 'Cement Pakistan billing record created successfully',
+                'message' => 'Syngenta billing record created successfully',
+                'billing' => $billing
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Error creating record: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    // Syngenta Breading Billing
+    public function syngentaBreadingIndex()
+    {
+        $currentMonth = Carbon::now()->format('Y-m');
+        $billings = SyngentaBreadingBilling::byMonth($currentMonth)
+            ->orderBy('date')
+            ->get();
+
+        return view('pages.syngenta-breading-billing', compact('billings', 'currentMonth'));
+    }
+
+    public function syngentaBreadingStore(Request $request)
+    {
+        try {
+            $request->validate([
+                'date' => 'required|date',
+                'vehicle_number' => 'required|string|max:50',
+                'delivery_point' => 'required|string|max:255',
+                'billing_month' => 'required|date_format:Y-m',
+            ]);
+
+            $billing = SyngentaBreadingBilling::create($request->all());
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Syngenta Breading billing record created successfully',
                 'billing' => $billing
             ]);
         } catch (\Exception $e) {
@@ -320,7 +357,8 @@ class ProfessionalBillingController extends Controller
             'branding' => BrandingBilling::class,
             'marketing-development' => MarketingDevelopmentBilling::class,
             'spr' => SprBilling::class,
-            'cement-pakistan' => CementPakistanBilling::class,
+            'cement-pakistan' => SyngentaBilling::class,
+            'syngenta-breading' => SyngentaBreadingBilling::class,
             'open-market-work' => OpenMarketWorkBilling::class,
             'seed-supply' => SeedSupplyBilling::class,
         ];

@@ -206,8 +206,21 @@ class PodController extends Controller
     public function destroy(string $id)
     {
         $pod = Pod::findOrFail($id);
-        $pod->delete();
-        return redirect()->route('pod.index')->with('success', 'POD deleted successfully.');
+
+        try {
+            $pod->delete();
+
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => true, 'message' => 'POD deleted successfully.']);
+            }
+
+            return redirect()->route('pod.index')->with('success', 'POD deleted successfully.');
+        } catch (\Illuminate\Database\QueryException $e) {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Cannot delete POD due to database constraints.'], 400);
+            }
+            return redirect()->route('pod.index')->with('error', 'Cannot delete POD due to database constraints.');
+        }
     }
 
     public function export(Request $request)

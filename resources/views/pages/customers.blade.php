@@ -376,21 +376,42 @@ function viewCustomer(id) {
 }
 
 function deleteCustomer(id) {
-    if (confirm('Are you sure you want to delete this customer?')) {
-        $.ajax({
-            url: '/customers/' + id,
-            type: 'DELETE',
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            },
-            success: function(response) {
-                location.reload();
-            },
-            error: function() {
-                alert('Error deleting customer');
-            }
-        });
-    }
+    Swal.fire({
+        title: 'Are you sure?',
+        text: 'You will not be able to recover this customer!',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: '/customers/' + id,
+                type: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    Swal.fire(
+                        'Deleted!',
+                        'Customer has been deleted.',
+                        'success'
+                    ).then(() => {
+                        location.reload();
+                    });
+                },
+                error: function(xhr) {
+                    var message = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Error deleting customer';
+                    Swal.fire(
+                        'Error!',
+                        message,
+                        'error'
+                    );
+                }
+            });
+        }
+    });
 }
 
 function filterByStatus(status) {

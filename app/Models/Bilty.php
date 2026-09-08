@@ -20,6 +20,7 @@ class Bilty extends Model
         'vehicle_number',
         'driver_name',
         'card_number',
+        'driver_phone',
         'sender_name',
         'sender_phone',
         'receiver_name',
@@ -31,6 +32,7 @@ class Bilty extends Model
         'advance_amount',
         'remaining_balance',
         'rent_amount',
+        'scale',
         'status',
         'notes',
         'customer_id',
@@ -47,6 +49,7 @@ class Bilty extends Model
         'advance_amount' => 'decimal:2',
         'remaining_balance' => 'decimal:2',
         'rent_amount' => 'decimal:2',
+        'scale' => 'decimal:2',
         'quantity' => 'integer',
     ];
 
@@ -90,6 +93,11 @@ class Bilty extends Model
     public function getFormattedRentAmountAttribute()
     {
         return CurrencyHelper::formatCurrency($this->rent_amount);
+    }
+
+    public function getFormattedScaleAttribute()
+    {
+        return CurrencyHelper::formatCurrency($this->scale);
     }
 
     // Scope for active bilties

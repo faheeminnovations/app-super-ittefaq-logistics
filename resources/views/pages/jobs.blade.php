@@ -479,21 +479,42 @@ function viewJob(id) {
 }
 
 function deleteJob(id) {
-    if (confirm('Are you sure you want to delete this job?')) {
-        $.ajax({
-            url: '/jobs/' + id,
-            type: 'DELETE',
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            },
-            success: function(response) {
-                location.reload();
-            },
-            error: function() {
-                alert('Error deleting job');
-            }
-        });
-    }
+    Swal.fire({
+        title: 'Are you sure?',
+        text: 'You will not be able to recover this job!',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: '/jobs/' + id,
+                type: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    Swal.fire(
+                        'Deleted!',
+                        'Job has been deleted.',
+                        'success'
+                    ).then(() => {
+                        location.reload();
+                    });
+                },
+                error: function(xhr) {
+                    var message = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Error deleting job';
+                    Swal.fire(
+                        'Error!',
+                        message,
+                        'error'
+                    );
+                }
+            });
+        }
+    });
 }
 
 function filterByStatus(status) {

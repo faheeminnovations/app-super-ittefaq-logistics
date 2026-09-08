@@ -36,25 +36,25 @@ class CustomerSeeder extends Seeder
                 'status' => 'active',
             ],
 
-            // Buyer Branding Customers
+            // Buyer Breading Customers
             [
-                'name' => 'Buyer Branding - Marketing Hub',
+                'name' => 'Buyer Breading - Marketing Hub',
                 'contact_person' => 'Kamran Shah',
-                'contact_email' => 'kamran@branding.com',
+                'contact_email' => 'kamran@breading.com',
                 'contact_phone' => '0300-3456789',
                 'city' => 'Karachi',
                 'address' => 'Business District, Karachi',
-                'business_type' => 'Buyer Branding',
+                'business_type' => 'Buyer Breading',
                 'status' => 'active',
             ],
             [
-                'name' => 'Buyer Branding - Advertising Agency',
+                'name' => 'Buyer Breading - Advertising Agency',
                 'contact_person' => 'Fatima Malik',
-                'contact_email' => 'fatima@branding.com',
+                'contact_email' => 'fatima@breading.com',
                 'contact_phone' => '0300-4567890',
                 'city' => 'Islamabad',
                 'address' => 'Media City, Islamabad',
-                'business_type' => 'Buyer Branding',
+                'business_type' => 'Buyer Breading',
                 'status' => 'active',
             ],
 
@@ -104,25 +104,47 @@ class CustomerSeeder extends Seeder
                 'status' => 'active',
             ],
 
-            // Cement Pakistan Customers
+            // Syngenta Customers
             [
-                'name' => 'Cement Pakistan - Construction Site A',
+                'name' => 'Syngenta - Construction Site A',
                 'contact_person' => 'Bilal Khan',
-                'contact_email' => 'bilal@cementpak.com',
+                'contact_email' => 'bilal@syngenta.com',
                 'contact_phone' => '0300-9012345',
                 'city' => 'Peshawar',
                 'address' => 'Construction Zone, Peshawar',
-                'business_type' => 'Cement Pakistan',
+                'business_type' => 'Syngenta',
                 'status' => 'active',
             ],
             [
-                'name' => 'Cement Pakistan - Building Materials',
+                'name' => 'Syngenta - Building Materials',
                 'contact_person' => 'Nadia Shah',
-                'contact_email' => 'nadia@cementpak.com',
+                'contact_email' => 'nadia@syngenta.com',
                 'contact_phone' => '0300-0123456',
                 'city' => 'Quetta',
                 'address' => 'Industrial Area, Quetta',
-                'business_type' => 'Cement Pakistan',
+                'business_type' => 'Syngenta',
+                'status' => 'active',
+            ],
+
+            // Syngenta Breading Customers
+            [
+                'name' => 'Syngenta Breading - Agricultural Division',
+                'contact_person' => 'Tariq Ahmed',
+                'contact_email' => 'tariq@syngentabreading.com',
+                'contact_phone' => '0300-2345670',
+                'city' => 'Hyderabad',
+                'address' => 'Agricultural Hub, Hyderabad',
+                'business_type' => 'Syngenta Breading',
+                'status' => 'active',
+            ],
+            [
+                'name' => 'Syngenta Breading - Distribution Center',
+                'contact_person' => 'Sana Malik',
+                'contact_email' => 'sana@syngentabreading.com',
+                'contact_phone' => '0300-3456781',
+                'city' => 'Sukkur',
+                'address' => 'Distribution Zone, Sukkur',
+                'business_type' => 'Syngenta Breading',
                 'status' => 'active',
             ],
 

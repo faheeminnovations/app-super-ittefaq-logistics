@@ -82,6 +82,9 @@
               <th>VIN</th>
               <th>Fitness Certificate</th>
               <th>Work Type</th>
+              <th>Route Permit</th>
+              <th>Token Tax</th>
+              <th>Insurance</th>
               <th>Fuel Capacity</th>
               <th>Status</th>
               <th>Actions</th>
@@ -112,6 +115,9 @@
                     <span class="badge bg-secondary">N/A</span>
                 @endswitch
               </td>
+              <td>{{ $vehicle->route_permit ? \Carbon\Carbon::parse($vehicle->route_permit)->format('d M Y') : 'N/A' }}</td>
+              <td>{{ $vehicle->token_tax ? \Carbon\Carbon::parse($vehicle->token_tax)->format('d M Y') : 'N/A' }}</td>
+              <td>{{ $vehicle->insurance ? \Carbon\Carbon::parse($vehicle->insurance)->format('d M Y') : 'N/A' }}</td>
               <td>{{ $vehicle->fuel_capacity ? $vehicle->fuel_capacity . 'L' : 'N/A' }}</td>
               <td>
                 @switch($vehicle->status)
@@ -147,7 +153,7 @@
             </tr>
             @endforeach
             @else
-            <tr><td colspan="10" class="text-center">No vehicles found</td></tr>
+            <tr><td colspan="13" class="text-center">No vehicles found</td></tr>
             @endisset
           </tbody>
         </table>
@@ -194,11 +200,11 @@
             <div class="row">
               <div class="col-md-6 mb-3">
                 <label for="make_model" class="form-label">Make / Model</label>
-                <input type="text" class="form-control" name="make_model" id="make_model" required>
+                <input type="text" class="form-control" name="make_model" id="make_model">
               </div>
               <div class="col-md-6 mb-3">
                 <label for="year" class="form-label">Year</label>
-                <input type="number" class="form-control" name="year" id="year" min="1900" max="{{ date('Y') + 1 }}" required>
+                <input type="number" class="form-control" name="year" id="year" min="1900" max="{{ date('Y') + 1 }}">
               </div>
             </div>
 
@@ -220,7 +226,8 @@
               </div>
               <div class="col-md-6 mb-3">
                 <label for="work_type" class="form-label">Work Type</label>
-                <select class="form-select" name="work_type" id="work_type" required>
+                <select class="form-select" name="work_type" id="work_type">
+                  <option value="">Select Work Type</option>
                   <option value="company">Company</option>
                   <option value="private">Private</option>
                   <option value="both">Both</option>
@@ -228,10 +235,29 @@
               </div>
             </div>
 
+            <div class="mb-3">
+              <label class="form-label">Vehicle Documents</label>
+              <div class="row">
+                <div class="col-md-4 mb-3">
+                  <label for="route_permit" class="form-label">Route Permit Expiry</label>
+                  <input type="date" class="form-control" name="route_permit" id="route_permit">
+                </div>
+                <div class="col-md-4 mb-3">
+                  <label for="token_tax" class="form-label">Token Tax Expiry</label>
+                  <input type="date" class="form-control" name="token_tax" id="token_tax">
+                </div>
+                <div class="col-md-4 mb-3">
+                  <label for="insurance" class="form-label">Insurance Expiry</label>
+                  <input type="date" class="form-control" name="insurance" id="insurance">
+                </div>
+              </div>
+            </div>
+
             <div class="row">
               <div class="col-md-6 mb-3">
                 <label for="status" class="form-label">Status</label>
-                <select class="form-select" name="status" id="status" required>
+                <select class="form-select" name="status" id="status">
+                  <option value="">Select Status</option>
                   <option value="available">Available</option>
                   <option value="on_trip">On Trip</option>
                   <option value="maintenance">Maintenance</option>
@@ -282,7 +308,7 @@ $(document).ready(function() {
         lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
         order: [[0, 'asc']],
         columnDefs: [
-            { orderable: false, targets: 9 } // Actions column
+            { orderable: false, targets: 12 } // Actions column
         ],
         language: {
             search: "_INPUT_",
@@ -293,22 +319,24 @@ $(document).ready(function() {
     // Form submission
     $('#vehicleForm').on('submit', function(e) {
         e.preventDefault();
-        
-        var formData = $(this).serialize();
+
         var vehicleId = $('#vehicle_id').val();
         var url = vehicleId ? '/vehicles/' + vehicleId : '{{ route("vehicles.store") }}';
-        var method = 'POST';
-        
+
         // Set _method to PUT for updates
         if (vehicleId) {
             $('#_method').val('PUT');
         } else {
             $('#_method').val('POST');
         }
-        
+
+        // Serialize form after setting _method
+        var formData = $(this).serialize();
+
+        // Always use POST for AJAX, Laravel will read _method field
         $.ajax({
             url: url,
-            type: method,
+            type: 'POST',
             data: formData,
             headers: {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -325,6 +353,17 @@ $(document).ready(function() {
                     $.each(errors, function(key, value) {
                         errorMessage += value + '\n';
                     });
+                } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMessage = xhr.responseJSON.message;
+                } else if (xhr.responseText) {
+                    try {
+                        var response = JSON.parse(xhr.responseText);
+                        if (response.message) {
+                            errorMessage = response.message;
+                        }
+                    } catch (e) {
+                        errorMessage = 'Error saving vehicle: ' + xhr.status;
+                    }
                 }
                 alert(errorMessage);
             }
@@ -374,6 +413,24 @@ function fillVehicleForm(vehicle) {
         $('#fitness_certificate_expiry').val(formattedFitness);
     }
     
+    if (vehicle.route_permit) {
+        var routePermitDate = new Date(vehicle.route_permit);
+        var formattedRoutePermit = routePermitDate.toISOString().split('T')[0];
+        $('#route_permit').val(formattedRoutePermit);
+    }
+    
+    if (vehicle.token_tax) {
+        var tokenTaxDate = new Date(vehicle.token_tax);
+        var formattedTokenTax = tokenTaxDate.toISOString().split('T')[0];
+        $('#token_tax').val(formattedTokenTax);
+    }
+    
+    if (vehicle.insurance) {
+        var insuranceDate = new Date(vehicle.insurance);
+        var formattedInsurance = insuranceDate.toISOString().split('T')[0];
+        $('#insurance').val(formattedInsurance);
+    }
+    
     if (vehicle.work_type) {
         $('#work_type').val(vehicle.work_type);
     }
@@ -404,6 +461,9 @@ function viewVehicle(id) {
                         <h6>Compliance Details</h6>
                         <p><strong>Fitness Certificate:</strong> ${vehicle.fitness_certificate_expiry ? new Date(vehicle.fitness_certificate_expiry).toLocaleDateString() : 'N/A'}</p>
                         <p><strong>Work Type:</strong> ${vehicle.work_type || 'N/A'}</p>
+                        <p><strong>Route Permit:</strong> ${vehicle.route_permit ? new Date(vehicle.route_permit).toLocaleDateString() : 'N/A'}</p>
+                        <p><strong>Token Tax:</strong> ${vehicle.token_tax ? new Date(vehicle.token_tax).toLocaleDateString() : 'N/A'}</p>
+                        <p><strong>Insurance:</strong> ${vehicle.insurance ? new Date(vehicle.insurance).toLocaleDateString() : 'N/A'}</p>
                         <p><strong>Fuel Capacity:</strong> ${vehicle.fuel_capacity ? vehicle.fuel_capacity + 'L' : 'N/A'}</p>
                         <p><strong>Status:</strong> ${vehicle.status}</p>
                     </div>
@@ -425,29 +485,50 @@ function viewVehicle(id) {
 }
 
 function deleteVehicle(id) {
-    if (confirm('Are you sure you want to delete this vehicle?')) {
-        $.ajax({
-            url: '/vehicles/' + id,
-            type: 'DELETE',
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            },
-            success: function(response) {
-                location.reload();
-            },
-            error: function() {
-                alert('Error deleting vehicle');
-            }
-        });
-    }
+    Swal.fire({
+        title: 'Are you sure?',
+        text: 'You will not be able to recover this vehicle!',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: '/vehicles/' + id,
+                type: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    Swal.fire(
+                        'Deleted!',
+                        'Vehicle has been deleted.',
+                        'success'
+                    ).then(() => {
+                        location.reload();
+                    });
+                },
+                error: function(xhr) {
+                    var message = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Error deleting vehicle';
+                    Swal.fire(
+                        'Error!',
+                        message,
+                        'error'
+                    );
+                }
+            });
+        }
+    });
 }
 
 function filterByStatus(status) {
     var table = $('#vehiclesTable').DataTable();
     if (status === 'all') {
-        table.column(8).search('').draw();
+        table.column(11).search('').draw();
     } else {
-        table.column(8).search(status).draw();
+        table.column(11).search(status).draw();
     }
 }
 

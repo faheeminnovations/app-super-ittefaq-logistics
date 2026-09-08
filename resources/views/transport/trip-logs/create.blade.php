@@ -138,8 +138,8 @@
                                 </div>
                             </div>
 
-                            <!-- Buyer Branding: Serial No. / Date / Delivery Point / Kilometers / Rate / Amount -->
-                            <div class="category-fields d-none" data-category="Buyer Branding">
+                            <!-- Buyer Breading: Serial No. / Date / Delivery Point / Kilometers / Rate / Amount -->
+                            <div class="category-fields d-none" data-category="Buyer Breading">
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
                                         <label for="loading_point" class="form-label">Loading Point</label>
@@ -154,7 +154,7 @@
                                 </div>
                             </div>
 
-                            <!-- Buyer Marketing Development: Same as Buyer Branding -->
+                            <!-- Buyer Marketing Development: Same as Buyer Breading -->
                             <div class="category-fields d-none" data-category="Buyer Marketing Development">
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
@@ -170,7 +170,7 @@
                                 </div>
                             </div>
 
-                            <!-- Buyer S.P.R: Same as Buyer Branding -->
+                            <!-- Buyer S.P.R: Same as Buyer Breading -->
                             <div class="category-fields d-none" data-category="Buyer S.P.R">
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
@@ -186,8 +186,24 @@
                                 </div>
                             </div>
 
-                            <!-- Cement Pakistan: Same as Buyer Branding -->
-                            <div class="category-fields d-none" data-category="Cement Pakistan">
+                            <!-- Syngenta: Same as Buyer Breading -->
+                            <div class="category-fields d-none" data-category="Syngenta">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label for="loading_point" class="form-label">Loading Point</label>
+                                        <input type="text" class="form-control" id="loading_point" name="loading_point"
+                                               value="{{ old('loading_point') }}">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label for="unloading_point" class="form-label">Unloading Point</label>
+                                        <input type="text" class="form-control" id="unloading_point" name="unloading_point"
+                                               value="{{ old('unloading_point') }}">
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Syngenta Breading: Same as Buyer Breading -->
+                            <div class="category-fields d-none" data-category="Syngenta Breading">
                                 <div class="row">
                                     <div class="col-md-6 mb-3">
                                         <label for="loading_point" class="form-label">Loading Point</label>

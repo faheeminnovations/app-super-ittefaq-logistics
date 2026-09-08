@@ -37,22 +37,47 @@ class VehicleController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'reg_no' => 'required|string|unique:vehicles,reg_no|max:20',
-            'type' => 'required|string|max:50',
-            'make_model' => 'required|string|max:100',
-            'year' => 'required|integer|min:1900|max:' . (date('Y') + 1),
-            'fitness_certificate_expiry' => 'nullable|date',
-            'status' => 'required|in:available,on_trip,maintenance,out_of_service',
-            'work_type' => 'required|in:company,private,both',
-            'fuel_capacity' => 'nullable|numeric|min:0',
-            'vin' => 'nullable|string|max:50',
-            'notes' => 'nullable|string',
-        ]);
+        try {
+            $validated = $request->validate([
+                'reg_no' => 'required|string|max:20|unique:vehicles,reg_no',
+                'type' => 'required|string|max:50',
+                'make_model' => 'nullable|string|max:100',
+                'year' => 'nullable|integer|min:1900|max:' . (date('Y') + 1),
+                'fitness_certificate_expiry' => 'nullable|date',
+                'status' => 'nullable|in:available,on_trip,maintenance,out_of_service',
+                'work_type' => 'nullable|in:company,private,both',
+                'fuel_capacity' => 'nullable|numeric|min:0',
+                'vin' => 'nullable|string|max:50',
+                'notes' => 'nullable|string',
+                'vehicle_category' => 'nullable|string|max:50',
+                'route_permit' => 'nullable|date',
+                'token_tax' => 'nullable|date',
+                'insurance' => 'nullable|date',
+            ]);
 
-        Vehicle::create($validated);
+            // Remove null values to let database defaults apply
+            $validated = array_filter($validated, function($value) {
+                return $value !== null && $value !== '';
+            });
 
-        return redirect()->route('vehicles.index')->with('success', 'Vehicle created successfully.');
+            Vehicle::create($validated);
+
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => true, 'message' => 'Vehicle created successfully.']);
+            }
+
+            return redirect()->route('vehicles.index')->with('success', 'Vehicle created successfully.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'errors' => $e->errors()], 422);
+            }
+            return redirect()->back()->withErrors($e->errors())->withInput();
+        } catch (\Exception $e) {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Error creating vehicle: ' . $e->getMessage()], 500);
+            }
+            return redirect()->back()->with('error', 'Error creating vehicle: ' . $e->getMessage())->withInput();
+        }
     }
 
     /**
@@ -92,22 +117,47 @@ class VehicleController extends Controller
     {
         $vehicle = Vehicle::findOrFail($id);
 
-        $validated = $request->validate([
-            'reg_no' => 'required|string|unique:vehicles,reg_no,' . $id . '|max:20',
-            'type' => 'required|string|max:50',
-            'make_model' => 'required|string|max:100',
-            'year' => 'required|integer|min:1900|max:' . (date('Y') + 1),
-            'fitness_certificate_expiry' => 'nullable|date',
-            'status' => 'required|in:available,on_trip,maintenance,out_of_service',
-            'work_type' => 'required|in:company,private,both',
-            'fuel_capacity' => 'nullable|numeric|min:0',
-            'vin' => 'nullable|string|max:50',
-            'notes' => 'nullable|string',
-        ]);
+        try {
+            $validated = $request->validate([
+                'reg_no' => 'required|string|max:20|unique:vehicles,reg_no,' . $id,
+                'type' => 'required|string|max:50',
+                'make_model' => 'nullable|string|max:100',
+                'year' => 'nullable|integer|min:1900|max:' . (date('Y') + 1),
+                'fitness_certificate_expiry' => 'nullable|date',
+                'status' => 'nullable|in:available,on_trip,maintenance,out_of_service',
+                'work_type' => 'nullable|in:company,private,both',
+                'fuel_capacity' => 'nullable|numeric|min:0',
+                'vin' => 'nullable|string|max:50',
+                'notes' => 'nullable|string',
+                'vehicle_category' => 'nullable|string|max:50',
+                'route_permit' => 'nullable|date',
+                'token_tax' => 'nullable|date',
+                'insurance' => 'nullable|date',
+            ]);
 
-        $vehicle->update($validated);
+            // Remove null values to let database defaults apply
+            $validated = array_filter($validated, function($value) {
+                return $value !== null && $value !== '';
+            });
 
-        return redirect()->route('vehicles.index')->with('success', 'Vehicle updated successfully.');
+            $vehicle->update($validated);
+
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => true, 'message' => 'Vehicle updated successfully.']);
+            }
+
+            return redirect()->route('vehicles.index')->with('success', 'Vehicle updated successfully.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'errors' => $e->errors()], 422);
+            }
+            return redirect()->back()->withErrors($e->errors())->withInput();
+        } catch (\Exception $e) {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Error updating vehicle: ' . $e->getMessage()], 500);
+            }
+            return redirect()->back()->with('error', 'Error updating vehicle: ' . $e->getMessage())->withInput();
+        }
     }
 
     /**
@@ -116,9 +166,37 @@ class VehicleController extends Controller
     public function destroy(string $id)
     {
         $vehicle = Vehicle::findOrFail($id);
-        $vehicle->delete();
 
-        return redirect()->route('vehicles.index')->with('success', 'Vehicle deleted successfully.');
+        // Check if vehicle has associated trips
+        if ($vehicle->trips()->exists()) {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Cannot delete vehicle with associated trips. Please delete the trips first.'], 400);
+            }
+            return redirect()->route('vehicles.index')->with('error', 'Cannot delete vehicle with associated trips. Please delete the trips first.');
+        }
+
+        // Check if vehicle has associated maintenance records
+        if ($vehicle->maintenance()->exists()) {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Cannot delete vehicle with associated maintenance records.'], 400);
+            }
+            return redirect()->route('vehicles.index')->with('error', 'Cannot delete vehicle with associated maintenance records.');
+        }
+
+        try {
+            $vehicle->delete();
+
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => true, 'message' => 'Vehicle deleted successfully.']);
+            }
+
+            return redirect()->route('vehicles.index')->with('success', 'Vehicle deleted successfully.');
+        } catch (\Illuminate\Database\QueryException $e) {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Cannot delete vehicle due to database constraints.'], 400);
+            }
+            return redirect()->route('vehicles.index')->with('error', 'Cannot delete vehicle due to database constraints.');
+        }
     }
 
     public function export(Request $request)

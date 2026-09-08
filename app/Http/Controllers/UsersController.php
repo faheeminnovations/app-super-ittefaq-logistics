@@ -87,8 +87,21 @@ class UsersController extends Controller
     public function destroy(string $id)
     {
         $user = User::findOrFail($id);
-        $user->delete();
-        return redirect()->route('users.index')->with('success', 'User deleted successfully.');
+
+        try {
+            $user->delete();
+
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => true, 'message' => 'User deleted successfully.']);
+            }
+
+            return redirect()->route('users.index')->with('success', 'User deleted successfully.');
+        } catch (\Illuminate\Database\QueryException $e) {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Cannot delete user due to database constraints.'], 400);
+            }
+            return redirect()->route('users.index')->with('error', 'Cannot delete user due to database constraints.');
+        }
     }
 
     public function permissions(string $id)

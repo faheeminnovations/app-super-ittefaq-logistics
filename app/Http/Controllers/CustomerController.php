@@ -112,9 +112,29 @@ class CustomerController extends Controller
     public function destroy(string $id)
     {
         $customer = Customer::findOrFail($id);
-        $customer->delete();
 
-        return redirect()->route('customers.index')->with('success', 'Customer deleted successfully.');
+        // Check if customer has associated jobs
+        if ($customer->jobs()->exists()) {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Cannot delete customer with associated jobs. Please delete the jobs first.'], 400);
+            }
+            return redirect()->route('customers.index')->with('error', 'Cannot delete customer with associated jobs. Please delete the jobs first.');
+        }
+
+        try {
+            $customer->delete();
+
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => true, 'message' => 'Customer deleted successfully.']);
+            }
+
+            return redirect()->route('customers.index')->with('success', 'Customer deleted successfully.');
+        } catch (\Illuminate\Database\QueryException $e) {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Cannot delete customer due to database constraints.'], 400);
+            }
+            return redirect()->route('customers.index')->with('error', 'Cannot delete customer due to database constraints.');
+        }
     }
 
     public function export(Request $request)

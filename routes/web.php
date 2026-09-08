@@ -127,8 +127,8 @@ Route::middleware(['auth', 'role:admin,accounts,manager'])->group(function () {
     Route::get('/professional-billing/supply-chain', [ProfessionalBillingController::class, 'supplyChainIndex'])->name('professional-billing.supply-chain');
     Route::post('/professional-billing/supply-chain/store', [ProfessionalBillingController::class, 'supplyChainStore'])->name('professional-billing.supply-chain.store');
     Route::delete('/professional-billing/supply-chain/{id}', [ProfessionalBillingController::class, 'destroy'])->name('professional-billing.supply-chain.destroy');
-    
-    // Branding Billing
+
+    // Breading Billing
     Route::get('/professional-billing/branding', [ProfessionalBillingController::class, 'brandingIndex'])->name('professional-billing.branding');
     Route::post('/professional-billing/branding/store', [ProfessionalBillingController::class, 'brandingStore'])->name('professional-billing.branding.store');
     Route::delete('/professional-billing/branding/{id}', [ProfessionalBillingController::class, 'destroy'])->name('professional-billing.branding.destroy');
@@ -142,12 +142,17 @@ Route::middleware(['auth', 'role:admin,accounts,manager'])->group(function () {
     Route::get('/professional-billing/spr', [ProfessionalBillingController::class, 'sprIndex'])->name('professional-billing.spr');
     Route::post('/professional-billing/spr/store', [ProfessionalBillingController::class, 'sprStore'])->name('professional-billing.spr.store');
     Route::delete('/professional-billing/spr/{id}', [ProfessionalBillingController::class, 'destroy'])->name('professional-billing.spr.destroy');
-    
-    // Cement Pakistan Billing
+
+    // Syngenta Billing
     Route::get('/professional-billing/cement-pakistan', [ProfessionalBillingController::class, 'cementPakistanIndex'])->name('professional-billing.cement-pakistan');
     Route::post('/professional-billing/cement-pakistan/store', [ProfessionalBillingController::class, 'cementPakistanStore'])->name('professional-billing.cement-pakistan.store');
     Route::delete('/professional-billing/cement-pakistan/{id}', [ProfessionalBillingController::class, 'destroy'])->name('professional-billing.cement-pakistan.destroy');
-    
+
+    // Syngenta Breading Billing
+    Route::get('/professional-billing/syngenta-breading', [ProfessionalBillingController::class, 'syngentaBreadingIndex'])->name('professional-billing.syngenta-breading');
+    Route::post('/professional-billing/syngenta-breading/store', [ProfessionalBillingController::class, 'syngentaBreadingStore'])->name('professional-billing.syngenta-breading.store');
+    Route::delete('/professional-billing/syngenta-breading/{id}', [ProfessionalBillingController::class, 'destroy'])->name('professional-billing.syngenta-breading.destroy');
+
     // Open Market Work Billing
     Route::get('/professional-billing/open-market-work', [ProfessionalBillingController::class, 'openMarketWorkIndex'])->name('professional-billing.open-market-work');
     Route::post('/professional-billing/open-market-work/store', [ProfessionalBillingController::class, 'openMarketWorkStore'])->name('professional-billing.open-market-work.store');

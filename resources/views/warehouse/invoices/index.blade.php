@@ -96,13 +96,9 @@
                                                     <a href="{{ route('warehouse.invoices.edit', $invoice) }}" class="btn btn-warning">
                                                         <i class="bi bi-pencil"></i>
                                                     </a>
-                                                    <form action="{{ route('warehouse.invoices.destroy', $invoice) }}" method="POST" class="d-inline">
-                                                        @csrf
-                                                        @method('DELETE')
-                                                        <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure?')">
-                                                            <i class="bi bi-trash"></i>
-                                                        </button>
-                                                    </form>
+                                                    <button type="button" class="btn btn-danger" onclick="deleteWarehouseInvoice({{ $invoice->id }})">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
                                                 @endif
                                                 @if($invoice->status == 'draft')
                                                     <a href="{{ route('warehouse.invoices.mark-sent', $invoice) }}" class="btn btn-success">
@@ -144,3 +140,46 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+function deleteWarehouseInvoice(id) {
+    Swal.fire({
+        title: 'Are you sure?',
+        text: 'You will not be able to recover this warehouse invoice!',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: '/warehouse.invoices/' + id,
+                type: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    Swal.fire(
+                        'Deleted!',
+                        'Warehouse invoice has been deleted.',
+                        'success'
+                    ).then(() => {
+                        location.reload();
+                    });
+                },
+                error: function(xhr) {
+                    var message = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Error deleting warehouse invoice';
+                    Swal.fire(
+                        'Error!',
+                        message,
+                        'error'
+                    );
+                }
+            });
+        }
+    });
+}
+</script>
+@endpush

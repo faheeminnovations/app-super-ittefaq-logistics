@@ -104,8 +104,21 @@ class DispatchController extends Controller
     public function destroy(string $id)
     {
         $dispatch = Dispatch::findOrFail($id);
-        $dispatch->delete();
-        return redirect()->route('dispatch.index')->with('success', 'Dispatch deleted successfully.');
+
+        try {
+            $dispatch->delete();
+
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => true, 'message' => 'Dispatch deleted successfully.']);
+            }
+
+            return redirect()->route('dispatch.index')->with('success', 'Dispatch deleted successfully.');
+        } catch (\Illuminate\Database\QueryException $e) {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Cannot delete dispatch due to database constraints.'], 400);
+            }
+            return redirect()->route('dispatch.index')->with('error', 'Cannot delete dispatch due to database constraints.');
+        }
     }
 
     public function export(Request $request)

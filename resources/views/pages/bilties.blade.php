@@ -224,17 +224,21 @@
               <!-- Vehicle and Driver Information -->
               <h6 class="mb-3 mt-4">Vehicle & Driver Information</h6>
               <div class="row">
-                <div class="col-md-4 mb-3">
+                <div class="col-md-3 mb-3">
                   <label for="vehicle_number" class="form-label">Vehicle Number (گاڑی نمبر)</label>
                   <input type="text" class="form-control" name="vehicle_number" id="vehicle_number">
                 </div>
-                <div class="col-md-4 mb-3">
+                <div class="col-md-3 mb-3">
                   <label for="driver_name" class="form-label">Driver Name (نام ڈرائیور)</label>
                   <input type="text" class="form-control" name="driver_name" id="driver_name">
                 </div>
-                <div class="col-md-4 mb-3">
-                  <label for="card_number" class="form-label">Card Number (کارڈ نمبر)</label>
+                <div class="col-md-3 mb-3">
+                  <label for="card_number" class="form-label">ID Card Number (کارڈ نمبر)</label>
                   <input type="text" class="form-control" name="card_number" id="card_number">
+                </div>
+                <div class="col-md-3 mb-3">
+                  <label for="driver_phone" class="form-label">Driver Phone</label>
+                  <input type="text" class="form-control" name="driver_phone" id="driver_phone">
                 </div>
               </div>
 
@@ -301,17 +305,21 @@
               <!-- Financial Information -->
               <h6 class="mb-3 mt-4">Financial Information</h6>
               <div class="row">
-                <div class="col-md-4 mb-3">
+                <div class="col-md-3 mb-3">
                   <label for="total_amount" class="form-label">Total Amount (کرایہ روپے)</label>
                   <input type="number" step="0.01" class="form-control" name="total_amount" id="total_amount" required>
                 </div>
-                <div class="col-md-4 mb-3">
+                <div class="col-md-3 mb-3">
                   <label for="advance_amount" class="form-label">Advance (پیشگی)</label>
                   <input type="number" step="0.01" class="form-control" name="advance_amount" id="advance_amount" placeholder="0.00">
                 </div>
-                <div class="col-md-4 mb-3">
+                <div class="col-md-3 mb-3">
                   <label for="rent_amount" class="form-label">Rent Amount</label>
                   <input type="number" step="0.01" class="form-control" name="rent_amount" id="rent_amount" placeholder="0.00">
+                </div>
+                <div class="col-md-3 mb-3">
+                  <label for="scale" class="form-label">Scale</label>
+                  <input type="number" step="0.01" class="form-control" name="scale" id="scale" placeholder="0.00">
                 </div>
               </div>
 
@@ -372,6 +380,10 @@
   <script>
     let currentBiltyId = null;
     let biltyModal, viewBiltyModal;
+
+    // Clear any previous error messages from localStorage
+    localStorage.removeItem('lastError');
+    sessionStorage.removeItem('lastError');
 
     // Debug: Log that script is loaded
     console.log('Bilties script loaded');
@@ -453,6 +465,7 @@
             document.getElementById('vehicle_number').value = bilty.vehicle_number || '';
             document.getElementById('driver_name').value = bilty.driver_name || '';
             document.getElementById('card_number').value = bilty.card_number || '';
+            document.getElementById('driver_phone').value = bilty.driver_phone || '';
             document.getElementById('customer_id').value = bilty.customer_id || '';
             document.getElementById('vehicle_id').value = bilty.vehicle_id || '';
             document.getElementById('driver_id').value = bilty.driver_id || '';
@@ -463,6 +476,7 @@
             document.getElementById('total_amount').value = bilty.total_amount || '';
             document.getElementById('advance_amount').value = bilty.advance_amount || '';
             document.getElementById('rent_amount').value = bilty.rent_amount || '';
+            document.getElementById('scale').value = bilty.scale || '';
             document.getElementById('registration_number').value = bilty.registration_number || '';
             document.getElementById('contact_details').value = bilty.contact_details || '';
             document.getElementById('notes').value = bilty.notes || '';
@@ -522,7 +536,8 @@
                 <div class="col-md-6">
                   <strong>Vehicle Number:</strong> ${bilty.vehicle_number || 'N/A'}<br>
                   <strong>Driver Name:</strong> ${bilty.driver_name || 'N/A'}<br>
-                  <strong>Card Number:</strong> ${bilty.card_number || 'N/A'}
+                  <strong>ID Card Number:</strong> ${bilty.card_number || 'N/A'}<br>
+                  <strong>Driver Phone:</strong> ${bilty.driver_phone || 'N/A'}
                 </div>
                 <div class="col-md-6">
                   <strong>Goods:</strong> ${bilty.goods_description}<br>
@@ -532,14 +547,17 @@
               </div>
               <hr>
               <div class="row">
-                <div class="col-md-4">
+                <div class="col-md-3">
                   <strong>Total Amount:</strong> ${bilty.total_amount}
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                   <strong>Advance:</strong> ${bilty.advance_amount || 0}
                 </div>
-                <div class="col-md-4">
+                <div class="col-md-3">
                   <strong>Remaining Balance:</strong> ${bilty.remaining_balance || 0}
+                </div>
+                <div class="col-md-3">
+                  <strong>Scale:</strong> ${bilty.scale || 'N/A'}
                 </div>
               </div>
               ${bilty.notes ? `<hr><strong>Notes:</strong> ${bilty.notes}` : ''}
@@ -686,9 +704,19 @@
               location.reload();
             });
           } else {
+            // Handle validation errors
+            let errorMessage = 'Failed to save bilty';
+            if (data.errors) {
+              errorMessage = '';
+              for (const field in data.errors) {
+                errorMessage += data.errors[field].join(', ') + '\n';
+              }
+            } else if (data.message) {
+              errorMessage = data.message;
+            }
             Swal.fire({
               title: 'Error',
-              text: 'Failed to save bilty',
+              text: errorMessage,
               icon: 'error',
               confirmButtonColor: '#d33'
             });
@@ -698,7 +726,7 @@
           console.error('Error:', error);
           Swal.fire({
             title: 'Error',
-            text: 'Failed to save bilty',
+            text: 'Failed to save bilty: ' + error.message,
             icon: 'error',
             confirmButtonColor: '#d33'
           });

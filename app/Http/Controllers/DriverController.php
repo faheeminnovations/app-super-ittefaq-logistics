@@ -37,20 +37,47 @@ class DriverController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'licence_no' => 'required|string|unique:drivers,licence_no|max:50',
-            'category' => 'required|string|max:10',
-            'cpc_expiry' => 'required|date',
-            'phone' => 'required|string|max:20',
-            'status' => 'required|in:on_trip,on_duty,on_leave,suspended,licence_expired',
-            'address' => 'nullable|string',
-            'licence_expiry' => 'nullable|date',
-        ]);
+        try {
+            $rules = [
+                'name' => 'required|string|max:255',
+                'licence_no' => 'nullable|string|max:50',
+                'category' => 'nullable|in:Bike,Car/Jeep,LTV,LTVPSV,HTV,HTVPSV',
+                'phone' => 'nullable|string|max:20',
+                'status' => 'nullable|in:on_trip,on_duty,on_leave,suspended,licence_expired',
+                'address' => 'nullable|string',
+                'licence_expiry' => 'nullable|date',
+            ];
 
-        Driver::create($validated);
+            // Add unique validation for licence_no only if it's provided
+            if ($request->filled('licence_no')) {
+                $rules['licence_no'] .= '|unique:drivers,licence_no';
+            }
 
-        return redirect()->route('drivers.index')->with('success', 'Driver created successfully.');
+            $validated = $request->validate($rules);
+
+            // Remove null values to let database defaults apply
+            $validated = array_filter($validated, function($value) {
+                return $value !== null && $value !== '';
+            });
+
+            Driver::create($validated);
+
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => true, 'message' => 'Driver created successfully.']);
+            }
+
+            return redirect()->route('drivers.index')->with('success', 'Driver created successfully.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'errors' => $e->errors()], 422);
+            }
+            return redirect()->back()->withErrors($e->errors())->withInput();
+        } catch (\Exception $e) {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Error creating driver: ' . $e->getMessage()], 500);
+            }
+            return redirect()->back()->with('error', 'Error creating driver: ' . $e->getMessage())->withInput();
+        }
     }
 
     /**
@@ -90,20 +117,47 @@ class DriverController extends Controller
     {
         $driver = Driver::findOrFail($id);
 
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'licence_no' => 'required|string|unique:drivers,licence_no,' . $id . '|max:50',
-            'category' => 'required|string|max:10',
-            'cpc_expiry' => 'required|date',
-            'phone' => 'required|string|max:20',
-            'status' => 'required|in:on_trip,on_duty,on_leave,suspended,licence_expired',
-            'address' => 'nullable|string',
-            'licence_expiry' => 'nullable|date',
-        ]);
+        try {
+            $rules = [
+                'name' => 'required|string|max:255',
+                'licence_no' => 'nullable|string|max:50',
+                'category' => 'nullable|in:Bike,Car/Jeep,LTV,LTVPSV,HTV,HTVPSV',
+                'phone' => 'nullable|string|max:20',
+                'status' => 'nullable|in:on_trip,on_duty,on_leave,suspended,licence_expired',
+                'address' => 'nullable|string',
+                'licence_expiry' => 'nullable|date',
+            ];
 
-        $driver->update($validated);
+            // Add unique validation for licence_no only if it's provided
+            if ($request->filled('licence_no')) {
+                $rules['licence_no'] .= '|unique:drivers,licence_no,' . $id;
+            }
 
-        return redirect()->route('drivers.index')->with('success', 'Driver updated successfully.');
+            $validated = $request->validate($rules);
+
+            // Remove null values to let database defaults apply
+            $validated = array_filter($validated, function($value) {
+                return $value !== null && $value !== '';
+            });
+
+            $driver->update($validated);
+
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => true, 'message' => 'Driver updated successfully.']);
+            }
+
+            return redirect()->route('drivers.index')->with('success', 'Driver updated successfully.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'errors' => $e->errors()], 422);
+            }
+            return redirect()->back()->withErrors($e->errors())->withInput();
+        } catch (\Exception $e) {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Error updating driver: ' . $e->getMessage()], 500);
+            }
+            return redirect()->back()->with('error', 'Error updating driver: ' . $e->getMessage())->withInput();
+        }
     }
 
     /**
@@ -112,9 +166,29 @@ class DriverController extends Controller
     public function destroy(string $id)
     {
         $driver = Driver::findOrFail($id);
-        $driver->delete();
 
-        return redirect()->route('drivers.index')->with('success', 'Driver deleted successfully.');
+        // Check if driver has associated trips
+        if ($driver->trips()->exists()) {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Cannot delete driver with associated trips. Please delete the trips first.'], 400);
+            }
+            return redirect()->route('drivers.index')->with('error', 'Cannot delete driver with associated trips. Please delete the trips first.');
+        }
+
+        try {
+            $driver->delete();
+
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => true, 'message' => 'Driver deleted successfully.']);
+            }
+
+            return redirect()->route('drivers.index')->with('success', 'Driver deleted successfully.');
+        } catch (\Illuminate\Database\QueryException $e) {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Cannot delete driver due to database constraints.'], 400);
+            }
+            return redirect()->route('drivers.index')->with('error', 'Cannot delete driver due to database constraints.');
+        }
     }
 
     public function export(Request $request)
@@ -128,18 +202,18 @@ class DriverController extends Controller
         
         $callback = function() use ($drivers) {
             $file = fopen('php://output', 'w');
-            fputcsv($file, ['ID', 'Name', 'Phone', 'License Number', 'License Expiry', 'Status', 'Address', 'Hire Date']);
+            fputcsv($file, ['ID', 'Name', 'Phone', 'License Number', 'Licence Type', 'License Expiry', 'Status', 'Address']);
             
             foreach ($drivers as $driver) {
                 fputcsv($file, [
                     $driver->id,
                     $driver->name,
                     $driver->phone,
-                    $driver->license_number,
-                    $driver->license_expiry,
+                    $driver->licence_no,
+                    $driver->category,
+                    $driver->licence_expiry,
                     $driver->status,
                     $driver->address,
-                    $driver->hire_date,
                 ]);
             }
             

@@ -182,7 +182,7 @@
                 </div>
             @endif
 
-            @if(in_array($tripLog->business_category, ['Buyer Branding', 'Buyer Marketing Development', 'Buyer S.P.R', 'Cement Pakistan']))
+            @if(in_array($tripLog->business_category, ['Buyer Breading', 'Buyer Marketing Development', 'Buyer S.P.R', 'Syngenta', 'Syngenta Breading']))
                 <div class="field-row">
                     <div class="field-label">Loading Point:</div>
                     <div>{{ $tripLog->loading_point ?? '-' }}</div>

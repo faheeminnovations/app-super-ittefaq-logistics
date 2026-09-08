@@ -125,13 +125,9 @@
                                                 <a href="{{ route('trip-logs.print', $tripLog) }}" class="btn btn-secondary" target="_blank">
                                                     <i class="bi bi-printer"></i>
                                                 </a>
-                                                <form action="{{ route('trip-logs.destroy', $tripLog) }}" method="POST" class="d-inline">
-                                                    @csrf
-                                                    @method('DELETE')
-                                                    <button type="submit" class="btn btn-danger" onclick="return confirm('Are you sure?')">
-                                                        <i class="bi bi-trash"></i>
-                                                    </button>
-                                                </form>
+                                                <button type="button" class="btn btn-danger" onclick="deleteTripLog({{ $tripLog->id }})">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
                                             </div>
                                         </td>
                                     </tr>
@@ -162,3 +158,46 @@
     </div>
 </div>
 @endsection
+
+@push('scripts')
+<script>
+function deleteTripLog(id) {
+    Swal.fire({
+        title: 'Are you sure?',
+        text: 'You will not be able to recover this trip log!',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: '/transport/trip-logs/' + id,
+                type: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    Swal.fire(
+                        'Deleted!',
+                        'Trip log has been deleted.',
+                        'success'
+                    ).then(() => {
+                        location.reload();
+                    });
+                },
+                error: function(xhr) {
+                    var message = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Error deleting trip log';
+                    Swal.fire(
+                        'Error!',
+                        message,
+                        'error'
+                    );
+                }
+            });
+        }
+    });
+}
+</script>
+@endpush

@@ -102,8 +102,21 @@ class DocumentController extends Controller
     public function destroy(string $id)
     {
         $document = Document::findOrFail($id);
-        $document->delete();
-        return redirect()->route('documents.index')->with('success', 'Document deleted successfully.');
+
+        try {
+            $document->delete();
+
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => true, 'message' => 'Document deleted successfully.']);
+            }
+
+            return redirect()->route('documents.index')->with('success', 'Document deleted successfully.');
+        } catch (\Illuminate\Database\QueryException $e) {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Cannot delete document due to database constraints.'], 400);
+            }
+            return redirect()->route('documents.index')->with('error', 'Cannot delete document due to database constraints.');
+        }
     }
 
     public function download(string $id)

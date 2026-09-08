@@ -197,6 +197,9 @@ class WarehouseInvoiceController extends Controller
     public function destroy(WarehouseInvoice $invoice)
     {
         if ($invoice->status === 'sent' || $invoice->status === 'paid') {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Cannot delete sent or paid invoices.'], 400);
+            }
             return redirect()->route('warehouse.invoices.index')
                 ->with('error', 'Cannot delete sent or paid invoices.');
         }
@@ -206,6 +209,10 @@ class WarehouseInvoiceController extends Controller
             ->update(['warehouse_invoice_id' => null, 'invoice_number' => null, 'status' => 'pending']);
 
         $invoice->delete();
+
+        if (request()->ajax() || request()->wantsJson()) {
+            return response()->json(['success' => true, 'message' => 'Warehouse invoice deleted successfully.']);
+        }
 
         return redirect()->route('warehouse.invoices.index')
             ->with('success', 'Warehouse invoice deleted successfully.');

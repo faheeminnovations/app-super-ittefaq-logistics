@@ -91,8 +91,21 @@ class MaintenanceController extends Controller
     public function destroy(string $id)
     {
         $maintenance = Maintenance::findOrFail($id);
-        $maintenance->delete();
-        return redirect()->route('maintenance.index')->with('success', 'Maintenance record deleted successfully.');
+
+        try {
+            $maintenance->delete();
+
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => true, 'message' => 'Maintenance record deleted successfully.']);
+            }
+
+            return redirect()->route('maintenance.index')->with('success', 'Maintenance record deleted successfully.');
+        } catch (\Illuminate\Database\QueryException $e) {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Cannot delete maintenance record due to database constraints.'], 400);
+            }
+            return redirect()->route('maintenance.index')->with('error', 'Cannot delete maintenance record due to database constraints.');
+        }
     }
 
     public function export(Request $request)

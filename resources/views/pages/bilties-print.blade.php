@@ -296,7 +296,7 @@
         
         <!-- Header Section -->
         <div class="header">
-            <div class="company-name-urdu">سپر اتفاق مینی گڈز</div>
+            <div class="company-name-urdu">سپر اتفاق منی گڈز</div>
             <div class="company-name">SUPER ITTEFAQ MINI GOODS</div>
             <div class="company-name" style="font-size: 18px; margin-top: 5px;">SUPER ITTEFAQ LOGISTICS</div>
             <div class="proprietor">
@@ -386,8 +386,12 @@
                     <div class="value-urdu">{{ $bilty->driver_name ?? 'N/A' }}</div>
                 </div>
                 <div class="form-group small">
-                    <div class="label-urdu">کارڈ نمبر (Card No.)</div>
+                    <div class="label-urdu">آئی ڈی کارڈ نمبر (ID Card No.)</div>
                     <div class="value-urdu">{{ $bilty->card_number ?? 'N/A' }}</div>
+                </div>
+                <div class="form-group small">
+                    <div class="label">Driver Phone</div>
+                    <div class="value">{{ $bilty->driver_phone ?? 'N/A' }}</div>
                 </div>
             </div>
         </div>
@@ -432,6 +436,12 @@
             <div class="financial-row">
                 <span><strong>کرایہ (Rent Amount):</strong></span>
                 <span>{{ $bilty->formatted_rent_amount }}</span>
+            </div>
+            @endif
+            @if($bilty->scale)
+            <div class="financial-row">
+                <span><strong>Scale:</strong></span>
+                <span>{{ $bilty->formatted_scale }}</span>
             </div>
             @endif
             <div class="financial-row total">

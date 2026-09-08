@@ -46,11 +46,11 @@
                 <i class="bi bi-badge-ad fs-3"></i>
               </div>
               <div class="ms-3">
-                <h5 class="card-title mb-0">Branding</h5>
+                <h5 class="card-title mb-0">Breading</h5>
                 <small class="text-muted">بائر،بریڈنگ</small>
               </div>
             </div>
-            <p class="card-text text-muted">Track branding billing with kilometers and rate calculations.</p>
+            <p class="card-text text-muted">Track breading billing with kilometers and rate calculations.</p>
             <div class="badge bg-success">سیریل نمبر، تاریخ،ڈلیوری پوائنٹ /کلومیٹر/ریٹ /رقم</div>
           </div>
         </div>
@@ -100,12 +100,30 @@
                 <i class="bi bi-building-fill fs-3"></i>
               </div>
               <div class="ms-3">
-                <h5 class="card-title mb-0">Cement Pakistan</h5>
-                <small class="text-muted">سیمنٹ پاکستان</small>
+                <h5 class="card-title mb-0">Syngenta</h5>
+                <small class="text-muted">سینجینٹا</small>
               </div>
             </div>
-            <p class="card-text text-muted">Manage Cement Pakistan billing with delivery tracking.</p>
-            <div class="badge bg-danger">Cement Billing</div>
+            <p class="card-text text-muted">Manage Syngenta billing with delivery tracking.</p>
+            <div class="badge bg-danger">Syngenta Billing</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="col-md-6 col-lg-4">
+        <div class="card h-100 billing-card" onclick="window.location.href='/professional-billing/syngenta-breading'">
+          <div class="card-body">
+            <div class="d-flex align-items-center mb-3">
+              <div class="icon-box bg-info bg-opacity-10 text-info">
+                <i class="bi bi-flower1 fs-3"></i>
+              </div>
+              <div class="ms-3">
+                <h5 class="card-title mb-0">Syngenta Breading</h5>
+                <small class="text-muted">سینجینٹا بریڈنگ</small>
+              </div>
+            </div>
+            <p class="card-text text-muted">Manage Syngenta Breading billing with delivery tracking.</p>
+            <div class="badge bg-info">Syngenta Breading Billing</div>
           </div>
         </div>
       </div>

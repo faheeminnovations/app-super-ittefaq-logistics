@@ -90,7 +90,7 @@ return new class extends Migration
             $table->index('billing_month');
         });
 
-        // 5. Cement Pakistan Billing Table
+        // 5. Syngenta Billing Table
         Schema::create('cement_pakistan_billings', function (Blueprint $table) {
             $table->id();
             $table->string('serial_number')->nullable();
@@ -103,13 +103,32 @@ return new class extends Migration
             $table->string('status')->default('Pending');
             $table->string('billing_month')->nullable();
             $table->timestamps();
-            
+
             $table->index('vehicle_number');
             $table->index('date');
             $table->index('billing_month');
         });
 
-        // 6. Open Market Work Billing Table
+        // 6. Syngenta Breading Billing Table
+        Schema::create('syngenta_breading_billings', function (Blueprint $table) {
+            $table->id();
+            $table->string('serial_number')->nullable();
+            $table->date('date');
+            $table->string('vehicle_number');
+            $table->string('delivery_point');
+            $table->decimal('kilometers', 8, 2)->default(0);
+            $table->decimal('rate', 10, 2)->default(0);
+            $table->decimal('amount', 12, 2)->default(0);
+            $table->string('status')->default('Pending');
+            $table->string('billing_month')->nullable();
+            $table->timestamps();
+
+            $table->index('vehicle_number');
+            $table->index('date');
+            $table->index('billing_month');
+        });
+
+        // 7. Open Market Work Billing Table
         Schema::create('open_market_work_billings', function (Blueprint $table) {
             $table->id();
             $table->date('date');
@@ -130,7 +149,7 @@ return new class extends Migration
             $table->index('billing_month');
         });
 
-        // 7. Seed Supply Billing Table
+        // 8. Seed Supply Billing Table
         Schema::create('seed_supply_billings', function (Blueprint $table) {
             $table->id();
             $table->date('date');
@@ -160,6 +179,7 @@ return new class extends Migration
     {
         Schema::dropIfExists('seed_supply_billings');
         Schema::dropIfExists('open_market_work_billings');
+        Schema::dropIfExists('syngenta_breading_billings');
         Schema::dropIfExists('cement_pakistan_billings');
         Schema::dropIfExists('spr_billings');
         Schema::dropIfExists('marketing_development_billings');

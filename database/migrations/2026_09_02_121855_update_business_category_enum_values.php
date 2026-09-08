@@ -12,7 +12,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        DB::statement("ALTER TABLE trip_logs MODIFY COLUMN business_category ENUM('Open Market Work', 'Buyer Supply Chain', 'Buyer Branding', 'Buyer Seed Supply', 'Buyer Marketing Development', 'Buyer S.P.R', 'Cement Pakistan') NULL");
+        DB::statement("ALTER TABLE trip_logs MODIFY COLUMN business_category ENUM('Open Market Work', 'Buyer Supply Chain', 'Buyer Breading', 'Buyer Seed Supply', 'Buyer Marketing Development', 'Buyer S.P.R', 'Syngenta', 'Syngenta Breading') NULL");
     }
 
     /**

@@ -54,6 +54,14 @@
               <td><strong>Remaining Balance:</strong></td>
               <td>{{ $bilty->formatted_remaining_balance }}</td>
             </tr>
+            <tr>
+              <td><strong>Rent Amount:</strong></td>
+              <td>{{ $bilty->formatted_rent_amount ?? 'N/A' }}</td>
+            </tr>
+            <tr>
+              <td><strong>Scale:</strong></td>
+              <td>{{ $bilty->formatted_scale ?? 'N/A' }}</td>
+            </tr>
           </table>
         </div>
       </div>
@@ -135,8 +143,12 @@
               <td>{{ $bilty->driver_name ?? 'N/A' }}</td>
             </tr>
             <tr>
-              <td><strong>Card Number (کارڈ نمبر):</strong></td>
+              <td><strong>ID Card Number (کارڈ نمبر):</strong></td>
               <td>{{ $bilty->card_number ?? 'N/A' }}</td>
+            </tr>
+            <tr>
+              <td><strong>Driver Phone:</strong></td>
+              <td>{{ $bilty->driver_phone ?? 'N/A' }}</td>
             </tr>
           </table>
         </div>

@@ -11,7 +11,6 @@ class Driver extends Model
         'name',
         'licence_no',
         'category',
-        'cpc_expiry',
         'phone',
         'status',
         'address',
@@ -19,9 +18,16 @@ class Driver extends Model
     ];
 
     protected $casts = [
-        'cpc_expiry' => 'date',
         'licence_expiry' => 'date',
     ];
+
+    /**
+     * Relationship with trips
+     */
+    public function trips(): HasMany
+    {
+        return $this->hasMany(\App\Models\Trip::class);
+    }
 
     /**
      * Relationship with trip logs

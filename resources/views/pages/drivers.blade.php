@@ -78,8 +78,7 @@
             <tr>
               <th>Driver</th>
               <th>Licence No</th>
-              <th>Category</th>
-              <th>CPC Expiry</th>
+              <th>Licence Type</th>
               <th>Licence Expiry</th>
               <th>Phone</th>
               <th>Status</th>
@@ -98,7 +97,6 @@
               </td>
               <td><span class='mono'>{{ $driver->licence_no }}</span></td>
               <td>{{ $driver->category }}</td>
-              <td>{{ \Carbon\Carbon::parse($driver->cpc_expiry)->format('d M Y') }}</td>
               <td>{{ $driver->licence_expiry ? \Carbon\Carbon::parse($driver->licence_expiry)->format('d M Y') : 'N/A' }}</td>
               <td>{{ $driver->phone }}</td>
               <td>
@@ -138,7 +136,7 @@
             </tr>
             @endforeach
             @else
-            <tr><td colspan="8" class="text-center">No drivers found</td></tr>
+            <tr><td colspan="7" class="text-center">No drivers found</td></tr>
             @endisset
           </tbody>
         </table>
@@ -170,33 +168,30 @@
               </div>
               <div class="col-md-6 mb-3">
                 <label for="licence_no" class="form-label">Licence Number</label>
-                <input type="text" class="form-control" name="licence_no" id="licence_no" required>
+                <input type="text" class="form-control" name="licence_no" id="licence_no">
               </div>
             </div>
 
             <div class="row">
               <div class="col-md-6 mb-3">
-                <label for="category" class="form-label">Category</label>
-                <select class="form-select" name="category" id="category" required>
-                  <option value="">Select Category</option>
-                  <option value="Cat B">Cat B</option>
-                  <option value="Cat C">Cat C</option>
-                  <option value="Cat C+E">Cat C+E</option>
-                  <option value="Cat D">Cat D</option>
-                  <option value="Cat D+E">Cat D+E</option>
+                <label for="category" class="form-label">Licence Type</label>
+                <select class="form-select" name="category" id="category">
+                  <option value="">Select Licence Type</option>
+                  <option value="Bike">Bike</option>
+                  <option value="Car/Jeep">Car/Jeep</option>
+                  <option value="LTV">LTV</option>
+                  <option value="LTVPSV">LTVPSV</option>
+                  <option value="HTV">HTV</option>
+                  <option value="HTVPSV">HTVPSV</option>
                 </select>
               </div>
               <div class="col-md-6 mb-3">
                 <label for="phone" class="form-label">Phone</label>
-                <input type="text" class="form-control" name="phone" id="phone" required>
+                <input type="text" class="form-control" name="phone" id="phone">
               </div>
             </div>
 
             <div class="row">
-              <div class="col-md-6 mb-3">
-                <label for="cpc_expiry" class="form-label">CPC Expiry Date</label>
-                <input type="date" class="form-control" name="cpc_expiry" id="cpc_expiry" required>
-              </div>
               <div class="col-md-6 mb-3">
                 <label for="licence_expiry" class="form-label">Licence Expiry Date</label>
                 <input type="date" class="form-control" name="licence_expiry" id="licence_expiry">
@@ -206,7 +201,8 @@
             <div class="row">
               <div class="col-md-6 mb-3">
                 <label for="status" class="form-label">Status</label>
-                <select class="form-select" name="status" id="status" required>
+                <select class="form-select" name="status" id="status">
+                  <option value="">Select Status</option>
                   <option value="on_duty">On Duty</option>
                   <option value="on_trip">On Trip</option>
                   <option value="on_leave">On Leave</option>
@@ -258,7 +254,7 @@ $(document).ready(function() {
         lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
         order: [[0, 'asc']],
         columnDefs: [
-            { orderable: false, targets: 7 } // Actions column
+            { orderable: false, targets: 6 } // Actions column
         ],
         language: {
             search: "_INPUT_",
@@ -269,22 +265,24 @@ $(document).ready(function() {
     // Form submission
     $('#driverForm').on('submit', function(e) {
         e.preventDefault();
-        
-        var formData = $(this).serialize();
+
         var driverId = $('#driver_id').val();
         var url = driverId ? '/drivers/' + driverId : '{{ route("drivers.store") }}';
-        var method = 'POST';
-        
+
         // Set _method to PUT for updates
         if (driverId) {
             $('#_method').val('PUT');
         } else {
             $('#_method').val('POST');
         }
-        
+
+        // Serialize form after setting _method
+        var formData = $(this).serialize();
+
+        // Always use POST for AJAX, Laravel will read _method field
         $.ajax({
             url: url,
-            type: method,
+            type: 'POST',
             data: formData,
             headers: {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -301,6 +299,17 @@ $(document).ready(function() {
                     $.each(errors, function(key, value) {
                         errorMessage += value + '\n';
                     });
+                } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMessage = xhr.responseJSON.message;
+                } else if (xhr.responseText) {
+                    try {
+                        var response = JSON.parse(xhr.responseText);
+                        if (response.message) {
+                            errorMessage = response.message;
+                        }
+                    } catch (e) {
+                        errorMessage = 'Error saving driver: ' + xhr.status;
+                    }
                 }
                 alert(errorMessage);
             }
@@ -342,12 +351,6 @@ function fillDriverForm(driver) {
     $('#address').val(driver.address);
     
     // Format dates for input type="date"
-    if (driver.cpc_expiry) {
-        var cpcDate = new Date(driver.cpc_expiry);
-        var formattedCpc = cpcDate.toISOString().split('T')[0];
-        $('#cpc_expiry').val(formattedCpc);
-    }
-    
     if (driver.licence_expiry) {
         var licenceDate = new Date(driver.licence_expiry);
         var formattedLicence = licenceDate.toISOString().split('T')[0];
@@ -372,12 +375,11 @@ function viewDriver(id) {
                         <h6>Driver Information</h6>
                         <p><strong>Name:</strong> ${driver.name}</p>
                         <p><strong>Licence No:</strong> ${driver.licence_no}</p>
-                        <p><strong>Category:</strong> ${driver.category}</p>
+                        <p><strong>Licence Type:</strong> ${driver.category}</p>
                         <p><strong>Phone:</strong> ${driver.phone}</p>
                     </div>
                     <div class="col-md-6">
                         <h6>Licence Details</h6>
-                        <p><strong>CPC Expiry:</strong> ${new Date(driver.cpc_expiry).toLocaleDateString()}</p>
                         <p><strong>Licence Expiry:</strong> ${driver.licence_expiry ? new Date(driver.licence_expiry).toLocaleDateString() : 'N/A'}</p>
                         <p><strong>Status:</strong> ${driver.status}</p>
                     </div>
@@ -399,29 +401,50 @@ function viewDriver(id) {
 }
 
 function deleteDriver(id) {
-    if (confirm('Are you sure you want to delete this driver?')) {
-        $.ajax({
-            url: '/drivers/' + id,
-            type: 'DELETE',
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            },
-            success: function(response) {
-                location.reload();
-            },
-            error: function() {
-                alert('Error deleting driver');
-            }
-        });
-    }
+    Swal.fire({
+        title: 'Are you sure?',
+        text: 'You will not be able to recover this driver!',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: '/drivers/' + id,
+                type: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    Swal.fire(
+                        'Deleted!',
+                        'Driver has been deleted.',
+                        'success'
+                    ).then(() => {
+                        location.reload();
+                    });
+                },
+                error: function(xhr) {
+                    var message = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Error deleting driver';
+                    Swal.fire(
+                        'Error!',
+                        message,
+                        'error'
+                    );
+                }
+            });
+        }
+    });
 }
 
 function filterByStatus(status) {
     var table = $('#driversTable').DataTable();
     if (status === 'all') {
-        table.column(6).search('').draw();
+        table.column(5).search('').draw();
     } else {
-        table.column(6).search(status).draw();
+        table.column(5).search(status).draw();
     }
 }
 

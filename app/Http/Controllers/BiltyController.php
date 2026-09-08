@@ -55,47 +55,61 @@ class BiltyController extends Controller
      */
     public function store(Request $request)
     {
-        $validated = $request->validate([
-            'bilty_date' => 'required|date',
-            'from_location' => 'required|string|max:255',
-            'to_location' => 'required|string|max:255',
-            'vehicle_number' => 'nullable|string|max:50',
-            'driver_name' => 'nullable|string|max:255',
-            'card_number' => 'nullable|string|max:50',
-            'sender_name' => 'required|string|max:255',
-            'sender_phone' => 'nullable|string|max:20',
-            'receiver_name' => 'required|string|max:255',
-            'receiver_phone' => 'nullable|string|max:20',
-            'goods_description' => 'required|string',
-            'quantity' => 'nullable|integer|min:0',
-            'quantity_unit' => 'nullable|string|max:50',
-            'total_amount' => 'required|numeric|min:0',
-            'advance_amount' => 'nullable|numeric|min:0',
-            'rent_amount' => 'nullable|numeric|min:0',
-            'status' => 'required|in:pending,in_transit,delivered,cancelled',
-            'notes' => 'nullable|string',
-            'customer_id' => 'nullable|exists:customers,id',
-            'vehicle_id' => 'nullable|exists:vehicles,id',
-            'driver_id' => 'nullable|exists:drivers,id',
-            'job_id' => 'nullable|exists:transport_jobs,id',
-            'registration_number' => 'nullable|string|max:50',
-            'contact_details' => 'nullable|string',
-        ]);
+        try {
+            $validated = $request->validate([
+                'bilty_date' => 'required|date',
+                'from_location' => 'required|string|max:255',
+                'to_location' => 'required|string|max:255',
+                'vehicle_number' => 'nullable|string|max:50',
+                'driver_name' => 'nullable|string|max:255',
+                'card_number' => 'nullable|string|max:50',
+                'driver_phone' => 'nullable|string|max:20',
+                'sender_name' => 'required|string|max:255',
+                'sender_phone' => 'nullable|string|max:20',
+                'receiver_name' => 'required|string|max:255',
+                'receiver_phone' => 'nullable|string|max:20',
+                'goods_description' => 'required|string',
+                'quantity' => 'nullable|integer|min:0',
+                'quantity_unit' => 'nullable|string|max:50',
+                'total_amount' => 'required|numeric|min:0',
+                'advance_amount' => 'nullable|numeric|min:0',
+                'rent_amount' => 'nullable|numeric|min:0',
+                'scale' => 'nullable|numeric|min:0',
+                'status' => 'required|in:pending,in_transit,delivered,cancelled',
+                'notes' => 'nullable|string',
+                'customer_id' => 'nullable|exists:customers,id',
+                'vehicle_id' => 'nullable|exists:vehicles,id',
+                'driver_id' => 'nullable|exists:drivers,id',
+                'job_id' => 'nullable|exists:transport_jobs,id',
+                'registration_number' => 'nullable|string|max:50',
+                'contact_details' => 'nullable|string',
+            ]);
 
-        // Auto-generate bilty number
-        $validated['bilty_number'] = Bilty::generateBiltyNumber();
+            // Auto-generate bilty number
+            $validated['bilty_number'] = Bilty::generateBiltyNumber();
 
-        // Calculate remaining balance
-        $advanceAmount = $validated['advance_amount'] ?? 0;
-        $validated['remaining_balance'] = $validated['total_amount'] - $advanceAmount;
+            // Calculate remaining balance
+            $advanceAmount = $validated['advance_amount'] ?? 0;
+            $validated['remaining_balance'] = $validated['total_amount'] - $advanceAmount;
 
-        Bilty::create($validated);
+            Bilty::create($validated);
 
-        if (request()->ajax() || request()->wantsJson()) {
-            return response()->json(['success' => true, 'message' => 'Bilty created successfully.', 'bilty' => $validated]);
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => true, 'message' => 'Bilty created successfully.', 'bilty' => $validated]);
+            }
+
+            return redirect()->route('bilties.index')->with('success', 'Bilty created successfully.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'errors' => $e->errors()], 422);
+            }
+            return redirect()->back()->withErrors($e->errors())->withInput();
+        } catch (\Exception $e) {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Error creating bilty: ' . $e->getMessage()], 500);
+            }
+            return redirect()->back()->with('error', 'Error creating bilty: ' . $e->getMessage())->withInput();
         }
-
-        return redirect()->route('bilties.index')->with('success', 'Bilty created successfully.');
     }
 
     /**
@@ -143,45 +157,59 @@ class BiltyController extends Controller
     {
         $biltyData = Bilty::findOrFail($bilty);
 
-        $validated = $request->validate([
-            'bilty_number' => 'nullable|string|unique:bilties,bilty_number,' . $bilty . '|max:50',
-            'bilty_date' => 'required|date',
-            'from_location' => 'required|string|max:255',
-            'to_location' => 'required|string|max:255',
-            'vehicle_number' => 'nullable|string|max:50',
-            'driver_name' => 'nullable|string|max:255',
-            'card_number' => 'nullable|string|max:50',
-            'sender_name' => 'required|string|max:255',
-            'sender_phone' => 'nullable|string|max:20',
-            'receiver_name' => 'required|string|max:255',
-            'receiver_phone' => 'nullable|string|max:20',
-            'goods_description' => 'required|string',
-            'quantity' => 'nullable|integer|min:0',
-            'quantity_unit' => 'nullable|string|max:50',
-            'total_amount' => 'required|numeric|min:0',
-            'advance_amount' => 'nullable|numeric|min:0',
-            'rent_amount' => 'nullable|numeric|min:0',
-            'status' => 'required|in:pending,in_transit,delivered,cancelled',
-            'notes' => 'nullable|string',
-            'customer_id' => 'nullable|exists:customers,id',
-            'vehicle_id' => 'nullable|exists:vehicles,id',
-            'driver_id' => 'nullable|exists:drivers,id',
-            'job_id' => 'nullable|exists:transport_jobs,id',
-            'registration_number' => 'nullable|string|max:50',
-            'contact_details' => 'nullable|string',
-        ]);
+        try {
+            $validated = $request->validate([
+                'bilty_number' => 'nullable|string|unique:bilties,bilty_number,' . $bilty . '|max:50',
+                'bilty_date' => 'required|date',
+                'from_location' => 'required|string|max:255',
+                'to_location' => 'required|string|max:255',
+                'vehicle_number' => 'nullable|string|max:50',
+                'driver_name' => 'nullable|string|max:255',
+                'card_number' => 'nullable|string|max:50',
+                'driver_phone' => 'nullable|string|max:20',
+                'sender_name' => 'required|string|max:255',
+                'sender_phone' => 'nullable|string|max:20',
+                'receiver_name' => 'required|string|max:255',
+                'receiver_phone' => 'nullable|string|max:20',
+                'goods_description' => 'required|string',
+                'quantity' => 'nullable|integer|min:0',
+                'quantity_unit' => 'nullable|string|max:50',
+                'total_amount' => 'required|numeric|min:0',
+                'advance_amount' => 'nullable|numeric|min:0',
+                'rent_amount' => 'nullable|numeric|min:0',
+                'scale' => 'nullable|numeric|min:0',
+                'status' => 'required|in:pending,in_transit,delivered,cancelled',
+                'notes' => 'nullable|string',
+                'customer_id' => 'nullable|exists:customers,id',
+                'vehicle_id' => 'nullable|exists:vehicles,id',
+                'driver_id' => 'nullable|exists:drivers,id',
+                'job_id' => 'nullable|exists:transport_jobs,id',
+                'registration_number' => 'nullable|string|max:50',
+                'contact_details' => 'nullable|string',
+            ]);
 
-        // Recalculate remaining balance
-        $advanceAmount = $validated['advance_amount'] ?? 0;
-        $validated['remaining_balance'] = $validated['total_amount'] - $advanceAmount;
+            // Recalculate remaining balance
+            $advanceAmount = $validated['advance_amount'] ?? 0;
+            $validated['remaining_balance'] = $validated['total_amount'] - $advanceAmount;
 
-        $biltyData->update($validated);
+            $biltyData->update($validated);
 
-        if (request()->ajax() || request()->wantsJson()) {
-            return response()->json(['success' => true, 'message' => 'Bilty updated successfully.']);
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => true, 'message' => 'Bilty updated successfully.']);
+            }
+
+            return redirect()->route('bilties.index')->with('success', 'Bilty updated successfully.');
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'errors' => $e->errors()], 422);
+            }
+            return redirect()->back()->withErrors($e->errors())->withInput();
+        } catch (\Exception $e) {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Error updating bilty: ' . $e->getMessage()], 500);
+            }
+            return redirect()->back()->with('error', 'Error updating bilty: ' . $e->getMessage())->withInput();
         }
-
-        return redirect()->route('bilties.index')->with('success', 'Bilty updated successfully.');
     }
 
     /**

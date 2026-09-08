@@ -15,14 +15,14 @@ class AdminUserSeeder extends Seeder
         // Create admin user
         User::create([
             'name' => 'Admin',
-            'email' => 'admin@ittefaq.com',
+            'email' => 'zahidafzal5152@gmail.com',
             'password' => bcrypt('password'),
             'role' => 'admin',
             'status' => 'active',
         ]);
 
         $this->command->info('Admin user created successfully!');
-        $this->command->info('Email: admin@ittefaq.com');
+        $this->command->info('Email: zahidafzal5152@gmail.com');
         $this->command->info('Password: password');
     }
 }

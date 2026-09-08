@@ -74,11 +74,12 @@ class TripLogController extends Controller
         $categories = [
             'Open Market Work' => 'Open Market Work',
             'Buyer Supply Chain' => 'Buyer Supply Chain',
-            'Buyer Branding' => 'Buyer Branding',
+            'Buyer Breading' => 'Buyer Breading',
             'Buyer Seed Supply' => 'Buyer Seed Supply',
             'Buyer Marketing Development' => 'Buyer Marketing Development',
             'Buyer S.P.R' => 'Buyer S.P.R',
-            'Cement Pakistan' => 'Cement Pakistan'
+            'Syngenta' => 'Syngenta',
+            'Syngenta Breading' => 'Syngenta Breading'
         ];
         
         // Add LOGISTICS & TRANSPORT categories if found
@@ -122,11 +123,12 @@ class TripLogController extends Controller
         $categories = [
             'Open Market Work' => 'Open Market Work',
             'Buyer Supply Chain' => 'Buyer Supply Chain',
-            'Buyer Branding' => 'Buyer Branding',
+            'Buyer Breading' => 'Buyer Breading',
             'Buyer Seed Supply' => 'Buyer Seed Supply',
             'Buyer Marketing Development' => 'Buyer Marketing Development',
             'Buyer S.P.R' => 'Buyer S.P.R',
-            'Cement Pakistan' => 'Cement Pakistan'
+            'Syngenta' => 'Syngenta',
+            'Syngenta Breading' => 'Syngenta Breading'
         ];
         
         // Add LOGISTICS & TRANSPORT categories if found
@@ -250,11 +252,12 @@ class TripLogController extends Controller
         $categories = [
             'Open Market Work' => 'Open Market Work',
             'Buyer Supply Chain' => 'Buyer Supply Chain',
-            'Buyer Branding' => 'Buyer Branding',
+            'Buyer Breading' => 'Buyer Breading',
             'Buyer Seed Supply' => 'Buyer Seed Supply',
             'Buyer Marketing Development' => 'Buyer Marketing Development',
             'Buyer S.P.R' => 'Buyer S.P.R',
-            'Cement Pakistan' => 'Cement Pakistan'
+            'Syngenta' => 'Syngenta',
+            'Syngenta Breading' => 'Syngenta Breading'
         ];
         
         // Add LOGISTICS & TRANSPORT categories if found
@@ -362,10 +365,31 @@ class TripLogController extends Controller
      */
     public function destroy(TripLog $tripLog)
     {
-        $tripLog->delete();
+        // Check if trip log is associated with an invoice
+        if ($tripLog->invoice()->exists()) {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Cannot delete trip log that is associated with an invoice.'], 400);
+            }
+            return redirect()->route('trip-logs.index')
+                ->with('error', 'Cannot delete trip log that is associated with an invoice.');
+        }
 
-        return redirect()->route('trip-logs.index')
-            ->with('success', 'Trip log deleted successfully.');
+        try {
+            $tripLog->delete();
+
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => true, 'message' => 'Trip log deleted successfully.']);
+            }
+
+            return redirect()->route('trip-logs.index')
+                ->with('success', 'Trip log deleted successfully.');
+        } catch (\Illuminate\Database\QueryException $e) {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Cannot delete trip log due to database constraints.'], 400);
+            }
+            return redirect()->route('trip-logs.index')
+                ->with('error', 'Cannot delete trip log due to database constraints.');
+        }
     }
 
     /**

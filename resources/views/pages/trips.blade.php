@@ -312,22 +312,24 @@ $(document).ready(function() {
     // Form submission
     $('#tripForm').on('submit', function(e) {
         e.preventDefault();
-        
-        var formData = $(this).serialize();
+
         var tripId = $('#trip_id').val();
         var url = tripId ? '/trips/' + tripId : '{{ route("trips.store") }}';
-        var method = 'POST';
-        
-        // Set _method to PUT for updates
+
+        // Set _method field for Laravel method spoofing
         if (tripId) {
             $('#_method').val('PUT');
         } else {
             $('#_method').val('POST');
         }
-        
+
+        // Serialize form after setting _method
+        var formData = $(this).serialize();
+
+        // Always use POST for AJAX, Laravel will read _method field
         $.ajax({
             url: url,
-            type: method,
+            type: 'POST',
             data: formData,
             headers: {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
@@ -344,6 +346,17 @@ $(document).ready(function() {
                     $.each(errors, function(key, value) {
                         errorMessage += value + '\n';
                     });
+                } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                    errorMessage = xhr.responseJSON.message;
+                } else if (xhr.responseText) {
+                    try {
+                        var response = JSON.parse(xhr.responseText);
+                        if (response.message) {
+                            errorMessage = response.message;
+                        }
+                    } catch (e) {
+                        errorMessage = 'Error saving trip: ' + xhr.status;
+                    }
                 }
                 alert(errorMessage);
             }
@@ -454,21 +467,42 @@ function viewTrip(id) {
 }
 
 function deleteTrip(id) {
-    if (confirm('Are you sure you want to delete this trip?')) {
-        $.ajax({
-            url: '/trips/' + id,
-            type: 'DELETE',
-            headers: {
-                'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-            },
-            success: function(response) {
-                location.reload();
-            },
-            error: function() {
-                alert('Error deleting trip');
-            }
-        });
-    }
+    Swal.fire({
+        title: 'Are you sure?',
+        text: 'You will not be able to recover this trip!',
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!'
+    }).then((result) => {
+        if (result.isConfirmed) {
+            $.ajax({
+                url: '/trips/' + id,
+                type: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    Swal.fire(
+                        'Deleted!',
+                        'Trip has been deleted.',
+                        'success'
+                    ).then(() => {
+                        location.reload();
+                    });
+                },
+                error: function(xhr) {
+                    var message = xhr.responseJSON && xhr.responseJSON.message ? xhr.responseJSON.message : 'Error deleting trip';
+                    Swal.fire(
+                        'Error!',
+                        message,
+                        'error'
+                    );
+                }
+            });
+        }
+    });
 }
 
 function filterByStatus(status) {

@@ -121,8 +121,29 @@ class InvoiceController extends Controller
     public function destroy(string $id)
     {
         $invoice = Invoice::findOrFail($id);
-        $invoice->delete();
-        return redirect()->route('invoices.index')->with('success', 'Invoice deleted successfully.');
+
+        // Check if invoice has associated trip logs
+        if ($invoice->tripLogs()->exists()) {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Cannot delete invoice with associated trip logs. Please remove the trip logs first.'], 400);
+            }
+            return redirect()->route('invoices.index')->with('error', 'Cannot delete invoice with associated trip logs. Please remove the trip logs first.');
+        }
+
+        try {
+            $invoice->delete();
+
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => true, 'message' => 'Invoice deleted successfully.']);
+            }
+
+            return redirect()->route('invoices.index')->with('success', 'Invoice deleted successfully.');
+        } catch (\Illuminate\Database\QueryException $e) {
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Cannot delete invoice due to database constraints.'], 400);
+            }
+            return redirect()->route('invoices.index')->with('error', 'Cannot delete invoice due to database constraints.');
+        }
     }
 
     public function export(Request $request)
