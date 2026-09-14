@@ -138,7 +138,7 @@ class TripOperation extends Model
         $tripNumber = "{$prefix}-{$year}-{$month}-{$newNumber}";
 
         // Ensure unique trip number with fallback to timestamp
-        $maxAttempts = 20;
+        $maxAttempts = 50;
         $attempts = 0;
 
         while (self::where('trip_number', $tripNumber)->whereNull('deleted_at')->exists() && $attempts < $maxAttempts) {
@@ -148,9 +148,9 @@ class TripOperation extends Model
             $tripNumber = "{$prefix}-{$year}-{$month}-{$newNumber}";
         }
 
-        // If still not unique after many attempts, use timestamp
+        // If still not unique after many attempts, use timestamp with random
         if (self::where('trip_number', $tripNumber)->whereNull('deleted_at')->exists()) {
-            $timestamp = date('His');
+            $timestamp = date('His') . rand(100, 999);
             $tripNumber = "{$prefix}-{$year}-{$month}-{$timestamp}";
         }
 

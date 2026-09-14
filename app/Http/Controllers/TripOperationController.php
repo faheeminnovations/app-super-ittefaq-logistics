@@ -159,7 +159,7 @@ class TripOperationController extends Controller
 
         // Generate trip number if it's a new trip
         if (!$tripId) {
-            $maxAttempts = 10;
+            $maxAttempts = 20;
             $attempts = 0;
             $tripOperation = null;
 
@@ -194,7 +194,7 @@ class TripOperationController extends Controller
             if (!$tripOperation) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Unable to generate unique trip number. Please try again.'
+                    'message' => 'Unable to generate unique trip number. Please try again or contact support.'
                 ], 500);
             }
         } else {
