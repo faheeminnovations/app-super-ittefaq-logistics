@@ -435,7 +435,12 @@ async function nextStep() {
     });
 
     if (!isValid) {
-        alert('Please fill in all required fields');
+        Swal.fire({
+            icon: 'error',
+            title: 'Validation Error',
+            text: 'Please fill in all required fields',
+            confirmButtonColor: '#0d6efd'
+        });
         return;
     }
 
@@ -466,11 +471,21 @@ async function nextStep() {
                 updateWizardUI();
             }
         } else {
-            alert('Error: ' + data.message);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: data.message,
+                confirmButtonColor: '#0d6efd'
+            });
         }
     } catch (error) {
         console.error('Error:', error);
-        alert('Error saving step data');
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Error saving step data',
+            confirmButtonColor: '#0d6efd'
+        });
     }
 }
 
@@ -496,13 +511,30 @@ async function completeWizard() {
         const data = await response.json();
 
         if (data.success) {
-            window.location.href = '/trip-operations';
+            Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: 'Trip operation completed successfully!',
+                confirmButtonColor: '#198754'
+            }).then(() => {
+                window.location.href = '/trip-operations';
+            });
         } else {
-            alert('Error: ' + data.message);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: data.message,
+                confirmButtonColor: '#0d6efd'
+            });
         }
     } catch (error) {
         console.error('Error:', error);
-        alert('Error completing wizard');
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Error completing wizard',
+            confirmButtonColor: '#0d6efd'
+        });
     }
 }
 </script>
