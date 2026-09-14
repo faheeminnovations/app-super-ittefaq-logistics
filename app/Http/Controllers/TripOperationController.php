@@ -68,8 +68,7 @@ class TripOperationController extends Controller
             'Buyer Seed Supply' => 'Buyer Seed Supply',
             'Buyer Marketing Development' => 'Buyer Marketing Development',
             'Buyer S.P.R' => 'Buyer S.P.R',
-            'Syngenta' => 'Syngenta',
-            'Syngenta Breading' => 'Syngenta Breading'
+            'Syngenta' => 'Syngenta'
         ];
 
         $months = [];
@@ -109,8 +108,7 @@ class TripOperationController extends Controller
             'Buyer Seed Supply' => 'Buyer Seed Supply',
             'Buyer Marketing Development' => 'Buyer Marketing Development',
             'Buyer S.P.R' => 'Buyer S.P.R',
-            'Syngenta' => 'Syngenta',
-            'Syngenta Breading' => 'Syngenta Breading'
+            'Syngenta' => 'Syngenta'
         ];
 
         $tripStatuses = [
@@ -341,8 +339,7 @@ class TripOperationController extends Controller
             'Buyer Seed Supply' => 'Buyer Seed Supply',
             'Buyer Marketing Development' => 'Buyer Marketing Development',
             'Buyer S.P.R' => 'Buyer S.P.R',
-            'Syngenta' => 'Syngenta',
-            'Syngenta Breading' => 'Syngenta Breading'
+            'Syngenta' => 'Syngenta'
         ];
 
         $tripStatuses = [
@@ -495,8 +492,7 @@ class TripOperationController extends Controller
             'Buyer Seed Supply' => 'Buyer Seed Supply',
             'Buyer Marketing Development' => 'Buyer Marketing Development',
             'Buyer S.P.R' => 'Buyer S.P.R',
-            'Syngenta' => 'Syngenta',
-            'Syngenta Breading' => 'Syngenta Breading'
+            'Syngenta' => 'Syngenta'
         ];
 
         $tripStatuses = [
