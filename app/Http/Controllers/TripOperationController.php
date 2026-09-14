@@ -159,22 +159,44 @@ class TripOperationController extends Controller
 
         // Generate trip number if it's a new trip
         if (!$tripId) {
-            $validated['trip_number'] = TripOperation::generateTripNumber();
-            $validated['current_wizard_step'] = 1;
-            $validated['wizard_steps_completed'] = [];
+            $maxAttempts = 5;
+            $attempts = 0;
+            $tripOperation = null;
 
-            // Set default values for decimal fields to avoid database errors
-            $validated['kilometers'] = $validated['kilometers'] ?? 0;
-            $validated['rate_per_km'] = $validated['rate_per_km'] ?? 0;
-            $validated['freight'] = $validated['freight'] ?? 0;
-            $validated['fuel_payment_amount'] = $validated['fuel_payment_amount'] ?? 0;
-            $validated['expenses'] = $validated['expenses'] ?? 0;
-            $validated['rent_paid'] = $validated['rent_paid'] ?? 0;
-            $validated['initial_amount'] = $validated['initial_amount'] ?? 0;
-            $validated['amount_changed'] = $validated['amount_changed'] ?? 0;
-            $validated['quantity'] = $validated['quantity'] ?? 0;
+            while ($attempts < $maxAttempts && !$tripOperation) {
+                try {
+                    $validated['trip_number'] = TripOperation::generateTripNumber();
+                    $validated['current_wizard_step'] = 1;
+                    $validated['wizard_steps_completed'] = [];
 
-            $tripOperation = TripOperation::create($validated);
+                    // Set default values for decimal fields to avoid database errors
+                    $validated['kilometers'] = $validated['kilometers'] ?? 0;
+                    $validated['rate_per_km'] = $validated['rate_per_km'] ?? 0;
+                    $validated['freight'] = $validated['freight'] ?? 0;
+                    $validated['fuel_payment_amount'] = $validated['fuel_payment_amount'] ?? 0;
+                    $validated['expenses'] = $validated['expenses'] ?? 0;
+                    $validated['rent_paid'] = $validated['rent_paid'] ?? 0;
+                    $validated['initial_amount'] = $validated['initial_amount'] ?? 0;
+                    $validated['amount_changed'] = $validated['amount_changed'] ?? 0;
+                    $validated['quantity'] = $validated['quantity'] ?? 0;
+
+                    $tripOperation = TripOperation::create($validated);
+                } catch (\Illuminate\Database\QueryException $e) {
+                    if ($e->getCode() == 23000 && strpos($e->getMessage(), 'trip_number') !== false) {
+                        // Duplicate trip number, try again
+                        $attempts++;
+                        continue;
+                    }
+                    throw $e;
+                }
+            }
+
+            if (!$tripOperation) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Unable to generate unique trip number after multiple attempts'
+                ], 500);
+            }
         } else {
             $tripOperation = TripOperation::findOrFail($tripId);
 

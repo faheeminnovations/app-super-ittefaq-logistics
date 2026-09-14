@@ -134,7 +134,20 @@ class TripOperation extends Model
             $newNumber = '0001';
         }
 
-        return "{$prefix}-{$year}-{$month}-{$newNumber}";
+        $tripNumber = "{$prefix}-{$year}-{$month}-{$newNumber}";
+
+        // Ensure unique trip number
+        $maxAttempts = 10;
+        $attempts = 0;
+
+        while (self::where('trip_number', $tripNumber)->exists() && $attempts < $maxAttempts) {
+            $attempts++;
+            $lastNumber = (int) substr($tripNumber, -4);
+            $newNumber = str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
+            $tripNumber = "{$prefix}-{$year}-{$month}-{$newNumber}";
+        }
+
+        return $tripNumber;
     }
 
     // Calculate freight automatically
