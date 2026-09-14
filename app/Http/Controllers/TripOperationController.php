@@ -177,6 +177,18 @@ class TripOperationController extends Controller
             $tripOperation = TripOperation::create($validated);
         } else {
             $tripOperation = TripOperation::findOrFail($tripId);
+
+            // Set default values for decimal fields in update operations
+            $validated['kilometers'] = $validated['kilometers'] ?? $tripOperation->kilometers ?? 0;
+            $validated['rate_per_km'] = $validated['rate_per_km'] ?? $tripOperation->rate_per_km ?? 0;
+            $validated['freight'] = $validated['freight'] ?? $tripOperation->freight ?? 0;
+            $validated['fuel_payment_amount'] = $validated['fuel_payment_amount'] ?? $tripOperation->fuel_payment_amount ?? 0;
+            $validated['expenses'] = $validated['expenses'] ?? $tripOperation->expenses ?? 0;
+            $validated['rent_paid'] = $validated['rent_paid'] ?? $tripOperation->rent_paid ?? 0;
+            $validated['initial_amount'] = $validated['initial_amount'] ?? $tripOperation->initial_amount ?? 0;
+            $validated['amount_changed'] = $validated['amount_changed'] ?? $tripOperation->amount_changed ?? 0;
+            $validated['quantity'] = $validated['quantity'] ?? $tripOperation->quantity ?? 0;
+
             $tripOperation->update($validated);
         }
 
