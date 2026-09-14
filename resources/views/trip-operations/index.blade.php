@@ -225,23 +225,9 @@ $(document).ready(function() {
         lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
         order: [[0, 'desc']],
         columnDefs: [
-            { orderable: false, targets: -1 }, // Actions column
-            { orderable: false, targets: 10 }  // Wizard Progress column
+            { orderable: false, targets: [10, 11] } // Wizard Progress and Actions columns
         ],
-        columns: [
-            null, // Trip #
-            null, // Date
-            null, // Vehicle
-            null, // Driver
-            null, // Delivery Point
-            null, // Warehouse
-            null, // Category
-            null, // KM
-            null, // Freight
-            null, // Status
-            null, // Wizard Progress
-            null  // Actions
-        ],
+        autoWidth: false,
         language: {
             search: "_INPUT_",
             searchPlaceholder: "Search trip operations..."
