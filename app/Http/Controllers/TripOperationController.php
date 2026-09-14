@@ -136,12 +136,13 @@ class TripOperationController extends Controller
      */
     public function storeWizardStep(Request $request)
     {
-        $step = $request->input('step');
-        $tripId = $request->input('trip_id');
+        try {
+            $step = $request->input('step');
+            $tripId = $request->input('trip_id');
 
-        // Validate based on current step
-        $validationRules = $this->getStepValidationRules($step);
-        $validated = $request->validate($validationRules);
+            // Validate based on current step
+            $validationRules = $this->getStepValidationRules($step);
+            $validated = $request->validate($validationRules);
 
         // Auto-calculate billing information
         if (isset($validated['trip_date'])) {
@@ -190,6 +191,12 @@ class TripOperationController extends Controller
             'is_complete' => $step === 5,
             'message' => 'Step saved successfully'
         ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -229,6 +236,7 @@ class TripOperationController extends Controller
                     'business_category' => 'required|string|max:255',
                     'customer_name' => 'nullable|string|max:255',
                     'warehouse_location' => 'nullable|string|max:100',
+                    'gl_number' => 'nullable|string|max:50',
                     'load_id' => 'nullable|string|max:50',
                     'freight_bill_no' => 'nullable|string|max:50',
                 ];
@@ -469,17 +477,24 @@ class TripOperationController extends Controller
      */
     public function completeWizard(Request $request, $id)
     {
-        $tripOperation = TripOperation::findOrFail($id);
+        try {
+            $tripOperation = TripOperation::findOrFail($id);
 
-        // Mark all 5 steps as completed
-        $tripOperation->wizard_steps_completed = [1, 2, 3, 4, 5];
-        $tripOperation->current_wizard_step = 5; // Mark as completed at step 5
-        $tripOperation->save();
+            // Mark all 5 steps as completed
+            $tripOperation->wizard_steps_completed = [1, 2, 3, 4, 5];
+            $tripOperation->current_wizard_step = 5; // Mark as completed at step 5
+            $tripOperation->save();
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Trip operation completed successfully',
-            'trip_id' => $tripOperation->id
-        ]);
+            return response()->json([
+                'success' => true,
+                'message' => 'Trip operation completed successfully',
+                'trip_id' => $tripOperation->id
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 500);
+        }
     }
 }
