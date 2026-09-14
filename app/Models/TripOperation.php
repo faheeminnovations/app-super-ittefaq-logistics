@@ -123,8 +123,9 @@ class TripOperation extends Model
         $year = date('Y');
         $month = date('m');
 
-        // Get the maximum existing trip number for this month
+        // Get the maximum existing trip number for this month (excluding soft deletes)
         $maxTripNumber = self::where('trip_number', 'like', "{$prefix}-{$year}-{$month}-%")
+            ->whereNull('deleted_at')
             ->max('trip_number');
 
         if ($maxTripNumber) {
@@ -140,7 +141,7 @@ class TripOperation extends Model
         $maxAttempts = 20;
         $attempts = 0;
 
-        while (self::where('trip_number', $tripNumber)->exists() && $attempts < $maxAttempts) {
+        while (self::where('trip_number', $tripNumber)->whereNull('deleted_at')->exists() && $attempts < $maxAttempts) {
             $attempts++;
             $lastNumber = (int) substr($tripNumber, -4);
             $newNumber = str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
@@ -148,7 +149,7 @@ class TripOperation extends Model
         }
 
         // If still not unique after many attempts, use timestamp
-        if (self::where('trip_number', $tripNumber)->exists()) {
+        if (self::where('trip_number', $tripNumber)->whereNull('deleted_at')->exists()) {
             $timestamp = date('His');
             $tripNumber = "{$prefix}-{$year}-{$month}-{$timestamp}";
         }
