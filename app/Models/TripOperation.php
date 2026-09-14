@@ -123,12 +123,12 @@ class TripOperation extends Model
         $year = date('Y');
         $month = date('m');
 
-        $lastTrip = self::where('trip_number', 'like', "{$prefix}-{$year}-{$month}-%")
-            ->orderBy('id', 'desc')
-            ->first();
+        // Get the maximum existing trip number for this month
+        $maxTripNumber = self::where('trip_number', 'like', "{$prefix}-{$year}-{$month}-%")
+            ->max('trip_number');
 
-        if ($lastTrip) {
-            $lastNumber = (int) substr($lastTrip->trip_number, -4);
+        if ($maxTripNumber) {
+            $lastNumber = (int) substr($maxTripNumber, -4);
             $newNumber = str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
         } else {
             $newNumber = '0001';
@@ -136,8 +136,8 @@ class TripOperation extends Model
 
         $tripNumber = "{$prefix}-{$year}-{$month}-{$newNumber}";
 
-        // Ensure unique trip number
-        $maxAttempts = 10;
+        // Ensure unique trip number with fallback to timestamp
+        $maxAttempts = 20;
         $attempts = 0;
 
         while (self::where('trip_number', $tripNumber)->exists() && $attempts < $maxAttempts) {
@@ -145,6 +145,12 @@ class TripOperation extends Model
             $lastNumber = (int) substr($tripNumber, -4);
             $newNumber = str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
             $tripNumber = "{$prefix}-{$year}-{$month}-{$newNumber}";
+        }
+
+        // If still not unique after many attempts, use timestamp
+        if (self::where('trip_number', $tripNumber)->exists()) {
+            $timestamp = date('His');
+            $tripNumber = "{$prefix}-{$year}-{$month}-{$timestamp}";
         }
 
         return $tripNumber;
