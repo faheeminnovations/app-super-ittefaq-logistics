@@ -219,25 +219,9 @@
 @push('scripts')
 <script>
 $(document).ready(function() {
-    // Initialize DataTable
-    try {
-        $('#tripOperationsTable').DataTable({
-            pageLength: 25,
-            lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
-            order: [[0, 'desc']],
-            columnDefs: [
-                { orderable: false, targets: [10, 11] } // Wizard Progress and Actions columns
-            ],
-            autoWidth: false,
-            language: {
-                search: "_INPUT_",
-                searchPlaceholder: "Search trip operations..."
-            }
-        });
-    } catch(e) {
-        console.error('DataTables initialization error:', e);
-        // If DataTables fails, the table will still work as a regular HTML table
-    }
+    // DataTables temporarily disabled due to column count issues
+    // The table will work as a regular HTML table with server-side pagination
+    console.log('DataTables disabled - using regular table');
 });
 
 function filterTrips() {
