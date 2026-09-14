@@ -32,10 +32,12 @@ class DriversController extends Controller
             'licence_expiry' => 'nullable|date',
             'driver_picture' => 'nullable|image|max:2048',
             'cnic_picture' => 'nullable|image|max:2048',
+            'cnic_picture_back' => 'nullable|image|max:2048',
             'license_picture' => 'nullable|image|max:2048',
+            'license_picture_back' => 'nullable|image|max:2048',
         ]);
 
-        $data = $request->except(['_token', 'driver_picture', 'cnic_picture', 'license_picture']);
+        $data = $request->except(['_token', 'driver_picture', 'cnic_picture', 'cnic_picture_back', 'license_picture', 'license_picture_back']);
 
         // Handle file uploads
         if ($request->hasFile('driver_picture')) {
@@ -50,10 +52,22 @@ class DriversController extends Controller
             $data['cnic_picture'] = $path;
         }
 
+        if ($request->hasFile('cnic_picture_back')) {
+            $file = $request->file('cnic_picture_back');
+            $path = $file->store('cnic_pictures', 'public');
+            $data['cnic_picture_back'] = $path;
+        }
+
         if ($request->hasFile('license_picture')) {
             $file = $request->file('license_picture');
             $path = $file->store('license_pictures', 'public');
             $data['license_picture'] = $path;
+        }
+
+        if ($request->hasFile('license_picture_back')) {
+            $file = $request->file('license_picture_back');
+            $path = $file->store('license_pictures', 'public');
+            $data['license_picture_back'] = $path;
         }
 
         Driver::create($data);
@@ -82,10 +96,12 @@ class DriversController extends Controller
             'licence_expiry' => 'nullable|date',
             'driver_picture' => 'nullable|image|max:2048',
             'cnic_picture' => 'nullable|image|max:2048',
+            'cnic_picture_back' => 'nullable|image|max:2048',
             'license_picture' => 'nullable|image|max:2048',
+            'license_picture_back' => 'nullable|image|max:2048',
         ]);
 
-        $data = $request->except(['_token', '_method', 'driver_picture', 'cnic_picture', 'license_picture']);
+        $data = $request->except(['_token', '_method', 'driver_picture', 'cnic_picture', 'cnic_picture_back', 'license_picture', 'license_picture_back']);
 
         // Handle file uploads
         if ($request->hasFile('driver_picture')) {
@@ -108,6 +124,16 @@ class DriversController extends Controller
             $data['cnic_picture'] = $path;
         }
 
+        if ($request->hasFile('cnic_picture_back')) {
+            // Delete old file if exists
+            if ($driver->cnic_picture_back) {
+                Storage::disk('public')->delete($driver->cnic_picture_back);
+            }
+            $file = $request->file('cnic_picture_back');
+            $path = $file->store('cnic_pictures', 'public');
+            $data['cnic_picture_back'] = $path;
+        }
+
         if ($request->hasFile('license_picture')) {
             // Delete old file if exists
             if ($driver->license_picture) {
@@ -116,6 +142,16 @@ class DriversController extends Controller
             $file = $request->file('license_picture');
             $path = $file->store('license_pictures', 'public');
             $data['license_picture'] = $path;
+        }
+
+        if ($request->hasFile('license_picture_back')) {
+            // Delete old file if exists
+            if ($driver->license_picture_back) {
+                Storage::disk('public')->delete($driver->license_picture_back);
+            }
+            $file = $request->file('license_picture_back');
+            $path = $file->store('license_pictures', 'public');
+            $data['license_picture_back'] = $path;
         }
 
         $driver->update($data);
@@ -140,8 +176,14 @@ class DriversController extends Controller
         if ($driver->cnic_picture) {
             Storage::disk('public')->delete($driver->cnic_picture);
         }
+        if ($driver->cnic_picture_back) {
+            Storage::disk('public')->delete($driver->cnic_picture_back);
+        }
         if ($driver->license_picture) {
             Storage::disk('public')->delete($driver->license_picture);
+        }
+        if ($driver->license_picture_back) {
+            Storage::disk('public')->delete($driver->license_picture_back);
         }
 
         $driver->delete();
@@ -154,7 +196,7 @@ class DriversController extends Controller
         $drivers = Driver::all();
         $csv = fopen('php://temp', 'r+');
 
-        fputcsv($csv, ['ID', 'Name', 'Licence No', 'CNIC', 'Category', 'Phone', 'Status', 'Address', 'Licence Expiry']);
+        fputcsv($csv, ['ID', 'Name', 'Licence No', 'CNIC', 'Category', 'Phone', 'Status', 'Address', 'Licence Expiry', 'CNIC Picture', 'CNIC Picture Back', 'License Picture', 'License Picture Back']);
 
         foreach ($drivers as $driver) {
             fputcsv($csv, [
@@ -167,6 +209,10 @@ class DriversController extends Controller
                 $driver->status,
                 $driver->address,
                 $driver->licence_expiry,
+                $driver->cnic_picture,
+                $driver->cnic_picture_back,
+                $driver->license_picture,
+                $driver->license_picture_back,
             ]);
         }
 

@@ -195,18 +195,6 @@
 
             <div class="row">
               <div class="col-md-6 mb-3">
-                <label for="category" class="form-label">Licence Type</label>
-                <select class="form-select" name="category" id="category">
-                  <option value="">Select Licence Type</option>
-                  <option value="Bike">Bike</option>
-                  <option value="Car/Jeep">Car/Jeep</option>
-                  <option value="LTV">LTV</option>
-                  <option value="LTVPSV">LTVPSV</option>
-                  <option value="HTV">HTV</option>
-                  <option value="HTVPSV">HTVPSV</option>
-                </select>
-              </div>
-              <div class="col-md-6 mb-3">
                 <label for="phone" class="form-label">Phone</label>
                 <input type="text" class="form-control" name="phone" id="phone">
               </div>
@@ -218,12 +206,23 @@
                 <input type="file" class="form-control" name="driver_picture" id="driver_picture" accept="image/*">
               </div>
               <div class="col-md-4 mb-3">
-                <label for="cnic_picture" class="form-label">CNIC Picture</label>
+                <label for="cnic_picture" class="form-label">CNIC Picture (Front)</label>
                 <input type="file" class="form-control" name="cnic_picture" id="cnic_picture" accept="image/*">
               </div>
               <div class="col-md-4 mb-3">
-                <label for="license_picture" class="form-label">License Picture</label>
+                <label for="cnic_picture_back" class="form-label">CNIC Picture (Back)</label>
+                <input type="file" class="form-control" name="cnic_picture_back" id="cnic_picture_back" accept="image/*">
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="license_picture" class="form-label">License Picture (Front)</label>
                 <input type="file" class="form-control" name="license_picture" id="license_picture" accept="image/*">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="license_picture_back" class="form-label">License Picture (Back)</label>
+                <input type="file" class="form-control" name="license_picture_back" id="license_picture_back" accept="image/*">
               </div>
             </div>
 
@@ -360,6 +359,13 @@ function resetForm() {
     $('#driver_id').val('');
     $('#_method').val('POST');
     $('#driverModalLabel').text('New Driver');
+    
+    // Clear file inputs specifically
+    $('#driver_picture').val('');
+    $('#cnic_picture').val('');
+    $('#cnic_picture_back').val('');
+    $('#license_picture').val('');
+    $('#license_picture_back').val('');
 }
 
 function editDriver(id) {
@@ -396,6 +402,9 @@ function fillDriverForm(driver) {
         $('#licence_expiry').val(formattedLicence);
     }
 
+    // Note: File inputs cannot be pre-filled for security reasons
+    // Users will need to re-upload files when editing
+
     $('#driverModalLabel').text('Edit Driver');
 }
 
@@ -427,6 +436,15 @@ function viewDriver(id) {
                     <div class="col-12">
                         <h6>Address</h6>
                         <p>${driver.address || 'No address provided'}</p>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6>Document Pictures</h6>
+                        <p><strong>CNIC Picture (Front):</strong> ${driver.cnic_picture ? '✓ Uploaded' : 'Not uploaded'}</p>
+                        <p><strong>CNIC Picture (Back):</strong> ${driver.cnic_picture_back ? '✓ Uploaded' : 'Not uploaded'}</p>
+                        <p><strong>License Picture (Front):</strong> ${driver.license_picture ? '✓ Uploaded' : 'Not uploaded'}</p>
+                        <p><strong>License Picture (Back):</strong> ${driver.license_picture_back ? '✓ Uploaded' : 'Not uploaded'}</p>
                     </div>
                 </div>
             `;
