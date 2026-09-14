@@ -101,6 +101,21 @@
                             </div>
 
                             <div class="col-md-4 mb-3">
+                                <label for="fuel_payment_type" class="form-label">Fuel Payment Type</label>
+                                <select class="form-select" id="fuel_payment_type" name="fuel_payment_type">
+                                    <option value="">Select Type</option>
+                                    <option value="credit" {{ old('fuel_payment_type') == 'credit' ? 'selected' : '' }}>Credit</option>
+                                    <option value="cash" {{ old('fuel_payment_type') == 'cash' ? 'selected' : '' }}>Cash</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label for="fuel_payment_amount" class="form-label">Fuel Payment Amount</label>
+                                <input type="number" step="0.01" class="form-control" id="fuel_payment_amount" name="fuel_payment_amount"
+                                       value="{{ old('fuel_payment_amount') }}">
+                            </div>
+
+                            <div class="col-md-4 mb-3">
                                 <label for="driver_name" class="form-label">Driver Name</label>
                                 <select class="form-select" id="driver_name" name="driver_name">
                                     <option value="">Driver Select Karein</option>
@@ -130,11 +145,7 @@
                                         <input type="text" class="form-control" id="freight_bill_no" name="freight_bill_no"
                                                value="{{ old('freight_bill_no') }}">
                                     </div>
-                                    <div class="col-md-4 mb-3">
-                                        <label for="cluster" class="form-label">Cluster</label>
-                                        <input type="text" class="form-control" id="cluster" name="cluster"
-                                               value="{{ old('cluster') }}">
-                                    </div>
+
                                 </div>
                             </div>
 
@@ -302,6 +313,23 @@
                                         </select>
                                     </div>
                                 </div>
+                            </div>
+                        </div>
+
+                        <hr>
+
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="initial_amount" class="form-label">Initial Amount</label>
+                                <input type="number" step="0.01" class="form-control" id="initial_amount" name="initial_amount"
+                                       value="{{ old('initial_amount') }}">
+                                <small class="text-muted">Starting amount before changes</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="amount_changed" class="form-label">Amount Changed</label>
+                                <input type="number" step="0.01" class="form-control" id="amount_changed" name="amount_changed"
+                                       value="{{ old('amount_changed') }}">
+                                <small class="text-muted">Final amount after changes</small>
                             </div>
                         </div>
 

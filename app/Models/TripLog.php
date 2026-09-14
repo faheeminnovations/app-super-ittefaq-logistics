@@ -22,13 +22,14 @@ class TripLog extends Model
         'rate',
         'frt',
         'fuel',
+        'fuel_payment_type',
+        'fuel_payment_amount',
         'driver_name',
         'load_id',
         'freight_bill_no',
         'billing_month',
         'billing_year',
         'billing_month_number',
-        'cluster',
         'customer_name',
         'loading_point',
         'unloading_point',
@@ -40,6 +41,8 @@ class TripLog extends Model
         'receiving_details',
         'status',
         'expenses',
+        'initial_amount',
+        'amount_changed',
     ];
 
     protected $casts = [

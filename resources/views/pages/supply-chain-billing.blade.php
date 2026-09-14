@@ -48,7 +48,6 @@
                 <th>Gate Pass #</th>
                 <th>Delivery Point</th>
                 <th>Vehicle Category</th>
-                <th>Cluster</th>
                 <th>Rate</th>
                 <th>Amount</th>
                 <th>Status</th>
@@ -65,7 +64,6 @@
                   <td>{{ $billing->gate_pass_number ?? '-' }}</td>
                   <td>{{ $billing->delivery_point ?? '' }}</td>
                   <td>{{ $billing->vehicle_category ?? '-' }}</td>
-                  <td>{{ $billing->cluster ?? '-' }}</td>
                   <td>{{ number_format($billing->rate ?? 0, 2) }}</td>
                   <td>{{ $billing->formatted_amount }}</td>
                   <td>
@@ -125,10 +123,6 @@
               <div class="col-md-2">
                 <label class="form-label">Vehicle Category</label>
                 <input type="text" class="form-control" id="vehicle_category" placeholder="2T">
-              </div>
-              <div class="col-md-2">
-                <label class="form-label">Cluster</label>
-                <input type="text" class="form-control" id="cluster" placeholder="North">
               </div>
               <div class="col-md-2">
                 <label class="form-label">Rate</label>
@@ -207,7 +201,6 @@
         gate_pass_number: document.getElementById('gate_pass_number').value || null,
         delivery_point: deliveryPoint,
         vehicle_category: document.getElementById('vehicle_category').value || null,
-        cluster: document.getElementById('cluster').value || null,
         rate: parseFloat(document.getElementById('rate').value) || 0,
         amount: parseFloat(document.getElementById('amount').value) || 0,
         status: document.getElementById('status').value,

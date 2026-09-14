@@ -77,6 +77,7 @@
           <thead>
             <tr>
               <th>Driver</th>
+              <th>CNIC</th>
               <th>Licence No</th>
               <th>Licence Type</th>
               <th>Licence Expiry</th>
@@ -95,6 +96,7 @@
                   {{ $driver->name }}
                 </div>
               </td>
+              <td><span class='mono'>{{ $driver->cnic ?? '-' }}</span></td>
               <td><span class='mono'>{{ $driver->licence_no }}</span></td>
               <td>{{ $driver->category }}</td>
               <td>{{ $driver->licence_expiry ? \Carbon\Carbon::parse($driver->licence_expiry)->format('d M Y') : 'N/A' }}</td>
@@ -136,7 +138,7 @@
             </tr>
             @endforeach
             @else
-            <tr><td colspan="7" class="text-center">No drivers found</td></tr>
+            <tr><td colspan="8" class="text-center">No drivers found</td></tr>
             @endisset
           </tbody>
         </table>
@@ -155,7 +157,7 @@
           <h5 class="modal-title" id="driverModalLabel">New Driver</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
-        <form id="driverForm" action="{{ route('drivers.store') }}" method="POST">
+        <form id="driverForm" action="{{ route('drivers.store') }}" method="POST" enctype="multipart/form-data">
           @csrf
           <div class="modal-body">
             <input type="hidden" name="driver_id" id="driver_id">
@@ -169,6 +171,25 @@
               <div class="col-md-6 mb-3">
                 <label for="licence_no" class="form-label">Licence Number</label>
                 <input type="text" class="form-control" name="licence_no" id="licence_no">
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-6 mb-3">
+                <label for="cnic" class="form-label">CNIC Number</label>
+                <input type="text" class="form-control" name="cnic" id="cnic" placeholder="00000-0000000-0">
+              </div>
+              <div class="col-md-6 mb-3">
+                <label for="category" class="form-label">Licence Type</label>
+                <select class="form-select" name="category" id="category">
+                  <option value="">Select Licence Type</option>
+                  <option value="Bike">Bike</option>
+                  <option value="Car/Jeep">Car/Jeep</option>
+                  <option value="LTV">LTV</option>
+                  <option value="LTVPSV">LTVPSV</option>
+                  <option value="HTV">HTV</option>
+                  <option value="HTVPSV">HTVPSV</option>
+                </select>
               </div>
             </div>
 
@@ -188,6 +209,21 @@
               <div class="col-md-6 mb-3">
                 <label for="phone" class="form-label">Phone</label>
                 <input type="text" class="form-control" name="phone" id="phone">
+              </div>
+            </div>
+
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label for="driver_picture" class="form-label">Driver Picture</label>
+                <input type="file" class="form-control" name="driver_picture" id="driver_picture" accept="image/*">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label for="cnic_picture" class="form-label">CNIC Picture</label>
+                <input type="file" class="form-control" name="cnic_picture" id="cnic_picture" accept="image/*">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label for="license_picture" class="form-label">License Picture</label>
+                <input type="file" class="form-control" name="license_picture" id="license_picture" accept="image/*">
               </div>
             </div>
 
@@ -276,14 +312,16 @@ $(document).ready(function() {
             $('#_method').val('POST');
         }
 
-        // Serialize form after setting _method
-        var formData = $(this).serialize();
+        // Use FormData for file uploads
+        var formData = new FormData(this);
 
         // Always use POST for AJAX, Laravel will read _method field
         $.ajax({
             url: url,
             type: 'POST',
             data: formData,
+            processData: false,
+            contentType: false,
             headers: {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             },
@@ -345,18 +383,19 @@ function fillDriverForm(driver) {
     $('#driver_id').val(driver.id);
     $('#name').val(driver.name);
     $('#licence_no').val(driver.licence_no);
+    $('#cnic').val(driver.cnic);
     $('#category').val(driver.category);
     $('#phone').val(driver.phone);
     $('#status').val(driver.status);
     $('#address').val(driver.address);
-    
+
     // Format dates for input type="date"
     if (driver.licence_expiry) {
         var licenceDate = new Date(driver.licence_expiry);
         var formattedLicence = licenceDate.toISOString().split('T')[0];
         $('#licence_expiry').val(formattedLicence);
     }
-    
+
     $('#driverModalLabel').text('Edit Driver');
 }
 

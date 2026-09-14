@@ -76,6 +76,7 @@
           <thead>
             <tr>
               <th>Invoice #</th>
+              <th>Type</th>
               <th>Billing Month</th>
               <th>Client</th>
               <th>Subtotal</th>
@@ -90,6 +91,13 @@
               @foreach($invoices as $invoice)
             <tr>
               <td><span class='mono fw-semibold'>{{ $invoice->invoice_number }}</span></td>
+              <td>
+                @if($invoice->invoice_type === 'internal')
+                  <span class="badge bg-primary">Internal</span>
+                @else
+                  <span class="badge bg-secondary">Company</span>
+                @endif
+              </td>
               <td>{{ $invoice->billing_month }}</td>
               <td>{{ $invoice->client_name ?? 'N/A' }}</td>
               <td>{{ \App\Helpers\CurrencyHelper::formatCurrency($invoice->subtotal) }}</td>
@@ -134,7 +142,7 @@
             </tr>
             @endforeach
             @else
-            <tr><td colspan="8" class="text-center">No invoices found</td></tr>
+            <tr><td colspan="9" class="text-center">No invoices found</td></tr>
             @endisset
           </tbody>
         </table>
@@ -209,6 +217,14 @@
 
             <div class="row">
               <div class="col-md-6 mb-3">
+                <label for="invoice_type" class="form-label">Invoice Type</label>
+                <select class="form-select" name="invoice_type" id="invoice_type" required>
+                  <option value="internal">Internal (Internal Invoice)</option>
+                  <option value="company">Company (Company Invoice)</option>
+                </select>
+                <small class="text-muted">Internal: Include driver data, fuel data, expenses. Company: Only delivery point details.</small>
+              </div>
+              <div class="col-md-6 mb-3">
                 <label for="status" class="form-label">Status</label>
                 <select class="form-select" name="status" id="status" required>
                   <option value="draft">Draft</option>
@@ -261,7 +277,7 @@ $(document).ready(function() {
         lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
         order: [[0, 'desc']],
         columnDefs: [
-            { orderable: false, targets: 7 } // Actions column
+            { orderable: false, targets: -1 } // Actions column (always last)
         ],
         language: {
             search: "_INPUT_",
@@ -346,9 +362,10 @@ function fillInvoiceForm(invoice) {
     $('#warehouse').val(invoice.warehouse);
     $('#gl_number').val(invoice.gl_number);
     $('#tax_rate').val(invoice.tax_rate);
+    $('#invoice_type').val(invoice.invoice_type || 'internal');
     $('#status').val(invoice.status);
     $('#notes').val(invoice.notes);
-    
+
     $('#invoiceModalLabel').text('Edit Invoice');
 }
 
@@ -365,37 +382,53 @@ function viewInvoice(id) {
             var tripLogsHtml = '';
             
             if (tripLogs.length > 0) {
+                var showInternalData = invoice.invoice_type === 'internal';
+                var tableHeader = showInternalData ?
+                    '<tr><th>Sr</th><th>Date</th><th>Vehicle</th><th>Driver</th><th>Delivery Point</th><th>KM</th><th>Rate</th><th>FRT</th><th>Fuel</th><th>Expenses</th></tr>' :
+                    '<tr><th>Sr</th><th>Date</th><th>Vehicle</th><th>Delivery Point</th><th>KM</th><th>Rate</th><th>FRT</th></tr>';
+
+                var tableRows = tripLogs.map(function(trip) {
+                    if (showInternalData) {
+                        return `
+                            <tr>
+                                <td>${trip.sr}</td>
+                                <td>${trip.date}</td>
+                                <td>${trip.vehicle_no}</td>
+                                <td>${trip.driver_name || '-'}</td>
+                                <td>${trip.delivery_point.substring(0, 30)}...</td>
+                                <td>${trip.km}</td>
+                                <td>${trip.rate}</td>
+                                <td>${trip.frt}</td>
+                                <td>${trip.fuel || '-'}</td>
+                                <td>${trip.expenses || '-'}</td>
+                            </tr>
+                        `;
+                    } else {
+                        return `
+                            <tr>
+                                <td>${trip.sr}</td>
+                                <td>${trip.date}</td>
+                                <td>${trip.vehicle_no}</td>
+                                <td>${trip.delivery_point.substring(0, 30)}...</td>
+                                <td>${trip.km}</td>
+                                <td>${trip.rate}</td>
+                                <td>${trip.frt}</td>
+                            </tr>
+                        `;
+                    }
+                }).join('');
+
                 tripLogsHtml = `
                     <div class="row mt-3">
                         <div class="col-12">
-                            <h6>Trip Details (${tripLogs.length} trips)</h6>
+                            <h6>Trip Details (${tripLogs.length} trips) - ${showInternalData ? 'Internal Invoice (Full Details)' : 'Company Invoice (Basic Details)'}</h6>
                             <div class="table-responsive">
                                 <table class="table table-sm table-striped">
                                     <thead>
-                                        <tr>
-                                            <th>Sr</th>
-                                            <th>Date</th>
-                                            <th>Vehicle</th>
-                                            <th>Delivery Point</th>
-                                            <th>KM</th>
-                                            <th>Rate</th>
-                                            <th>FRT</th>
-                                        </tr>
+                                        ${tableHeader}
                                     </thead>
                                     <tbody>
-                                        ${tripLogs.map(function(trip) {
-                                            return `
-                                                <tr>
-                                                    <td>${trip.sr}</td>
-                                                    <td>${trip.date}</td>
-                                                    <td>${trip.vehicle_no}</td>
-                                                    <td>${trip.delivery_point.substring(0, 30)}...</td>
-                                                    <td>${trip.km}</td>
-                                                    <td>${trip.rate}</td>
-                                                    <td>${trip.frt}</td>
-                                                </tr>
-                                            `;
-                                        }).join('')}
+                                        ${tableRows}
                                     </tbody>
                                 </table>
                             </div>
@@ -409,6 +442,7 @@ function viewInvoice(id) {
                     <div class="col-md-6">
                         <h6>Invoice Information</h6>
                         <p><strong>Invoice Number:</strong> ${invoice.invoice_number}</p>
+                        <p><strong>Invoice Type:</strong> ${invoice.invoice_type === 'internal' ? 'Internal' : 'Company'}</p>
                         <p><strong>Billing Month:</strong> ${invoice.billing_month}</p>
                         <p><strong>Invoice Date:</strong> ${invoice.invoice_date}</p>
                         <p><strong>Client:</strong> ${invoice.client_name || 'N/A'}</p>

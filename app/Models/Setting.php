@@ -8,6 +8,8 @@ class Setting extends Model
 {
     protected $fillable = [
         'company_name',
+        'vehicle_categories',
+        'vehicle_number_formats',
         'operator_licence_no',
         'vat_number',
         'ntn_number',

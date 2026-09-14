@@ -31,6 +31,7 @@ class Invoice extends Model
         'amount_in_words',
         'status',
         'notes',
+        'invoice_type',
         'verified_by',
         'verified_at',
     ];
