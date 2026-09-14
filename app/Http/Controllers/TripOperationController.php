@@ -162,6 +162,18 @@ class TripOperationController extends Controller
             $validated['trip_number'] = TripOperation::generateTripNumber();
             $validated['current_wizard_step'] = 1;
             $validated['wizard_steps_completed'] = [];
+
+            // Set default values for decimal fields to avoid database errors
+            $validated['kilometers'] = $validated['kilometers'] ?? 0;
+            $validated['rate_per_km'] = $validated['rate_per_km'] ?? 0;
+            $validated['freight'] = $validated['freight'] ?? 0;
+            $validated['fuel_payment_amount'] = $validated['fuel_payment_amount'] ?? 0;
+            $validated['expenses'] = $validated['expenses'] ?? 0;
+            $validated['rent_paid'] = $validated['rent_paid'] ?? 0;
+            $validated['initial_amount'] = $validated['initial_amount'] ?? 0;
+            $validated['amount_changed'] = $validated['amount_changed'] ?? 0;
+            $validated['quantity'] = $validated['quantity'] ?? 0;
+
             $tripOperation = TripOperation::create($validated);
         } else {
             $tripOperation = TripOperation::findOrFail($tripId);
