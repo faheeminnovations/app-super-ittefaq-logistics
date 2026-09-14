@@ -199,7 +199,7 @@
                         </td>
                     </tr>
                     @empty
-                    <tr><td colspan="12" class="text-center">No trip operations found</td></tr>
+                    <tr class="no-data-row" style="display:none;"><td colspan="12" class="text-center">No trip operations found</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -220,19 +220,24 @@
 <script>
 $(document).ready(function() {
     // Initialize DataTable
-    $('#tripOperationsTable').DataTable({
-        pageLength: 25,
-        lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
-        order: [[0, 'desc']],
-        columnDefs: [
-            { orderable: false, targets: [10, 11] } // Wizard Progress and Actions columns
-        ],
-        autoWidth: false,
-        language: {
-            search: "_INPUT_",
-            searchPlaceholder: "Search trip operations..."
-        }
-    });
+    try {
+        $('#tripOperationsTable').DataTable({
+            pageLength: 25,
+            lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
+            order: [[0, 'desc']],
+            columnDefs: [
+                { orderable: false, targets: [10, 11] } // Wizard Progress and Actions columns
+            ],
+            autoWidth: false,
+            language: {
+                search: "_INPUT_",
+                searchPlaceholder: "Search trip operations..."
+            }
+        });
+    } catch(e) {
+        console.error('DataTables initialization error:', e);
+        // If DataTables fails, the table will still work as a regular HTML table
+    }
 });
 
 function filterTrips() {
