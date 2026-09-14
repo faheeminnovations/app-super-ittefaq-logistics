@@ -26,15 +26,15 @@ return new class extends Migration
             $table->string('vehicle_type')->nullable(); // Additional vehicle type info
             
             // Distance and Rate Information
-            $table->decimal('kilometers', 10, 2)->default(0);
-            $table->decimal('rate_per_km', 10, 2)->default(0);
-            $table->decimal('freight', 10, 2)->default(0);
-            
+            $table->decimal('kilometers', 15, 2)->default(0);
+            $table->decimal('rate_per_km', 15, 2)->default(0);
+            $table->decimal('freight', 20, 2)->default(0);
+
             // Fuel Information
             $table->string('fuel_type')->nullable();
             $table->string('fuel')->nullable(); // Amount, cash, or null
             $table->enum('fuel_payment_type', ['credit', 'cash'])->nullable();
-            $table->decimal('fuel_payment_amount', 10, 2)->default(0);
+            $table->decimal('fuel_payment_amount', 15, 2)->default(0);
             
             // Driver Information
             $table->string('driver_name')->nullable();
@@ -69,14 +69,14 @@ return new class extends Migration
             $table->string('phone_number')->nullable();
             $table->integer('quantity')->default(0);
             $table->string('guarantor')->nullable();
-            $table->decimal('rent_paid', 10, 2)->default(0);
+            $table->decimal('rent_paid', 15, 2)->default(0);
             $table->text('payment_details')->nullable();
             $table->text('receiving_details')->nullable();
-            $table->decimal('expenses', 10, 2)->default(0);
-            
+            $table->decimal('expenses', 15, 2)->default(0);
+
             // Amount Tracking
-            $table->decimal('initial_amount', 10, 2)->default(0);
-            $table->decimal('amount_changed', 10, 2)->default(0);
+            $table->decimal('initial_amount', 15, 2)->default(0);
+            $table->decimal('amount_changed', 15, 2)->default(0);
             
             // Invoice Information
             $table->foreignId('invoice_id')->nullable()->constrained('invoices')->onDelete('set null');

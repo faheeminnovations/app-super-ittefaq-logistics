@@ -218,8 +218,8 @@ class TripOperationController extends Controller
                 return [
                     'vehicle_category' => 'nullable|string|max:10',
                     'vehicle_type' => 'nullable|string|max:50',
-                    'kilometers' => 'required|numeric|min:0',
-                    'rate_per_km' => 'required|numeric|min:0',
+                    'kilometers' => 'required|numeric|min:0|max:999999999.99',
+                    'rate_per_km' => 'required|numeric|min:0|max:999999999.99',
                 ];
 
             case 3: // Fuel and Expenses
@@ -227,8 +227,8 @@ class TripOperationController extends Controller
                     'fuel_type' => 'nullable|string|max:50',
                     'fuel' => 'nullable|string|max:255',
                     'fuel_payment_type' => 'nullable|in:credit,cash',
-                    'fuel_payment_amount' => 'nullable|numeric|min:0',
-                    'expenses' => 'nullable|numeric|min:0',
+                    'fuel_payment_amount' => 'nullable|numeric|min:0|max:999999999.99',
+                    'expenses' => 'nullable|numeric|min:0|max:999999999.99',
                 ];
 
             case 4: // Business Details
@@ -248,11 +248,11 @@ class TripOperationController extends Controller
                     'phone_number' => 'nullable|string|max:50',
                     'quantity' => 'nullable|integer|min:0',
                     'guarantor' => 'nullable|string|max:255',
-                    'rent_paid' => 'nullable|numeric|min:0',
+                    'rent_paid' => 'nullable|numeric|min:0|max:999999999.99',
                     'payment_details' => 'nullable|string',
                     'receiving_details' => 'nullable|string',
-                    'initial_amount' => 'nullable|numeric|min:0',
-                    'amount_changed' => 'nullable|numeric|min:0',
+                    'initial_amount' => 'nullable|numeric|min:0|max:999999999.99',
+                    'amount_changed' => 'nullable|numeric|min:0|max:999999999.99',
                     'notes' => 'nullable|string',
                     'status' => 'required|in:pending,in_progress,completed,billed,cancelled',
                 ];

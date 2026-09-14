@@ -115,11 +115,11 @@
                         </div>
                         <div class="col-md-4 mb-3">
                             <label for="kilometers" class="form-label">Kilometers *</label>
-                            <input type="number" step="0.01" class="form-control" id="kilometers" name="kilometers" required oninput="calculateFreight()" value="{{ isset($tripOperation) ? $tripOperation->kilometers : '' }}">
+                            <input type="number" step="0.01" class="form-control" id="kilometers" name="kilometers" required oninput="calculateFreight()" value="{{ isset($tripOperation) ? $tripOperation->kilometers : '' }}" max="999999999">
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="rate_per_km" class="form-label">Rate per KM *</label>
-                            <input type="number" step="0.01" class="form-control" id="rate_per_km" name="rate_per_km" required oninput="calculateFreight()" value="{{ isset($tripOperation) ? $tripOperation->rate_per_km : '' }}">
+                            <input type="number" step="0.01" class="form-control" id="rate_per_km" name="rate_per_km" required oninput="calculateFreight()" value="{{ isset($tripOperation) ? $tripOperation->rate_per_km : '' }}" max="999999999">
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="freight" class="form-label">Calculated Freight</label>
