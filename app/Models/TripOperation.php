@@ -123,9 +123,9 @@ class TripOperation extends Model
         $year = date('Y');
         $month = date('m');
 
-        // Get the maximum existing trip number for this month (excluding soft deletes)
-        $maxTripNumber = self::where('trip_number', 'like', "{$prefix}-{$year}-{$month}-%")
-            ->whereNull('deleted_at')
+        // Get the maximum existing trip number for this month (including soft-deleted due to unique constraint)
+        $maxTripNumber = self::withTrashed()
+            ->where('trip_number', 'like', "{$prefix}-{$year}-{$month}-%")
             ->max('trip_number');
 
         if ($maxTripNumber) {
@@ -141,7 +141,7 @@ class TripOperation extends Model
         $maxAttempts = 50;
         $attempts = 0;
 
-        while (self::where('trip_number', $tripNumber)->whereNull('deleted_at')->exists() && $attempts < $maxAttempts) {
+        while (self::withTrashed()->where('trip_number', $tripNumber)->exists() && $attempts < $maxAttempts) {
             $attempts++;
             $lastNumber = (int) substr($tripNumber, -4);
             $newNumber = str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
@@ -149,7 +149,7 @@ class TripOperation extends Model
         }
 
         // If still not unique after many attempts, use timestamp with random
-        if (self::where('trip_number', $tripNumber)->whereNull('deleted_at')->exists()) {
+        if (self::withTrashed()->where('trip_number', $tripNumber)->exists()) {
             $timestamp = date('His') . rand(100, 999);
             $tripNumber = "{$prefix}-{$year}-{$month}-{$timestamp}";
         }

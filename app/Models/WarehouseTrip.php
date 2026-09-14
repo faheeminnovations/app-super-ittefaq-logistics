@@ -86,7 +86,8 @@ class WarehouseTrip extends Model
         $year = date('Y');
         $month = date('m');
         
-        $lastTrip = self::where('trip_number', 'like', "{$prefix}-{$year}-{$month}-%")
+        $lastTrip = self::withTrashed()
+            ->where('trip_number', 'like', "{$prefix}-{$year}-{$month}-%")
             ->orderBy('id', 'desc')
             ->first();
         
