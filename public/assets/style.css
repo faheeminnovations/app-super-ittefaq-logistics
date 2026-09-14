@@ -272,7 +272,7 @@ h1,h2,h3,h4,.brand,.nav-section-label{
 }
 .panel .panel-sub{font-size:12px;color:var(--muted);margin-bottom:16px;}
 
-table.tbl{width:100%; font-size:13px;}
+table.tbl{width:100%; font-size:13px; min-width: 1000px;}
 table.tbl thead th{
   font-size:10.5px; text-transform:uppercase; letter-spacing:.8px;
   color:var(--muted); font-weight:700; border-bottom:1px solid var(--line);
@@ -284,6 +284,20 @@ table.tbl tbody td{
 table.tbl tbody tr:last-child td{border-bottom:none;}
 table.tbl tbody tr:hover{background:#FAFBFD;}
 
+/* Fixed column widths for better table layout */
+table.tbl th:nth-child(1), table.tbl td:nth-child(1) {width: 80px;} /* Trip # */
+table.tbl th:nth-child(2), table.tbl td:nth-child(2) {width: 100px;} /* Date */
+table.tbl th:nth-child(3), table.tbl td:nth-child(3) {width: 90px;} /* Vehicle */
+table.tbl th:nth-child(4), table.tbl td:nth-child(4) {width: 120px;} /* Driver */
+table.tbl th:nth-child(5), table.tbl td:nth-child(5) {width: 150px;} /* Delivery Point */
+table.tbl th:nth-child(6), table.tbl td:nth-child(6) {width: 100px;} /* Warehouse */
+table.tbl th:nth-child(7), table.tbl td:nth-child(7) {width: 100px;} /* Category */
+table.tbl th:nth-child(8), table.tbl td:nth-child(8) {width: 70px;} /* KM */
+table.tbl th:nth-child(9), table.tbl td:nth-child(9) {width: 100px;} /* Freight */
+table.tbl th:nth-child(10), table.tbl td:nth-child(10) {width: 90px;} /* Status */
+table.tbl th:nth-child(11), table.tbl td:nth-child(11) {width: 100px;} /* Wizard Progress */
+table.tbl th:nth-child(12), table.tbl td:nth-child(12) {width: 140px;} /* Actions */
+
 .badge-status{
   font-size:10.5px; font-weight:700; padding:4px 10px; border-radius:20px;
 }
@@ -291,6 +305,8 @@ table.tbl tbody tr:hover{background:#FAFBFD;}
 .badge-delivered{background:#E6F4EC;color:var(--success);}
 .badge-pending{background:#EDEFF5;color:var(--muted);}
 .badge-delayed{background:#FBE9E7;color:var(--danger);}
+.badge-cancelled{background:#FBE9E7;color:var(--danger);}
+.badge-success{background:#E6F4EC;color:var(--success);}
 
 .driver-mini{display:flex;align-items:center;gap:8px;}
 .driver-mini .av{
@@ -328,6 +344,71 @@ table.tbl tbody tr:hover{background:#FAFBFD;}
   #sidebar{transform:translateX(-100%);}
   #sidebar.show{transform:translateX(0);}
   #main{margin-left:0;}
+}
+
+/* Table responsive improvements */
+.table-responsive {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.table-responsive::-webkit-scrollbar {
+  height: 8px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: var(--bg);
+  border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: var(--navy-800);
+  border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb:hover {
+  background: var(--navy-700);
+}
+
+/* Improved table responsiveness */
+@media (max-width: 1200px) {
+  table.tbl {
+    font-size: 12px;
+  }
+
+  table.tbl thead th,
+  table.tbl tbody td {
+    padding: 8px 8px;
+  }
+}
+
+@media (max-width: 768px) {
+  table.tbl {
+    font-size: 11px;
+    min-width: 800px;
+  }
+
+  table.tbl thead th,
+  table.tbl tbody td {
+    padding: 6px 6px;
+  }
+
+  .btn-group-sm .btn {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+}
+
+/* Progress bar improvements */
+.progress {
+  background-color: #EDEFF5;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  background-color: var(--navy-800);
+  transition: width 0.3s ease;
 }
 
 /* ===== Global Search Results ===== */

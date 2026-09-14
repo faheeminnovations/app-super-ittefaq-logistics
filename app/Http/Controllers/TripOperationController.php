@@ -159,21 +159,36 @@ class TripOperationController extends Controller
         // Generate trip number if it's a new trip
         if (!$tripId) {
             $validated['trip_number'] = TripOperation::generateTripNumber();
-            $validated['current_wizard_step'] = 2; // Move to next step
-            $validated['wizard_steps_completed'] = [1];
+            $validated['current_wizard_step'] = 1;
+            $validated['wizard_steps_completed'] = [];
             $tripOperation = TripOperation::create($validated);
         } else {
-            // Update existing trip
             $tripOperation = TripOperation::findOrFail($tripId);
             $tripOperation->update($validated);
-            $tripOperation->markWizardStepCompleted($step);
         }
+
+        // Move to next step
+        $nextStep = $step + 1;
+        if ($nextStep > 5) {
+            $nextStep = 5; // Stay at step 5
+        }
+
+        $tripOperation->current_wizard_step = $nextStep;
+
+        // Mark step as completed
+        $completedSteps = $tripOperation->wizard_steps_completed ?? [];
+        if (!in_array($step, $completedSteps)) {
+            $completedSteps[] = $step;
+        }
+        $tripOperation->wizard_steps_completed = $completedSteps;
+        $tripOperation->save();
 
         return response()->json([
             'success' => true,
             'trip_id' => $tripOperation->id,
-            'current_step' => $tripOperation->current_wizard_step,
-            'message' => 'Step ' . $step . ' saved successfully'
+            'current_step' => $nextStep,
+            'is_complete' => $step === 5,
+            'message' => 'Step saved successfully'
         ]);
     }
 
@@ -186,7 +201,7 @@ class TripOperationController extends Controller
             case 1: // Basic Information
                 return [
                     'trip_date' => 'required|date',
-                    'vehicle_number' => 'required|string|max:50',
+                    'vehicle_number' => 'nullable|string|max:50',
                     'driver_name' => 'nullable|string|max:255',
                     'delivery_point' => 'required|string|max:255',
                     'gp_number' => 'nullable|string|max:50',
@@ -218,7 +233,7 @@ class TripOperationController extends Controller
                     'freight_bill_no' => 'nullable|string|max:50',
                 ];
 
-            case 5: // Additional Details
+            case 5: // Additional Details (Final Step)
                 return [
                     'loading_point' => 'nullable|string|max:255',
                     'unloading_point' => 'nullable|string|max:255',
@@ -406,6 +421,12 @@ class TripOperationController extends Controller
     {
         $tripOperation = TripOperation::findOrFail($id);
 
+        // Ensure current wizard step is capped at 5
+        if ($tripOperation->current_wizard_step > 5) {
+            $tripOperation->current_wizard_step = 5;
+            $tripOperation->save();
+        }
+
         $vehicles = Vehicle::active()->pluck('reg_no', 'reg_no');
         $drivers = Driver::active()->pluck('name', 'name');
         $customers = Customer::all();
@@ -450,9 +471,9 @@ class TripOperationController extends Controller
     {
         $tripOperation = TripOperation::findOrFail($id);
 
-        // Mark all steps as completed
+        // Mark all 5 steps as completed
         $tripOperation->wizard_steps_completed = [1, 2, 3, 4, 5];
-        $tripOperation->current_wizard_step = 6; // Completed
+        $tripOperation->current_wizard_step = 5; // Mark as completed at step 5
         $tripOperation->save();
 
         return response()->json([

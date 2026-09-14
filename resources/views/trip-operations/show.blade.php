@@ -237,10 +237,14 @@
                     </div>
                     <div class="mb-3">
                         <label class="form-label text-muted">Wizard Progress</label>
-                        <div class="progress">
-                            <div class="progress-bar" role="progressbar" style="width: {{ $tripOperation->wizard_progress }}%;" aria-valuenow="{{ $tripOperation->wizard_progress }}" aria-valuemin="0" aria-valuemax="100"></div>
+                        <div class="progress" style="background-color: #EDEFF5;">
+                            <div class="progress-bar" role="progressbar"
+                                 style="width: {{ $tripOperation->wizard_progress ?? 0 }}%; background-color: var(--navy-800);"
+                                 aria-valuenow="{{ $tripOperation->wizard_progress ?? 0 }}"
+                                 aria-valuemin="0"
+                                 aria-valuemax="100"></div>
                         </div>
-                        <small>{{ number_format($tripOperation->wizard_progress) }}% Complete</small>
+                        <small>{{ number_format($tripOperation->wizard_progress ?? 0) }}% Complete</small>
                     </div>
                     <div class="mb-3">
                         <label class="form-label text-muted">Billing Month</label>

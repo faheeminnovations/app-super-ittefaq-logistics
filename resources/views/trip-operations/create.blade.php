@@ -17,8 +17,12 @@
         <div class="card-body">
             <!-- Wizard Progress -->
             <div class="wizard-progress mb-4">
-                <div class="progress" style="height: 8px;">
-                    <div class="progress-bar" id="overallProgress" role="progressbar" style="width: {{ isset($tripOperation) ? $tripOperation->wizard_progress : 20 }}%;" aria-valuenow="{{ isset($tripOperation) ? $tripOperation->wizard_progress : 20 }}" aria-valuemin="0" aria-valuemax="100"></div>
+                <div class="progress" style="height: 8px; background-color: #EDEFF5;">
+                    <div class="progress-bar" id="overallProgress" role="progressbar"
+                         style="width: {{ isset($tripOperation) ? $tripOperation->wizard_progress : 0 }}%; background-color: var(--navy-800);"
+                         aria-valuenow="{{ isset($tripOperation) ? $tripOperation->wizard_progress : 0 }}"
+                         aria-valuemin="0"
+                         aria-valuemax="100"></div>
                 </div>
                 <div class="wizard-steps mt-3">
                     <div class="step {{ isset($tripOperation) && $tripOperation->current_wizard_step > 1 ? 'completed' : '' }} {{ !isset($tripOperation) || $tripOperation->current_wizard_step == 1 ? 'active' : '' }}" data-step="1">
@@ -39,7 +43,7 @@
                     </div>
                     <div class="step {{ isset($tripOperation) && $tripOperation->current_wizard_step > 5 ? 'completed' : '' }} {{ isset($tripOperation) && $tripOperation->current_wizard_step == 5 ? 'active' : '' }}" data-step="5">
                         <div class="step-number">5</div>
-                        <div class="step-label">Additional Info</div>
+                        <div class="step-label">Final Step</div>
                     </div>
                 </div>
             </div>
@@ -58,13 +62,18 @@
                             <input type="date" class="form-control" id="trip_date" name="trip_date" required value="{{ isset($tripOperation) ? ($tripOperation->trip_date ? $tripOperation->trip_date->format('Y-m-d') : '') : old('trip_date', now()->format('Y-m-d')) }}">
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="vehicle_number" class="form-label">Vehicle Number *</label>
-                            <select class="form-select" id="vehicle_number" name="vehicle_number" required>
-                                <option value="">Select Vehicle</option>
-                                @foreach($vehicles as $regNo => $vehicle)
-                                    <option value="{{ $regNo }}" {{ isset($tripOperation) && $tripOperation->vehicle_number == $regNo ? 'selected' : '' }}>{{ strtoupper($regNo) }}</option>
-                                @endforeach
-                            </select>
+                            <label for="vehicle_number" class="form-label">Vehicle Number</label>
+                            @if($vehicles->isEmpty())
+                                <input type="text" class="form-control" id="vehicle_number" name="vehicle_number" placeholder="Enter vehicle number manually" value="{{ isset($tripOperation) ? $tripOperation->vehicle_number : '' }}">
+                                <small class="text-danger">No vehicles in database - enter manually</small>
+                            @else
+                                <select class="form-select" id="vehicle_number" name="vehicle_number">
+                                    <option value="">Select Vehicle</option>
+                                    @foreach($vehicles as $regNo => $vehicle)
+                                        <option value="{{ $regNo }}" {{ isset($tripOperation) && $tripOperation->vehicle_number == $regNo ? 'selected' : '' }}>{{ strtoupper($regNo) }}</option>
+                                    @endforeach
+                                </select>
+                            @endif
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="driver_name" class="form-label">Driver Name</label>
@@ -192,9 +201,9 @@
                     </div>
                 </div>
 
-                <!-- Step 5: Additional Information -->
+                <!-- Step 5: Final Information -->
                 <div class="wizard-step {{ isset($tripOperation) && $tripOperation->current_wizard_step == 5 ? 'active' : '' }}" data-step="5">
-                    <h4 class="mb-3">Step 5: Additional Information</h4>
+                    <h4 class="mb-3">Step 5: Final Information</h4>
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="loading_point" class="form-label">Loading Point</label>
@@ -257,7 +266,7 @@
                 <div class="wizard-navigation mt-4">
                     <button type="button" class="btn btn-secondary" id="prevBtn" onclick="previousStep()" disabled>Previous</button>
                     <button type="button" class="btn btn-primary" id="nextBtn" onclick="nextStep()">Next</button>
-                    <button type="button" class="btn btn-success d-none" id="completeBtn" onclick="completeWizard()">Complete Trip</button>
+                    <button type="button" class="btn btn-success d-none" id="completeBtn" onclick="completeWizard()">Complete Trip Operation</button>
                 </div>
             </form>
         </div>
@@ -353,10 +362,15 @@
 
 @push('scripts')
 <script>
-let currentStep = {{ isset($tripOperation) ? $tripOperation->current_wizard_step : 1 }};
+let currentStep = 1;
 const totalSteps = 5;
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Set initial step based on existing trip operation
+    @if(isset($tripOperation))
+        currentStep = {{ $tripOperation->current_wizard_step > 5 ? 5 : $tripOperation->current_wizard_step }};
+    @endif
+
     updateWizardUI();
 });
 
@@ -388,7 +402,7 @@ function updateWizardUI() {
     });
 
     // Update progress bar
-    const progress = (currentStep / totalSteps) * 100;
+    const progress = ((currentStep - 1) / totalSteps) * 100;
     document.getElementById('overallProgress').style.width = progress + '%';
     document.getElementById('overallProgress').setAttribute('aria-valuenow', progress);
 
@@ -406,10 +420,26 @@ function updateWizardUI() {
 }
 
 async function nextStep() {
-    if (!validateCurrentStep()) {
+    // Simple validation - just check required fields
+    const currentStepElement = document.querySelector(`.wizard-step[data-step="${currentStep}"]`);
+    const requiredFields = currentStepElement.querySelectorAll('[required]');
+    let isValid = true;
+
+    requiredFields.forEach(field => {
+        if (!field.value.trim()) {
+            field.classList.add('is-invalid');
+            isValid = false;
+        } else {
+            field.classList.remove('is-invalid');
+        }
+    });
+
+    if (!isValid) {
+        alert('Please fill in all required fields');
         return;
     }
 
+    // Save current step data
     const formData = new FormData(document.getElementById('wizardForm'));
     formData.append('step', currentStep);
 
@@ -428,7 +458,13 @@ async function nextStep() {
         if (data.success) {
             document.getElementById('trip_id').value = data.trip_id;
             currentStep = data.current_step;
-            updateWizardUI();
+
+            if (data.is_complete || currentStep > 5) {
+                // Wizard complete - redirect
+                window.location.href = '/trip-operations';
+            } else {
+                updateWizardUI();
+            }
         } else {
             alert('Error: ' + data.message);
         }
@@ -445,32 +481,7 @@ function previousStep() {
     }
 }
 
-function validateCurrentStep() {
-    const currentStepElement = document.querySelector(`.wizard-step[data-step="${currentStep}"]`);
-    const requiredFields = currentStepElement.querySelectorAll('[required]');
-    let isValid = true;
-
-    requiredFields.forEach(field => {
-        if (!field.value.trim()) {
-            field.classList.add('is-invalid');
-            isValid = false;
-        } else {
-            field.classList.remove('is-invalid');
-        }
-    });
-
-    if (!isValid) {
-        alert('Please fill in all required fields');
-    }
-
-    return isValid;
-}
-
 async function completeWizard() {
-    if (!validateCurrentStep()) {
-        return;
-    }
-
     const tripId = document.getElementById('trip_id').value;
 
     try {
@@ -485,13 +496,7 @@ async function completeWizard() {
         const data = await response.json();
 
         if (data.success) {
-            Swal.fire({
-                icon: 'success',
-                title: 'Success',
-                text: 'Trip operation created successfully!'
-            }).then(() => {
-                window.location.href = '/trip-operations';
-            });
+            window.location.href = '/trip-operations';
         } else {
             alert('Error: ' + data.message);
         }

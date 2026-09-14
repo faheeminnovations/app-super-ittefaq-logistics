@@ -123,7 +123,7 @@
             </div>
         </div>
         <div class="table-responsive">
-            <table class="table table-hover table-striped" id="tripOperationsTable">
+            <table class="table table-hover table-striped tbl" id="tripOperationsTable">
                 <thead>
                     <tr>
                         <th>Trip #</th>
@@ -174,10 +174,14 @@
                             @endswitch
                         </td>
                         <td>
-                            <div class="progress" style="height: 6px;">
-                                <div class="progress-bar" role="progressbar" style="width: {{ $trip->wizard_progress }}%;" aria-valuenow="{{ $trip->wizard_progress }}" aria-valuemin="0" aria-valuemax="100"></div>
+                            <div class="progress" style="height: 6px; background-color: #EDEFF5;">
+                                <div class="progress-bar" role="progressbar"
+                                     style="width: {{ $trip->wizard_progress ?? 0 }}%; background-color: var(--navy-800);"
+                                     aria-valuenow="{{ $trip->wizard_progress ?? 0 }}"
+                                     aria-valuemin="0"
+                                     aria-valuemax="100"></div>
                             </div>
-                            <small>{{ number_format($trip->wizard_progress) }}%</small>
+                            <small>{{ number_format($trip->wizard_progress ?? 0) }}%</small>
                         </td>
                         <td>
                             <div class="btn-group btn-group-sm">
@@ -187,7 +191,7 @@
                                 <button type="button" class="btn btn-outline-info" onclick="viewTrip({{ $trip->id }})" title="View">
                                     <i class="bi bi-eye"></i>
                                 </button>
-                                @if($trip->current_wizard_step < 6)
+                                @if($trip->current_wizard_step < 5)
                                 <button type="button" class="btn btn-outline-success" onclick="continueWizard({{ $trip->id }})" title="Continue Wizard">
                                     <i class="bi bi-arrow-right-circle"></i>
                                 </button>
