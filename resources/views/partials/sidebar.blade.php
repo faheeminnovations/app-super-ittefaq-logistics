@@ -32,6 +32,7 @@
       <div class="nav-section-label">Transport Management</div>
       <a href="{{ url('/transport/dashboard') }}" class="nav-link {{ request()->is('transport/dashboard') ? 'active' : '' }}" data-module="transport dashboard"><i class="bi bi-speedometer2"></i> Transport Dashboard </a>
       <a href="{{ url('/transport/trip-logs') }}" class="nav-link {{ request()->is('transport/trip-logs*') ? 'active' : '' }}" data-module="trip logs"><i class="bi bi-journal-text"></i> Trip Logs </a>
+      <a href="{{ url('/trip-operations') }}" class="nav-link {{ request()->is('trip-operations*') ? 'active' : '' }}" data-module="trip operations"><i class="bi bi-layers"></i> Trip Operations </a>
       <a href="{{ url('/transport/import') }}" class="nav-link {{ request()->is('transport/import') ? 'active' : '' }}" data-module="import excel"><i class="bi bi-upload"></i> Import Excel </a>
       <a href="{{ url('/transport/rate-management') }}" class="nav-link {{ request()->is('transport/rate-management') ? 'active' : '' }}" data-module="rate management"><i class="bi bi-currency-dollar"></i> Rate Management </a>
       <a href="{{ url('/transport/reports/vehicle') }}" class="nav-link {{ request()->is('transport/reports*') ? 'active' : '' }}" data-module="reports"><i class="bi bi-bar-chart"></i> Reports </a>

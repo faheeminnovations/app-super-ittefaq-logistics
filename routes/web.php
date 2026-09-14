@@ -31,6 +31,7 @@ use App\Http\Controllers\WarehouseTripController;
 use App\Http\Controllers\WarehouseInvoiceController;
 use App\Http\Controllers\TripLogController;
 use App\Http\Controllers\TransportManagementController;
+use App\Http\Controllers\TripOperationController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -109,6 +110,13 @@ Route::middleware(['auth', 'role:admin,dispatcher,manager'])->group(function () 
     Route::resource('warehouse.invoices', WarehouseInvoiceController::class);
     Route::get('/warehouse-invoices/{id}/mark-sent', [WarehouseInvoiceController::class, 'markAsSent'])->name('warehouse.invoices.mark-sent');
     Route::get('/warehouse-invoices/{id}/mark-paid', [WarehouseInvoiceController::class, 'markAsPaid'])->name('warehouse.invoices.mark-paid');
+
+    // Trip Operations routes (Combined module)
+    Route::resource('trip-operations', TripOperationController::class);
+    Route::post('/trip-operations/wizard-step', [TripOperationController::class, 'storeWizardStep'])->name('trip-operations.wizard-step');
+    Route::get('/trip-operations/{id}/wizard', [TripOperationController::class, 'continueWizard'])->name('trip-operations.wizard');
+    Route::get('/trip-operations/{id}/wizard-data', [TripOperationController::class, 'getWizardData'])->name('trip-operations.wizard-data');
+    Route::post('/trip-operations/{id}/complete-wizard', [TripOperationController::class, 'completeWizard'])->name('trip-operations.complete-wizard');
     
     // Trip Claims routes
     Route::get('/trip-claims', [TripClaimController::class, 'index'])->name('trip-claims.index');
