@@ -332,6 +332,10 @@ $(document).ready(function() {
         // Use FormData for file uploads
         var formData = new FormData(this);
 
+        // Log form data for debugging
+        console.log('Submitting form with URL:', url);
+        console.log('Form data keys:', Array.from(formData.keys()));
+
         // Always use POST for AJAX, Laravel will read _method field
         $.ajax({
             url: url,
@@ -343,10 +347,14 @@ $(document).ready(function() {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             },
             success: function(response) {
+                console.log('Success response:', response);
                 $('#driverModal').modal('hide');
                 location.reload();
             },
             error: function(xhr) {
+                console.error('Error response:', xhr);
+                console.error('Status:', xhr.status);
+                console.error('Response text:', xhr.responseText);
                 var errors = xhr.responseJSON ? xhr.responseJSON.errors : null;
                 var errorMessage = 'Error saving driver';
                 if (errors) {
@@ -363,7 +371,7 @@ $(document).ready(function() {
                             errorMessage = response.message;
                         }
                     } catch (e) {
-                        errorMessage = 'Error saving driver: ' + xhr.status;
+                        errorMessage = 'Error saving driver: ' + xhr.status + ' ' + xhr.statusText;
                     }
                 }
                 alert(errorMessage);

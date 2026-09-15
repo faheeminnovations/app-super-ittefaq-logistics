@@ -49,36 +49,61 @@ class DriversController extends Controller
 
         // Check if new columns exist in database before adding them to data
         $hasNewColumns = $this->checkNewColumnsExist();
+        
+        // Remove new fields from data if columns don't exist
+        if (!$hasNewColumns) {
+            unset($data['cnic_picture_back'], $data['license_picture_back']);
+        }
 
         // Handle file uploads
         if ($request->hasFile('driver_picture')) {
-            $file = $request->file('driver_picture');
-            $path = $file->store('driver_pictures', 'public');
-            $data['driver_picture'] = $path;
+            try {
+                $file = $request->file('driver_picture');
+                $path = $file->store('driver_pictures', 'public');
+                $data['driver_picture'] = $path;
+            } catch (\Exception $e) {
+                \Log::error('Driver picture upload failed: ' . $e->getMessage());
+            }
         }
 
         if ($request->hasFile('cnic_picture')) {
-            $file = $request->file('cnic_picture');
-            $path = $file->store('cnic_pictures', 'public');
-            $data['cnic_picture'] = $path;
+            try {
+                $file = $request->file('cnic_picture');
+                $path = $file->store('cnic_pictures', 'public');
+                $data['cnic_picture'] = $path;
+            } catch (\Exception $e) {
+                \Log::error('CNIC picture upload failed: ' . $e->getMessage());
+            }
         }
 
         if ($hasNewColumns && $request->hasFile('cnic_picture_back')) {
-            $file = $request->file('cnic_picture_back');
-            $path = $file->store('cnic_pictures', 'public');
-            $data['cnic_picture_back'] = $path;
+            try {
+                $file = $request->file('cnic_picture_back');
+                $path = $file->store('cnic_pictures', 'public');
+                $data['cnic_picture_back'] = $path;
+            } catch (\Exception $e) {
+                \Log::error('CNIC picture back upload failed: ' . $e->getMessage());
+            }
         }
 
         if ($request->hasFile('license_picture')) {
-            $file = $request->file('license_picture');
-            $path = $file->store('license_pictures', 'public');
-            $data['license_picture'] = $path;
+            try {
+                $file = $request->file('license_picture');
+                $path = $file->store('license_pictures', 'public');
+                $data['license_picture'] = $path;
+            } catch (\Exception $e) {
+                \Log::error('License picture upload failed: ' . $e->getMessage());
+            }
         }
 
         if ($hasNewColumns && $request->hasFile('license_picture_back')) {
-            $file = $request->file('license_picture_back');
-            $path = $file->store('license_pictures', 'public');
-            $data['license_picture_back'] = $path;
+            try {
+                $file = $request->file('license_picture_back');
+                $path = $file->store('license_pictures', 'public');
+                $data['license_picture_back'] = $path;
+            } catch (\Exception $e) {
+                \Log::error('License picture back upload failed: ' . $e->getMessage());
+            }
         }
 
         // Handle file uploads
@@ -178,56 +203,81 @@ class DriversController extends Controller
 
         // Check if new columns exist in database
         $hasNewColumns = $this->checkNewColumnsExist();
+        
+        // Remove new fields from data if columns don't exist
+        if (!$hasNewColumns) {
+            unset($data['cnic_picture_back'], $data['license_picture_back']);
+        }
 
         // Handle file uploads
         if ($request->hasFile('driver_picture')) {
-            // Delete old file if exists
-            if ($driver->driver_picture) {
-                Storage::disk('public')->delete($driver->driver_picture);
+            try {
+                // Delete old file if exists
+                if ($driver->driver_picture) {
+                    Storage::disk('public')->delete($driver->driver_picture);
+                }
+                $file = $request->file('driver_picture');
+                $path = $file->store('driver_pictures', 'public');
+                $data['driver_picture'] = $path;
+            } catch (\Exception $e) {
+                \Log::error('Driver picture upload failed: ' . $e->getMessage());
             }
-            $file = $request->file('driver_picture');
-            $path = $file->store('driver_pictures', 'public');
-            $data['driver_picture'] = $path;
         }
 
         if ($request->hasFile('cnic_picture')) {
-            // Delete old file if exists
-            if ($driver->cnic_picture) {
-                Storage::disk('public')->delete($driver->cnic_picture);
+            try {
+                // Delete old file if exists
+                if ($driver->cnic_picture) {
+                    Storage::disk('public')->delete($driver->cnic_picture);
+                }
+                $file = $request->file('cnic_picture');
+                $path = $file->store('cnic_pictures', 'public');
+                $data['cnic_picture'] = $path;
+            } catch (\Exception $e) {
+                \Log::error('CNIC picture upload failed: ' . $e->getMessage());
             }
-            $file = $request->file('cnic_picture');
-            $path = $file->store('cnic_pictures', 'public');
-            $data['cnic_picture'] = $path;
         }
 
         if ($hasNewColumns && $request->hasFile('cnic_picture_back')) {
-            // Delete old file if exists
-            if ($driver->cnic_picture_back) {
-                Storage::disk('public')->delete($driver->cnic_picture_back);
+            try {
+                // Delete old file if exists
+                if ($driver->cnic_picture_back) {
+                    Storage::disk('public')->delete($driver->cnic_picture_back);
+                }
+                $file = $request->file('cnic_picture_back');
+                $path = $file->store('cnic_pictures', 'public');
+                $data['cnic_picture_back'] = $path;
+            } catch (\Exception $e) {
+                \Log::error('CNIC picture back upload failed: ' . $e->getMessage());
             }
-            $file = $request->file('cnic_picture_back');
-            $path = $file->store('cnic_pictures', 'public');
-            $data['cnic_picture_back'] = $path;
         }
 
         if ($request->hasFile('license_picture')) {
-            // Delete old file if exists
-            if ($driver->license_picture) {
-                Storage::disk('public')->delete($driver->license_picture);
+            try {
+                // Delete old file if exists
+                if ($driver->license_picture) {
+                    Storage::disk('public')->delete($driver->license_picture);
+                }
+                $file = $request->file('license_picture');
+                $path = $file->store('license_pictures', 'public');
+                $data['license_picture'] = $path;
+            } catch (\Exception $e) {
+                \Log::error('License picture upload failed: ' . $e->getMessage());
             }
-            $file = $request->file('license_picture');
-            $path = $file->store('license_pictures', 'public');
-            $data['license_picture'] = $path;
         }
 
         if ($hasNewColumns && $request->hasFile('license_picture_back')) {
-            // Delete old file if exists
-            if ($driver->license_picture_back) {
-                Storage::disk('public')->delete($driver->license_picture_back);
+            try {
+                // Delete old file if exists
+                if ($driver->license_picture_back) {
+                    Storage::disk('public')->delete($driver->license_picture_back);
+                }
+                $file = $request->file('license_picture_back');
+                $path = $file->store('license_pictures', 'public');
+                $data['license_picture_back'] = $path;
+            } catch (\Exception $e) {
+                \Log::error('License picture back upload failed: ' . $e->getMessage());
             }
-            $file = $request->file('license_picture_back');
-            $path = $file->store('license_pictures', 'public');
-            $data['license_picture_back'] = $path;
         }
 
         $driver->update($data);
