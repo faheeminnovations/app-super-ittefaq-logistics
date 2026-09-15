@@ -36,22 +36,22 @@ class DriversController extends Controller
         
         // Only validate file fields if files are actually uploaded
         if ($request->hasFile('driver_picture')) {
-            $validationRules['driver_picture'] = 'nullable|image|max:2048';
+            $validationRules['driver_picture'] = 'nullable|image';
         }
         if ($request->hasFile('cnic_picture')) {
-            $validationRules['cnic_picture'] = 'nullable|image|max:2048';
+            $validationRules['cnic_picture'] = 'nullable|image';
         }
         if ($request->hasFile('license_picture')) {
-            $validationRules['license_picture'] = 'nullable|image|max:2048';
+            $validationRules['license_picture'] = 'nullable|image';
         }
         
         // Only add validation for new fields if columns exist and files are uploaded
         if ($hasNewColumns) {
             if ($request->hasFile('cnic_picture_back')) {
-                $validationRules['cnic_picture_back'] = 'nullable|image|max:2048';
+                $validationRules['cnic_picture_back'] = 'nullable|image';
             }
             if ($request->hasFile('license_picture_back')) {
-                $validationRules['license_picture_back'] = 'nullable|image|max:2048';
+                $validationRules['license_picture_back'] = 'nullable|image';
             }
         }
         
@@ -193,22 +193,22 @@ class DriversController extends Controller
         
         // Only validate file fields if files are actually uploaded
         if ($request->hasFile('driver_picture')) {
-            $validationRules['driver_picture'] = 'nullable|image|max:2048';
+            $validationRules['driver_picture'] = 'nullable|image';
         }
         if ($request->hasFile('cnic_picture')) {
-            $validationRules['cnic_picture'] = 'nullable|image|max:2048';
+            $validationRules['cnic_picture'] = 'nullable|image';
         }
         if ($request->hasFile('license_picture')) {
-            $validationRules['license_picture'] = 'nullable|image|max:2048';
+            $validationRules['license_picture'] = 'nullable|image';
         }
         
         // Only add validation for new fields if columns exist and files are uploaded
         if ($hasNewColumns) {
             if ($request->hasFile('cnic_picture_back')) {
-                $validationRules['cnic_picture_back'] = 'nullable|image|max:2048';
+                $validationRules['cnic_picture_back'] = 'nullable|image';
             }
             if ($request->hasFile('license_picture_back')) {
-                $validationRules['license_picture_back'] = 'nullable|image|max:2048';
+                $validationRules['license_picture_back'] = 'nullable|image';
             }
         }
         
