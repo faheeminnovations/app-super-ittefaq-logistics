@@ -327,6 +327,11 @@ $(document).ready(function() {
         console.log('Submitting form with URL:', url);
         console.log('Form data keys:', Array.from(formData.keys()));
 
+        // Show loading state
+        var submitBtn = $(this).find('button[type="submit"]');
+        var originalText = submitBtn.text();
+        submitBtn.prop('disabled', true).html('<i class="spinner-border spinner-border-sm me-2"></i>Saving...');
+
         // Always use POST for AJAX, Laravel will read _method field
         $.ajax({
             url: url,
@@ -334,6 +339,7 @@ $(document).ready(function() {
             data: formData,
             processData: false,
             contentType: false,
+            timeout: 60000, // 60 seconds timeout
             headers: {
                 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
             },
@@ -344,6 +350,7 @@ $(document).ready(function() {
                     location.reload();
                 } else {
                     alert(response.message || 'Error saving driver');
+                    submitBtn.prop('disabled', false).text(originalText);
                 }
             },
             error: function(xhr) {
@@ -370,6 +377,13 @@ $(document).ready(function() {
                     }
                 }
                 alert(errorMessage);
+                submitBtn.prop('disabled', false).text(originalText);
+            },
+            complete: function() {
+                // Reset button state if modal is still open
+                if ($('#driverModal').hasClass('show')) {
+                    submitBtn.prop('disabled', false).text(originalText);
+                }
             }
         });
     });

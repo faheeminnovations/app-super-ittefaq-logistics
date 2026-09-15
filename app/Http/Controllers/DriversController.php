@@ -52,40 +52,34 @@ class DriversController extends Controller
                 $file = $request->file('driver_picture');
                 $path = $file->store('driver_pictures', 'public');
                 $data['driver_picture'] = $path;
-                \Log::info('Driver picture uploaded successfully: ' . $path);
             }
 
             if ($request->hasFile('cnic_picture')) {
                 $file = $request->file('cnic_picture');
                 $path = $file->store('cnic_pictures', 'public');
                 $data['cnic_picture'] = $path;
-                \Log::info('CNIC picture uploaded successfully: ' . $path);
             }
 
             if ($hasNewColumns && $request->hasFile('cnic_picture_back')) {
                 $file = $request->file('cnic_picture_back');
                 $path = $file->store('cnic_pictures', 'public');
                 $data['cnic_picture_back'] = $path;
-                \Log::info('CNIC picture back uploaded successfully: ' . $path);
             }
 
             if ($request->hasFile('license_picture')) {
                 $file = $request->file('license_picture');
                 $path = $file->store('license_pictures', 'public');
                 $data['license_picture'] = $path;
-                \Log::info('License picture uploaded successfully: ' . $path);
             }
 
             if ($hasNewColumns && $request->hasFile('license_picture_back')) {
                 $file = $request->file('license_picture_back');
                 $path = $file->store('license_pictures', 'public');
                 $data['license_picture_back'] = $path;
-                \Log::info('License picture back uploaded successfully: ' . $path);
             }
         } catch (\Exception $e) {
             \Log::error('File upload failed: ' . $e->getMessage());
             // Continue without file uploads if they fail
-            \Log::info('Continuing without file uploads');
         }
 
         try {
@@ -173,7 +167,6 @@ class DriversController extends Controller
                 $file = $request->file('driver_picture');
                 $path = $file->store('driver_pictures', 'public');
                 $data['driver_picture'] = $path;
-                \Log::info('Driver picture updated successfully: ' . $path);
             }
 
             if ($request->hasFile('cnic_picture')) {
@@ -184,7 +177,6 @@ class DriversController extends Controller
                 $file = $request->file('cnic_picture');
                 $path = $file->store('cnic_pictures', 'public');
                 $data['cnic_picture'] = $path;
-                \Log::info('CNIC picture updated successfully: ' . $path);
             }
 
             if ($hasNewColumns && $request->hasFile('cnic_picture_back')) {
@@ -195,7 +187,6 @@ class DriversController extends Controller
                 $file = $request->file('cnic_picture_back');
                 $path = $file->store('cnic_pictures', 'public');
                 $data['cnic_picture_back'] = $path;
-                \Log::info('CNIC picture back updated successfully: ' . $path);
             }
 
             if ($request->hasFile('license_picture')) {
@@ -206,7 +197,6 @@ class DriversController extends Controller
                 $file = $request->file('license_picture');
                 $path = $file->store('license_pictures', 'public');
                 $data['license_picture'] = $path;
-                \Log::info('License picture updated successfully: ' . $path);
             }
 
             if ($hasNewColumns && $request->hasFile('license_picture_back')) {
@@ -217,12 +207,10 @@ class DriversController extends Controller
                 $file = $request->file('license_picture_back');
                 $path = $file->store('license_pictures', 'public');
                 $data['license_picture_back'] = $path;
-                \Log::info('License picture back updated successfully: ' . $path);
             }
         } catch (\Exception $e) {
             \Log::error('File upload failed: ' . $e->getMessage());
             // Continue without file uploads if they fail
-            \Log::info('Continuing without file uploads');
         }
 
         try {
