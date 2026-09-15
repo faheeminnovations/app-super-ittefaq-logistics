@@ -209,7 +209,7 @@
                 <label for="cnic_picture" class="form-label">CNIC Picture (Front)</label>
                 <input type="file" class="form-control" name="cnic_picture" id="cnic_picture" accept="image/*">
               </div>
-              <div class="col-md-4 mb-3 back-field" style="display:none;">
+              <div class="col-md-4 mb-3">
                 <label for="cnic_picture_back" class="form-label">CNIC Picture (Back)</label>
                 <input type="file" class="form-control" name="cnic_picture_back" id="cnic_picture_back" accept="image/*">
               </div>
@@ -220,7 +220,7 @@
                 <label for="license_picture" class="form-label">License Picture (Front)</label>
                 <input type="file" class="form-control" name="license_picture" id="license_picture" accept="image/*">
               </div>
-              <div class="col-md-6 mb-3 back-field" style="display:none;">
+              <div class="col-md-6 mb-3">
                 <label for="license_picture_back" class="form-label">License Picture (Back)</label>
                 <input type="file" class="form-control" name="license_picture_back" id="license_picture_back" accept="image/*">
               </div>
@@ -283,24 +283,6 @@
 @push('scripts')
 <script>
 $(document).ready(function() {
-    // Check if new fields exist in database and show/hide back fields accordingly
-    $.ajax({
-        url: '/drivers/check-new-fields',
-        type: 'GET',
-        headers: {
-            'Accept': 'application/json'
-        },
-        success: function(response) {
-            if (response.has_new_fields) {
-                $('.back-field').show();
-            }
-        },
-        error: function() {
-            // If check fails, hide back fields by default
-            $('.back-field').hide();
-        }
-    });
-
     // Initialize DataTable
     $('#driversTable').DataTable({
         pageLength: 10,
@@ -480,10 +462,24 @@ function viewDriver(id) {
                 <div class="row mt-3">
                     <div class="col-12">
                         <h6>Document Pictures</h6>
-                        <p><strong>CNIC Picture (Front):</strong> ${driver.cnic_picture ? '✓ Uploaded' : 'Not uploaded'}</p>
-                        <p><strong>CNIC Picture (Back):</strong> ${driver.cnic_picture_back ? '✓ Uploaded' : 'Not uploaded'}</p>
-                        <p><strong>License Picture (Front):</strong> ${driver.license_picture ? '✓ Uploaded' : 'Not uploaded'}</p>
-                        <p><strong>License Picture (Back):</strong> ${driver.license_picture_back ? '✓ Uploaded' : 'Not uploaded'}</p>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <strong>CNIC Picture (Front):</strong>
+                                ${driver.cnic_picture ? `<img src="/storage/${driver.cnic_picture}" class="img-fluid mt-2" style="max-height: 200px; border: 1px solid #ddd;">` : '<p class="text-muted">Not uploaded</p>'}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <strong>CNIC Picture (Back):</strong>
+                                ${driver.cnic_picture_back ? `<img src="/storage/${driver.cnic_picture_back}" class="img-fluid mt-2" style="max-height: 200px; border: 1px solid #ddd;">` : '<p class="text-muted">Not uploaded</p>'}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <strong>License Picture (Front):</strong>
+                                ${driver.license_picture ? `<img src="/storage/${driver.license_picture}" class="img-fluid mt-2" style="max-height: 200px; border: 1px solid #ddd;">` : '<p class="text-muted">Not uploaded</p>'}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <strong>License Picture (Back):</strong>
+                                ${driver.license_picture_back ? `<img src="/storage/${driver.license_picture_back}" class="img-fluid mt-2" style="max-height: 200px; border: 1px solid #ddd;">` : '<p class="text-muted">Not uploaded</p>'}
+                            </div>
+                        </div>
                     </div>
                 </div>
             `;
