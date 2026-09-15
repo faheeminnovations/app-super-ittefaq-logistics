@@ -32,15 +32,27 @@ class DriversController extends Controller
             'status' => 'nullable|string|max:255',
             'address' => 'nullable|string',
             'licence_expiry' => 'nullable|date',
-            'driver_picture' => 'nullable|image|max:2048',
-            'cnic_picture' => 'nullable|image|max:2048',
-            'license_picture' => 'nullable|image|max:2048',
         ];
         
-        // Only add validation for new fields if columns exist
+        // Only validate file fields if files are actually uploaded
+        if ($request->hasFile('driver_picture')) {
+            $validationRules['driver_picture'] = 'nullable|image|max:2048';
+        }
+        if ($request->hasFile('cnic_picture')) {
+            $validationRules['cnic_picture'] = 'nullable|image|max:2048';
+        }
+        if ($request->hasFile('license_picture')) {
+            $validationRules['license_picture'] = 'nullable|image|max:2048';
+        }
+        
+        // Only add validation for new fields if columns exist and files are uploaded
         if ($hasNewColumns) {
-            $validationRules['cnic_picture_back'] = 'nullable|image|max:2048';
-            $validationRules['license_picture_back'] = 'nullable|image|max:2048';
+            if ($request->hasFile('cnic_picture_back')) {
+                $validationRules['cnic_picture_back'] = 'nullable|image|max:2048';
+            }
+            if ($request->hasFile('license_picture_back')) {
+                $validationRules['license_picture_back'] = 'nullable|image|max:2048';
+            }
         }
         
         $validated = $request->validate($validationRules);
@@ -61,8 +73,10 @@ class DriversController extends Controller
                 $file = $request->file('driver_picture');
                 $path = $file->store('driver_pictures', 'public');
                 $data['driver_picture'] = $path;
+                \Log::info('Driver picture uploaded successfully: ' . $path);
             } catch (\Exception $e) {
                 \Log::error('Driver picture upload failed: ' . $e->getMessage());
+                return response()->json(['success' => false, 'message' => 'Driver picture upload failed: ' . $e->getMessage()], 500);
             }
         }
 
@@ -71,8 +85,10 @@ class DriversController extends Controller
                 $file = $request->file('cnic_picture');
                 $path = $file->store('cnic_pictures', 'public');
                 $data['cnic_picture'] = $path;
+                \Log::info('CNIC picture uploaded successfully: ' . $path);
             } catch (\Exception $e) {
                 \Log::error('CNIC picture upload failed: ' . $e->getMessage());
+                return response()->json(['success' => false, 'message' => 'CNIC picture upload failed: ' . $e->getMessage()], 500);
             }
         }
 
@@ -81,8 +97,10 @@ class DriversController extends Controller
                 $file = $request->file('cnic_picture_back');
                 $path = $file->store('cnic_pictures', 'public');
                 $data['cnic_picture_back'] = $path;
+                \Log::info('CNIC picture back uploaded successfully: ' . $path);
             } catch (\Exception $e) {
                 \Log::error('CNIC picture back upload failed: ' . $e->getMessage());
+                return response()->json(['success' => false, 'message' => 'CNIC picture back upload failed: ' . $e->getMessage()], 500);
             }
         }
 
@@ -91,8 +109,10 @@ class DriversController extends Controller
                 $file = $request->file('license_picture');
                 $path = $file->store('license_pictures', 'public');
                 $data['license_picture'] = $path;
+                \Log::info('License picture uploaded successfully: ' . $path);
             } catch (\Exception $e) {
                 \Log::error('License picture upload failed: ' . $e->getMessage());
+                return response()->json(['success' => false, 'message' => 'License picture upload failed: ' . $e->getMessage()], 500);
             }
         }
 
@@ -101,45 +121,28 @@ class DriversController extends Controller
                 $file = $request->file('license_picture_back');
                 $path = $file->store('license_pictures', 'public');
                 $data['license_picture_back'] = $path;
+                \Log::info('License picture back uploaded successfully: ' . $path);
             } catch (\Exception $e) {
                 \Log::error('License picture back upload failed: ' . $e->getMessage());
+                return response()->json(['success' => false, 'message' => 'License picture back upload failed: ' . $e->getMessage()], 500);
             }
         }
 
-        // Handle file uploads
-        if ($request->hasFile('driver_picture')) {
-            $file = $request->file('driver_picture');
-            $path = $file->store('driver_pictures', 'public');
-            $data['driver_picture'] = $path;
+        try {
+            \Log::info('Creating driver with data: ', $data);
+            $driver = Driver::create($data);
+            \Log::info('Driver created successfully with ID: ' . $driver->id);
+
+            // Always return JSON response since this is called via AJAX
+            return response()->json(['success' => true, 'message' => 'Driver created successfully']);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Validation error: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Validation failed: ' . $e->getMessage(), 'errors' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            \Log::error('Error creating driver: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            return response()->json(['success' => false, 'message' => 'Error creating driver: ' . $e->getMessage()], 500);
         }
-
-        if ($request->hasFile('cnic_picture')) {
-            $file = $request->file('cnic_picture');
-            $path = $file->store('cnic_pictures', 'public');
-            $data['cnic_picture'] = $path;
-        }
-
-        if ($request->hasFile('cnic_picture_back')) {
-            $file = $request->file('cnic_picture_back');
-            $path = $file->store('cnic_pictures', 'public');
-            $data['cnic_picture_back'] = $path;
-        }
-
-        if ($request->hasFile('license_picture')) {
-            $file = $request->file('license_picture');
-            $path = $file->store('license_pictures', 'public');
-            $data['license_picture'] = $path;
-        }
-
-        if ($request->hasFile('license_picture_back')) {
-            $file = $request->file('license_picture_back');
-            $path = $file->store('license_pictures', 'public');
-            $data['license_picture_back'] = $path;
-        }
-
-        Driver::create($data);
-
-        return redirect()->route('drivers.index')->with('success', 'Driver created successfully.');
     }
 
     /**
@@ -186,15 +189,27 @@ class DriversController extends Controller
             'status' => 'nullable|string|max:255',
             'address' => 'nullable|string',
             'licence_expiry' => 'nullable|date',
-            'driver_picture' => 'nullable|image|max:2048',
-            'cnic_picture' => 'nullable|image|max:2048',
-            'license_picture' => 'nullable|image|max:2048',
         ];
         
-        // Only add validation for new fields if columns exist
+        // Only validate file fields if files are actually uploaded
+        if ($request->hasFile('driver_picture')) {
+            $validationRules['driver_picture'] = 'nullable|image|max:2048';
+        }
+        if ($request->hasFile('cnic_picture')) {
+            $validationRules['cnic_picture'] = 'nullable|image|max:2048';
+        }
+        if ($request->hasFile('license_picture')) {
+            $validationRules['license_picture'] = 'nullable|image|max:2048';
+        }
+        
+        // Only add validation for new fields if columns exist and files are uploaded
         if ($hasNewColumns) {
-            $validationRules['cnic_picture_back'] = 'nullable|image|max:2048';
-            $validationRules['license_picture_back'] = 'nullable|image|max:2048';
+            if ($request->hasFile('cnic_picture_back')) {
+                $validationRules['cnic_picture_back'] = 'nullable|image|max:2048';
+            }
+            if ($request->hasFile('license_picture_back')) {
+                $validationRules['license_picture_back'] = 'nullable|image|max:2048';
+            }
         }
         
         $validated = $request->validate($validationRules);
@@ -219,8 +234,10 @@ class DriversController extends Controller
                 $file = $request->file('driver_picture');
                 $path = $file->store('driver_pictures', 'public');
                 $data['driver_picture'] = $path;
+                \Log::info('Driver picture updated successfully: ' . $path);
             } catch (\Exception $e) {
                 \Log::error('Driver picture upload failed: ' . $e->getMessage());
+                return response()->json(['success' => false, 'message' => 'Driver picture upload failed: ' . $e->getMessage()], 500);
             }
         }
 
@@ -233,8 +250,10 @@ class DriversController extends Controller
                 $file = $request->file('cnic_picture');
                 $path = $file->store('cnic_pictures', 'public');
                 $data['cnic_picture'] = $path;
+                \Log::info('CNIC picture updated successfully: ' . $path);
             } catch (\Exception $e) {
                 \Log::error('CNIC picture upload failed: ' . $e->getMessage());
+                return response()->json(['success' => false, 'message' => 'CNIC picture upload failed: ' . $e->getMessage()], 500);
             }
         }
 
@@ -247,8 +266,10 @@ class DriversController extends Controller
                 $file = $request->file('cnic_picture_back');
                 $path = $file->store('cnic_pictures', 'public');
                 $data['cnic_picture_back'] = $path;
+                \Log::info('CNIC picture back updated successfully: ' . $path);
             } catch (\Exception $e) {
                 \Log::error('CNIC picture back upload failed: ' . $e->getMessage());
+                return response()->json(['success' => false, 'message' => 'CNIC picture back upload failed: ' . $e->getMessage()], 500);
             }
         }
 
@@ -261,8 +282,10 @@ class DriversController extends Controller
                 $file = $request->file('license_picture');
                 $path = $file->store('license_pictures', 'public');
                 $data['license_picture'] = $path;
+                \Log::info('License picture updated successfully: ' . $path);
             } catch (\Exception $e) {
                 \Log::error('License picture upload failed: ' . $e->getMessage());
+                return response()->json(['success' => false, 'message' => 'License picture upload failed: ' . $e->getMessage()], 500);
             }
         }
 
@@ -275,14 +298,27 @@ class DriversController extends Controller
                 $file = $request->file('license_picture_back');
                 $path = $file->store('license_pictures', 'public');
                 $data['license_picture_back'] = $path;
+                \Log::info('License picture back updated successfully: ' . $path);
             } catch (\Exception $e) {
                 \Log::error('License picture back upload failed: ' . $e->getMessage());
+                return response()->json(['success' => false, 'message' => 'License picture back upload failed: ' . $e->getMessage()], 500);
             }
         }
 
-        $driver->update($data);
+        try {
+            \Log::info('Updating driver with ID: ' . $driver->id . ' data: ', $data);
+            $driver->update($data);
+            \Log::info('Driver updated successfully with ID: ' . $driver->id);
 
-        return response()->json(['success' => true, 'message' => 'Driver updated successfully']);
+            return response()->json(['success' => true, 'message' => 'Driver updated successfully']);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Validation error during update: ' . $e->getMessage());
+            return response()->json(['success' => false, 'message' => 'Validation failed: ' . $e->getMessage(), 'errors' => $e->errors()], 422);
+        } catch (\Exception $e) {
+            \Log::error('Error updating driver: ' . $e->getMessage());
+            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            return response()->json(['success' => false, 'message' => 'Error updating driver: ' . $e->getMessage()], 500);
+        }
     }
 
     public function show($id)

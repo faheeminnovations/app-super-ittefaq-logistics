@@ -332,6 +332,15 @@ $(document).ready(function() {
         // Use FormData for file uploads
         var formData = new FormData(this);
 
+        // Remove empty file inputs from FormData to avoid validation errors
+        var fileInputs = ['driver_picture', 'cnic_picture', 'cnic_picture_back', 'license_picture', 'license_picture_back'];
+        fileInputs.forEach(function(fieldName) {
+            var fileInput = document.getElementById(fieldName);
+            if (fileInput && fileInput.files.length === 0) {
+                formData.delete(fieldName);
+            }
+        });
+
         // Log form data for debugging
         console.log('Submitting form with URL:', url);
         console.log('Form data keys:', Array.from(formData.keys()));
@@ -348,8 +357,12 @@ $(document).ready(function() {
             },
             success: function(response) {
                 console.log('Success response:', response);
-                $('#driverModal').modal('hide');
-                location.reload();
+                if (response.success) {
+                    $('#driverModal').modal('hide');
+                    location.reload();
+                } else {
+                    alert(response.message || 'Error saving driver');
+                }
             },
             error: function(xhr) {
                 console.error('Error response:', xhr);
