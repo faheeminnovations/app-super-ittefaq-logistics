@@ -7,6 +7,7 @@ use App\Http\Controllers\BiltyController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DriverController;
+use App\Http\Controllers\DriversController;
 use App\Http\Controllers\DispatchController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\ExpenseController;
@@ -75,7 +76,7 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 Route::middleware(['auth', 'role:admin,dispatcher,manager'])->group(function () {
     Route::resource('customers', CustomerController::class);
     Route::resource('vehicles', VehicleController::class);
-    Route::resource('drivers', DriverController::class);
+    Route::resource('drivers', DriversController::class);
     Route::resource('jobs', JobController::class);
     Route::resource('trips', TripController::class);
     Route::resource('dispatch', DispatchController::class);
@@ -93,7 +94,8 @@ Route::middleware(['auth', 'role:admin,dispatcher,manager'])->group(function () 
     Route::post('/jobs/export', [JobController::class, 'export'])->name('jobs.export');
     Route::post('/customers/export', [CustomerController::class, 'export'])->name('customers.export');
     Route::post('/vehicles/export', [VehicleController::class, 'export'])->name('vehicles.export');
-    Route::post('/drivers/export', [DriverController::class, 'export'])->name('drivers.export');
+    Route::post('/drivers/export', [DriversController::class, 'export'])->name('drivers.export');
+    Route::get('/drivers/check-new-fields', [DriversController::class, 'checkNewFields'])->name('drivers.check-new-fields');
     
     // Bilty routes
     Route::resource('bilties', BiltyController::class);
@@ -208,7 +210,7 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth', 'role:admin,dispatcher,manager'])->group(function () {
     Route::get('/api/jobs/{id}', [JobController::class, 'show']);
     Route::get('/api/customers/{id}', [CustomerController::class, 'show']);
-    Route::get('/api/drivers/{id}', [DriverController::class, 'show']);
+    Route::get('/api/drivers/{id}', [DriversController::class, 'show']);
     Route::get('/api/vehicles/{id}', [VehicleController::class, 'show']);
     Route::get('/api/trips/{id}', [TripController::class, 'show']);
     Route::get('/api/dispatch/{id}', [DispatchController::class, 'show']);

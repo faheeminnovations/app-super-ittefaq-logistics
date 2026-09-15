@@ -21,7 +21,9 @@ class DriversController extends Controller
 
     public function store(Request $request)
     {
-        $validated = $request->validate([
+        $hasNewColumns = $this->checkNewColumnsExist();
+        
+        $validationRules = [
             'name' => 'required|string|max:255',
             'licence_no' => 'nullable|string|max:255',
             'cnic' => 'nullable|string|max:255',
@@ -32,12 +34,52 @@ class DriversController extends Controller
             'licence_expiry' => 'nullable|date',
             'driver_picture' => 'nullable|image|max:2048',
             'cnic_picture' => 'nullable|image|max:2048',
-            'cnic_picture_back' => 'nullable|image|max:2048',
             'license_picture' => 'nullable|image|max:2048',
-            'license_picture_back' => 'nullable|image|max:2048',
-        ]);
+        ];
+        
+        // Only add validation for new fields if columns exist
+        if ($hasNewColumns) {
+            $validationRules['cnic_picture_back'] = 'nullable|image|max:2048';
+            $validationRules['license_picture_back'] = 'nullable|image|max:2048';
+        }
+        
+        $validated = $request->validate($validationRules);
 
         $data = $request->except(['_token', 'driver_picture', 'cnic_picture', 'cnic_picture_back', 'license_picture', 'license_picture_back']);
+
+        // Check if new columns exist in database before adding them to data
+        $hasNewColumns = $this->checkNewColumnsExist();
+
+        // Handle file uploads
+        if ($request->hasFile('driver_picture')) {
+            $file = $request->file('driver_picture');
+            $path = $file->store('driver_pictures', 'public');
+            $data['driver_picture'] = $path;
+        }
+
+        if ($request->hasFile('cnic_picture')) {
+            $file = $request->file('cnic_picture');
+            $path = $file->store('cnic_pictures', 'public');
+            $data['cnic_picture'] = $path;
+        }
+
+        if ($hasNewColumns && $request->hasFile('cnic_picture_back')) {
+            $file = $request->file('cnic_picture_back');
+            $path = $file->store('cnic_pictures', 'public');
+            $data['cnic_picture_back'] = $path;
+        }
+
+        if ($request->hasFile('license_picture')) {
+            $file = $request->file('license_picture');
+            $path = $file->store('license_pictures', 'public');
+            $data['license_picture'] = $path;
+        }
+
+        if ($hasNewColumns && $request->hasFile('license_picture_back')) {
+            $file = $request->file('license_picture_back');
+            $path = $file->store('license_pictures', 'public');
+            $data['license_picture_back'] = $path;
+        }
 
         // Handle file uploads
         if ($request->hasFile('driver_picture')) {
@@ -75,6 +117,29 @@ class DriversController extends Controller
         return redirect()->route('drivers.index')->with('success', 'Driver created successfully.');
     }
 
+    /**
+     * Check if new columns exist in database
+     */
+    private function checkNewColumnsExist()
+    {
+        try {
+            $columns = \Schema::getColumnListing('drivers');
+            return in_array('cnic_picture_back', $columns) && in_array('license_picture_back', $columns);
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+
+    /**
+     * Check if new fields exist (for frontend)
+     */
+    public function checkNewFields()
+    {
+        return response()->json([
+            'has_new_fields' => $this->checkNewColumnsExist()
+        ]);
+    }
+
     public function edit($id)
     {
         $driver = Driver::findOrFail($id);
@@ -85,7 +150,9 @@ class DriversController extends Controller
     {
         $driver = Driver::findOrFail($id);
 
-        $validated = $request->validate([
+        $hasNewColumns = $this->checkNewColumnsExist();
+        
+        $validationRules = [
             'name' => 'required|string|max:255',
             'licence_no' => 'nullable|string|max:255',
             'cnic' => 'nullable|string|max:255',
@@ -96,12 +163,21 @@ class DriversController extends Controller
             'licence_expiry' => 'nullable|date',
             'driver_picture' => 'nullable|image|max:2048',
             'cnic_picture' => 'nullable|image|max:2048',
-            'cnic_picture_back' => 'nullable|image|max:2048',
             'license_picture' => 'nullable|image|max:2048',
-            'license_picture_back' => 'nullable|image|max:2048',
-        ]);
+        ];
+        
+        // Only add validation for new fields if columns exist
+        if ($hasNewColumns) {
+            $validationRules['cnic_picture_back'] = 'nullable|image|max:2048';
+            $validationRules['license_picture_back'] = 'nullable|image|max:2048';
+        }
+        
+        $validated = $request->validate($validationRules);
 
         $data = $request->except(['_token', '_method', 'driver_picture', 'cnic_picture', 'cnic_picture_back', 'license_picture', 'license_picture_back']);
+
+        // Check if new columns exist in database
+        $hasNewColumns = $this->checkNewColumnsExist();
 
         // Handle file uploads
         if ($request->hasFile('driver_picture')) {
@@ -124,7 +200,7 @@ class DriversController extends Controller
             $data['cnic_picture'] = $path;
         }
 
-        if ($request->hasFile('cnic_picture_back')) {
+        if ($hasNewColumns && $request->hasFile('cnic_picture_back')) {
             // Delete old file if exists
             if ($driver->cnic_picture_back) {
                 Storage::disk('public')->delete($driver->cnic_picture_back);
@@ -144,7 +220,7 @@ class DriversController extends Controller
             $data['license_picture'] = $path;
         }
 
-        if ($request->hasFile('license_picture_back')) {
+        if ($hasNewColumns && $request->hasFile('license_picture_back')) {
             // Delete old file if exists
             if ($driver->license_picture_back) {
                 Storage::disk('public')->delete($driver->license_picture_back);
@@ -176,13 +252,13 @@ class DriversController extends Controller
         if ($driver->cnic_picture) {
             Storage::disk('public')->delete($driver->cnic_picture);
         }
-        if ($driver->cnic_picture_back) {
+        if ($this->checkNewColumnsExist() && $driver->cnic_picture_back) {
             Storage::disk('public')->delete($driver->cnic_picture_back);
         }
         if ($driver->license_picture) {
             Storage::disk('public')->delete($driver->license_picture);
         }
-        if ($driver->license_picture_back) {
+        if ($this->checkNewColumnsExist() && $driver->license_picture_back) {
             Storage::disk('public')->delete($driver->license_picture_back);
         }
 
@@ -196,10 +272,17 @@ class DriversController extends Controller
         $drivers = Driver::all();
         $csv = fopen('php://temp', 'r+');
 
-        fputcsv($csv, ['ID', 'Name', 'Licence No', 'CNIC', 'Category', 'Phone', 'Status', 'Address', 'Licence Expiry', 'CNIC Picture', 'CNIC Picture Back', 'License Picture', 'License Picture Back']);
+        $hasNewColumns = $this->checkNewColumnsExist();
+        $headers = ['ID', 'Name', 'Licence No', 'CNIC', 'Category', 'Phone', 'Status', 'Address', 'Licence Expiry', 'CNIC Picture', 'License Picture'];
+        
+        if ($hasNewColumns) {
+            $headers = array_merge($headers, ['CNIC Picture Back', 'License Picture Back']);
+        }
+        
+        fputcsv($csv, $headers);
 
         foreach ($drivers as $driver) {
-            fputcsv($csv, [
+            $row = [
                 $driver->id,
                 $driver->name,
                 $driver->licence_no,
@@ -210,10 +293,15 @@ class DriversController extends Controller
                 $driver->address,
                 $driver->licence_expiry,
                 $driver->cnic_picture,
-                $driver->cnic_picture_back,
                 $driver->license_picture,
-                $driver->license_picture_back,
-            ]);
+            ];
+            
+            if ($hasNewColumns) {
+                $row[] = $driver->cnic_picture_back ?? '';
+                $row[] = $driver->license_picture_back ?? '';
+            }
+            
+            fputcsv($csv, $row);
         }
 
         rewind($csv);

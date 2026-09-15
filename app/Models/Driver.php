@@ -23,6 +23,20 @@ class Driver extends Model
         'licence_expiry',
     ];
 
+    /**
+     * Boot method to handle dynamic fillable fields based on database schema
+     */
+    protected static function boot()
+    {
+        parent::boot();
+
+        static::saving(function ($model) {
+            // Remove fields that don't exist in database schema
+            $columns = \Schema::getColumnListing('drivers');
+            $model->attributes = array_intersect_key($model->attributes, array_flip($columns));
+        });
+    }
+
     protected $casts = [
         'licence_expiry' => 'date',
     ];

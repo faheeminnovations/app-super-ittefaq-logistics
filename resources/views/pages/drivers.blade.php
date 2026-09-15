@@ -209,7 +209,7 @@
                 <label for="cnic_picture" class="form-label">CNIC Picture (Front)</label>
                 <input type="file" class="form-control" name="cnic_picture" id="cnic_picture" accept="image/*">
               </div>
-              <div class="col-md-4 mb-3">
+              <div class="col-md-4 mb-3 back-field" style="display:none;">
                 <label for="cnic_picture_back" class="form-label">CNIC Picture (Back)</label>
                 <input type="file" class="form-control" name="cnic_picture_back" id="cnic_picture_back" accept="image/*">
               </div>
@@ -220,7 +220,7 @@
                 <label for="license_picture" class="form-label">License Picture (Front)</label>
                 <input type="file" class="form-control" name="license_picture" id="license_picture" accept="image/*">
               </div>
-              <div class="col-md-6 mb-3">
+              <div class="col-md-6 mb-3 back-field" style="display:none;">
                 <label for="license_picture_back" class="form-label">License Picture (Back)</label>
                 <input type="file" class="form-control" name="license_picture_back" id="license_picture_back" accept="image/*">
               </div>
@@ -283,6 +283,24 @@
 @push('scripts')
 <script>
 $(document).ready(function() {
+    // Check if new fields exist in database and show/hide back fields accordingly
+    $.ajax({
+        url: '/drivers/check-new-fields',
+        type: 'GET',
+        headers: {
+            'Accept': 'application/json'
+        },
+        success: function(response) {
+            if (response.has_new_fields) {
+                $('.back-field').show();
+            }
+        },
+        error: function() {
+            // If check fails, hide back fields by default
+            $('.back-field').hide();
+        }
+    });
+
     // Initialize DataTable
     $('#driversTable').DataTable({
         pageLength: 10,
