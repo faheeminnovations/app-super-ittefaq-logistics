@@ -169,14 +169,10 @@
 <script>
 // Load notifications on page load
 document.addEventListener('DOMContentLoaded', function() {
-  // Only load notifications if user is authenticated
-  @if(auth()->check())
   loadNotifications();
   
   // Refresh notifications every 30 seconds
-  @if(auth()->check())
   setInterval(loadNotifications, 30000);
-  @endif
 });
 
 function loadNotifications() {
@@ -184,10 +180,6 @@ function loadNotifications() {
   const notificationDot = document.getElementById('notificationDot');
   
   if (!notificationList) return;
-  
-  // Check if user is authenticated by checking for csrf token
-  const csrfToken = document.querySelector('meta[name="csrf-token"]');
-  if (!csrfToken) return;
   
   fetch('{{ route("notifications.get") }}')
     .then(response => response.json())
@@ -281,14 +273,11 @@ function getTimeAgo(dateString) {
 }
 
 function markAsRead(id) {
-  const csrfToken = document.querySelector('meta[name="csrf-token"]');
-  if (!csrfToken) return;
-  
   fetch('{{ route("notifications.mark-read") }}', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-CSRF-TOKEN': csrfToken.content
+      'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
     },
     body: JSON.stringify({ notification_id: id })
   })
@@ -304,14 +293,11 @@ function markAsRead(id) {
 }
 
 function markAllAsRead() {
-  const csrfToken = document.querySelector('meta[name="csrf-token"]');
-  if (!csrfToken) return;
-  
   fetch('{{ route("notifications.mark-all-read") }}', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-CSRF-TOKEN': csrfToken.content
+      'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
     }
   })
   .then(response => response.json())

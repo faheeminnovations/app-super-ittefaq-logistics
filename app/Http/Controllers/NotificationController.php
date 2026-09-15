@@ -27,14 +27,6 @@ class NotificationController extends Controller
 
     public function getNotifications(): JsonResponse
     {
-        // Check if user is authenticated
-        if (!auth()->check()) {
-            return response()->json([
-                'notifications' => [],
-                'unread_count' => 0,
-            ]);
-        }
-
         $notifications = $this->notificationService->getUserNotifications(auth()->id(), 5);
         $unreadCount = $this->notificationService->getUnreadCount(auth()->id());
         
