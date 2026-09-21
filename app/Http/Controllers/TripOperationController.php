@@ -20,14 +20,15 @@ class TripOperationController extends Controller
         $query = TripOperation::query();
 
         // Filter by month if provided
-        if ($request->filled('month') && $request->filled('year')) {
+        if ($request->filled('month')) {
             $monthNumber = $request->month;
+            $query->where('billing_month_number', $monthNumber);
+        }
+
+        // Filter by year if provided
+        if ($request->filled('year')) {
             $year = $request->year;
-            $monthName = Carbon::create()->month($monthNumber)->format('F');
-            $billingMonth = $monthName . '-' . $year;
-            $query->where('billing_month', $billingMonth)
-                  ->where('billing_year', $year)
-                  ->where('billing_month_number', $monthNumber);
+            $query->where('billing_year', $year);
         }
 
         // Filter by warehouse location if provided
