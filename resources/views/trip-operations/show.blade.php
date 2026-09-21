@@ -179,7 +179,7 @@
                             <div class="fw-semibold">{{ \App\Helpers\CurrencyHelper::formatCurrency($tripOperation->initial_amount) }}</div>
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label class="form-label text-muted">Amount Changed</label>
+                            <label class="form-label text-muted">Amount Charged</label>
                             <div class="fw-semibold">{{ \App\Helpers\CurrencyHelper::formatCurrency($tripOperation->amount_changed) }}</div>
                         </div>
                     </div>

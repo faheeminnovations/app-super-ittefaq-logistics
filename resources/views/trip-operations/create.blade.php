@@ -39,10 +39,6 @@
                     </div>
                     <div class="step {{ isset($tripOperation) && $tripOperation->current_wizard_step > 4 ? 'completed' : '' }} {{ isset($tripOperation) && $tripOperation->current_wizard_step == 4 ? 'active' : '' }}" data-step="4">
                         <div class="step-number">4</div>
-                        <div class="step-label">Business Details</div>
-                    </div>
-                    <div class="step {{ isset($tripOperation) && $tripOperation->current_wizard_step > 5 ? 'completed' : '' }} {{ isset($tripOperation) && $tripOperation->current_wizard_step == 5 ? 'active' : '' }}" data-step="5">
-                        <div class="step-number">5</div>
                         <div class="step-label">Final Step</div>
                     </div>
                 </div>
@@ -53,7 +49,7 @@
                 <input type="hidden" name="trip_id" id="trip_id" value="{{ isset($tripOperation) ? $tripOperation->id : '' }}">
                 <input type="hidden" name="step" id="currentStep" value="{{ isset($tripOperation) ? $tripOperation->current_wizard_step : 1 }}">
 
-                <!-- Step 1: Basic Information -->
+                <!-- Step 1: Basic Information + Business Details -->
                 <div class="wizard-step {{ !isset($tripOperation) || $tripOperation->current_wizard_step == 1 ? 'active' : '' }}" data-step="1">
                     <h4 class="mb-3">Step 1: Basic Information</h4>
                     <div class="row">
@@ -92,6 +88,43 @@
                             <label for="delivery_point" class="form-label">Delivery Point *</label>
                             <textarea class="form-control" id="delivery_point" name="delivery_point" rows="2" required placeholder="Enter delivery location(s)">{{ isset($tripOperation) ? $tripOperation->delivery_point : '' }}</textarea>
                             <small class="text-muted">Multiple locations can be separated by commas</small>
+                        </div>
+                    </div>
+
+                    <h4 class="mb-3 mt-4">Business Details</h4>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="business_category" class="form-label">Business Category *</label>
+                            <select class="form-select" id="business_category" name="business_category" required>
+                                <option value="">Select Category</option>
+                                @foreach($categories as $key => $category)
+                                    <option value="{{ $key }}" {{ isset($tripOperation) && $tripOperation->business_category == $key ? 'selected' : '' }}>{{ $category }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="customer_name" class="form-label">Customer Name</label>
+                            <input type="text" class="form-control" id="customer_name" name="customer_name" value="{{ isset($tripOperation) ? $tripOperation->customer_name : '' }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="warehouse_location" class="form-label">Warehouse Location</label>
+                            <select class="form-select" id="warehouse_location" name="warehouse_location">
+                                <option value="">Select Warehouse</option>
+                                <option value="Manga Mandi" {{ isset($tripOperation) && $tripOperation->warehouse_location == 'Manga Mandi' ? 'selected' : '' }}>Manga Mandi</option>
+                                <option value="Sundar" {{ isset($tripOperation) && $tripOperation->warehouse_location == 'Sundar' ? 'selected' : '' }}>Sundar</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="gl_number" class="form-label">GL Number</label>
+                            <input type="text" class="form-control" id="gl_number" name="gl_number" value="{{ isset($tripOperation) ? $tripOperation->gl_number : '' }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="load_id" class="form-label">Load ID</label>
+                            <input type="text" class="form-control" id="load_id" name="load_id" value="{{ isset($tripOperation) ? $tripOperation->load_id : '' }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="freight_bill_no" class="form-label">Freight Bill Number</label>
+                            <input type="text" class="form-control" id="freight_bill_no" name="freight_bill_no" value="{{ isset($tripOperation) ? $tripOperation->freight_bill_no : '' }}">
                         </div>
                     </div>
                 </div>
@@ -135,7 +168,7 @@
                     <div class="row">
                         <div class="col-md-4 mb-3">
                             <label for="fuel_type" class="form-label">Fuel Type</label>
-                            <input type="text" class="form-control" id="fuel_type" name="fuel_type" placeholder="e.g., Diesel, Petrol" value="{{ isset($tripOperation) ? $tripOperation->fuel_type : '' }}">
+                            <input type="text" class="form-control" id="fuel_type" name="fuel_type" placeholder="e.g., Petrol" value="{{ isset($tripOperation) ? $tripOperation->fuel_type : '' }}">
                         </div>
                         <div class="col-md-4 mb-3">
                             <label for="fuel" class="form-label">Fuel</label>
@@ -160,50 +193,9 @@
                     </div>
                 </div>
 
-                <!-- Step 4: Business Details -->
+                <!-- Step 4: Final Information -->
                 <div class="wizard-step {{ isset($tripOperation) && $tripOperation->current_wizard_step == 4 ? 'active' : '' }}" data-step="4">
-                    <h4 class="mb-3">Step 4: Business Details</h4>
-                    <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="business_category" class="form-label">Business Category *</label>
-                            <select class="form-select" id="business_category" name="business_category" required>
-                                <option value="">Select Category</option>
-                                @foreach($categories as $key => $category)
-                                    <option value="{{ $key }}" {{ isset($tripOperation) && $tripOperation->business_category == $key ? 'selected' : '' }}>{{ $category }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="customer_name" class="form-label">Customer Name</label>
-                            <input type="text" class="form-control" id="customer_name" name="customer_name" value="{{ isset($tripOperation) ? $tripOperation->customer_name : '' }}">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="warehouse_location" class="form-label">Warehouse Location</label>
-                            <select class="form-select" id="warehouse_location" name="warehouse_location">
-                                <option value="">Select Warehouse</option>
-                                @foreach($warehouses as $warehouse)
-                                    <option value="{{ $warehouse->location }}" {{ isset($tripOperation) && $tripOperation->warehouse_location == $warehouse->location ? 'selected' : '' }}>{{ $warehouse->name }}</option>
-                                @endforeach
-                            </select>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="gl_number" class="form-label">GL Number</label>
-                            <input type="text" class="form-control" id="gl_number" name="gl_number" value="{{ isset($tripOperation) ? $tripOperation->gl_number : '' }}">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="load_id" class="form-label">Load ID</label>
-                            <input type="text" class="form-control" id="load_id" name="load_id" value="{{ isset($tripOperation) ? $tripOperation->load_id : '' }}">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="freight_bill_no" class="form-label">Freight Bill Number</label>
-                            <input type="text" class="form-control" id="freight_bill_no" name="freight_bill_no" value="{{ isset($tripOperation) ? $tripOperation->freight_bill_no : '' }}">
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Step 5: Final Information -->
-                <div class="wizard-step {{ isset($tripOperation) && $tripOperation->current_wizard_step == 5 ? 'active' : '' }}" data-step="5">
-                    <h4 class="mb-3">Step 5: Final Information</h4>
+                    <h4 class="mb-3">Step 4: Final Information</h4>
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="loading_point" class="form-label">Loading Point</label>
@@ -234,7 +226,7 @@
                             <input type="number" step="0.01" class="form-control" id="initial_amount" name="initial_amount" value="{{ isset($tripOperation) ? $tripOperation->initial_amount : '' }}">
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label for="amount_changed" class="form-label">Amount Changed</label>
+                            <label for="amount_changed" class="form-label">Amount Charged</label>
                             <input type="number" step="0.01" class="form-control" id="amount_changed" name="amount_changed" value="{{ isset($tripOperation) ? $tripOperation->amount_changed : '' }}">
                         </div>
                         <div class="col-12 mb-3">
@@ -363,12 +355,12 @@
 @push('scripts')
 <script>
 let currentStep = 1;
-const totalSteps = 5;
+const totalSteps = 4;
 
 document.addEventListener('DOMContentLoaded', function() {
     // Set initial step based on existing trip operation
     @if(isset($tripOperation))
-        currentStep = {{ $tripOperation->current_wizard_step > 5 ? 5 : $tripOperation->current_wizard_step }};
+        currentStep = {{ $tripOperation->current_wizard_step > 4 ? 4 : $tripOperation->current_wizard_step }};
     @endif
 
     updateWizardUI();
@@ -402,7 +394,7 @@ function updateWizardUI() {
     });
 
     // Update progress bar
-    const progress = ((currentStep - 1) / totalSteps) * 100;
+    const progress = ((currentStep - 1) / (totalSteps - 1)) * 100;
     document.getElementById('overallProgress').style.width = progress + '%';
     document.getElementById('overallProgress').setAttribute('aria-valuenow', progress);
 
@@ -464,7 +456,7 @@ async function nextStep() {
             document.getElementById('trip_id').value = data.trip_id;
             currentStep = data.current_step;
 
-            if (data.is_complete || currentStep > 5) {
+            if (data.is_complete || currentStep > 4) {
                 // Wizard complete - redirect
                 window.location.href = '/trip-operations';
             } else {

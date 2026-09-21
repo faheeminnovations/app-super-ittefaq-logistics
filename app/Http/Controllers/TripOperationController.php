@@ -214,8 +214,8 @@ class TripOperationController extends Controller
 
         // Move to next step
         $nextStep = $step + 1;
-        if ($nextStep > 5) {
-            $nextStep = 5; // Stay at step 5
+        if ($nextStep > 4) {
+            $nextStep = 4; // Stay at step 4
         }
 
         $tripOperation->current_wizard_step = $nextStep;
@@ -232,7 +232,7 @@ class TripOperationController extends Controller
             'success' => true,
             'trip_id' => $tripOperation->id,
             'current_step' => $nextStep,
-            'is_complete' => $step === 5,
+            'is_complete' => $step === 4,
             'message' => 'Step saved successfully'
         ]);
         } catch (\Exception $e) {
@@ -249,13 +249,19 @@ class TripOperationController extends Controller
     private function getStepValidationRules($step)
     {
         switch ($step) {
-            case 1: // Basic Information
+            case 1: // Basic Information + Business Details
                 return [
                     'trip_date' => 'required|date',
                     'vehicle_number' => 'nullable|string|max:50',
                     'driver_name' => 'nullable|string|max:255',
                     'delivery_point' => 'required|string|max:255',
                     'gp_number' => 'nullable|string|max:50',
+                    'business_category' => 'required|string|max:255',
+                    'customer_name' => 'nullable|string|max:255',
+                    'warehouse_location' => 'nullable|string|max:100',
+                    'gl_number' => 'nullable|string|max:50',
+                    'load_id' => 'nullable|string|max:50',
+                    'freight_bill_no' => 'nullable|string|max:50',
                 ];
 
             case 2: // Distance and Rate
@@ -275,17 +281,7 @@ class TripOperationController extends Controller
                     'expenses' => 'nullable|numeric|min:0|max:999999999.99',
                 ];
 
-            case 4: // Business Details
-                return [
-                    'business_category' => 'required|string|max:255',
-                    'customer_name' => 'nullable|string|max:255',
-                    'warehouse_location' => 'nullable|string|max:100',
-                    'gl_number' => 'nullable|string|max:50',
-                    'load_id' => 'nullable|string|max:50',
-                    'freight_bill_no' => 'nullable|string|max:50',
-                ];
-
-            case 5: // Additional Details (Final Step)
+            case 4: // Additional Details (Final Step)
                 return [
                     'loading_point' => 'nullable|string|max:255',
                     'unloading_point' => 'nullable|string|max:255',
@@ -472,9 +468,9 @@ class TripOperationController extends Controller
     {
         $tripOperation = TripOperation::findOrFail($id);
 
-        // Ensure current wizard step is capped at 5
-        if ($tripOperation->current_wizard_step > 5) {
-            $tripOperation->current_wizard_step = 5;
+        // Ensure current wizard step is capped at 4
+        if ($tripOperation->current_wizard_step > 4) {
+            $tripOperation->current_wizard_step = 4;
             $tripOperation->save();
         }
 

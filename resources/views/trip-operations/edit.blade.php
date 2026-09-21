@@ -80,7 +80,7 @@
                     <!-- Fuel & Expenses -->
                     <div class="col-md-4 mb-3">
                         <label for="fuel_type" class="form-label">Fuel Type</label>
-                        <input type="text" class="form-control" id="fuel_type" name="fuel_type" value="{{ $tripOperation->fuel_type }}">
+                        <input type="text" class="form-control" id="fuel_type" name="fuel_type" placeholder="e.g., Petrol" value="{{ $tripOperation->fuel_type }}">
                     </div>
                     <div class="col-md-4 mb-3">
                         <label for="fuel" class="form-label">Fuel</label>
@@ -123,7 +123,11 @@
                     </div>
                     <div class="col-md-6 mb-3">
                         <label for="warehouse_location" class="form-label">Warehouse Location</label>
-                        <input type="text" class="form-control" id="warehouse_location" name="warehouse_location" value="{{ $tripOperation->warehouse_location }}">
+                        <select class="form-select" id="warehouse_location" name="warehouse_location">
+                            <option value="">Select Warehouse</option>
+                            <option value="Manga Mandi" {{ $tripOperation->warehouse_location == 'Manga Mandi' ? 'selected' : '' }}>Manga Mandi</option>
+                            <option value="Sundar" {{ $tripOperation->warehouse_location == 'Sundar' ? 'selected' : '' }}>Sundar</option>
+                        </select>
                     </div>
                     <div class="col-md-6 mb-3">
                         <label for="gl_number" class="form-label">GL Number</label>
@@ -172,7 +176,7 @@
                         <input type="number" step="0.01" class="form-control" id="initial_amount" name="initial_amount" value="{{ $tripOperation->initial_amount }}">
                     </div>
                     <div class="col-md-4 mb-3">
-                        <label for="amount_changed" class="form-label">Amount Changed</label>
+                        <label for="amount_changed" class="form-label">Amount Charged</label>
                         <input type="number" step="0.01" class="form-control" id="amount_changed" name="amount_changed" value="{{ $tripOperation->amount_changed }}">
                     </div>
                     <div class="col-12 mb-3">

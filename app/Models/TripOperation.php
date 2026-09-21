@@ -227,10 +227,10 @@ class TripOperation extends Model
             $this->wizard_steps_completed = $completedSteps;
         }
 
-        // Always move to the next step (step + 1), but cap at 5
+        // Always move to the next step (step + 1), but cap at 4
         $nextStep = $step + 1;
-        if ($nextStep > 5) {
-            $nextStep = 5; // Stay at step 5 when complete
+        if ($nextStep > 4) {
+            $nextStep = 4; // Stay at step 4 when complete
         }
 
         $this->current_wizard_step = $nextStep;
@@ -240,17 +240,17 @@ class TripOperation extends Model
     // Get wizard progress percentage
     public function getWizardProgressAttribute()
     {
-        $totalSteps = 5; // Define total wizard steps
+        $totalSteps = 4; // Define total wizard steps
         $completedSteps = count($this->wizard_steps_completed ?? []);
 
         // Also consider current_wizard_step for better progress tracking
         $currentStep = $this->current_wizard_step ?? 1;
-        if ($currentStep > 5) {
-            $currentStep = 5; // Cap at 5 since that's the last step
+        if ($currentStep > 4) {
+            $currentStep = 4; // Cap at 4 since that's the last step
         }
 
         // Use the maximum of completed steps or current step - 1 for progress
         $progressStep = max($completedSteps, $currentStep - 1);
-        return ($progressStep / $totalSteps) * 100;
+        return ($progressStep / ($totalSteps - 1)) * 100;
     }
 }
