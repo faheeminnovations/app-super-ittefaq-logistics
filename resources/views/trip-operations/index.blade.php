@@ -73,20 +73,20 @@
                     <select class="form-select" id="filter_month" onchange="filterTrips()">
                         <option value="">All Months</option>
                         @foreach($months as $key => $month)
-                            <option value="{{ $key }}">{{ $month }}</option>
+                            <option value="{{ $key }}" {{ request()->query('month') == $key ? 'selected' : '' }}>{{ $month }}</option>
                         @endforeach
                     </select>
                 </div>
                 <div class="col-md-2">
                     <label class="form-label">Year</label>
-                    <input type="number" class="form-control" id="filter_year" value="{{ date('Y') }}" onchange="filterTrips()">
+                    <input type="number" class="form-control" id="filter_year" value="{{ request()->query('year', date('Y')) }}" onchange="filterTrips()">
                 </div>
                 <div class="col-md-3">
                     <label class="form-label">Warehouse Location</label>
                     <select class="form-select" id="filter_warehouse" onchange="filterTrips()">
                         <option value="">All Warehouses</option>
                         @foreach($warehouses as $warehouse)
-                            <option value="{{ $warehouse->location }}">{{ $warehouse->name }}</option>
+                            <option value="{{ $warehouse->location }}" {{ request()->query('warehouse_location') == $warehouse->location ? 'selected' : '' }}>{{ $warehouse->name }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -95,7 +95,7 @@
                     <select class="form-select" id="filter_category" onchange="filterTrips()">
                         <option value="">All Categories</option>
                         @foreach($categories as $key => $category)
-                            <option value="{{ $key }}">{{ $category }}</option>
+                            <option value="{{ $key }}" {{ request()->query('business_category') == $key ? 'selected' : '' }}>{{ $category }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -103,11 +103,11 @@
                     <label class="form-label">Status</label>
                     <select class="form-select" id="filter_status" onchange="filterTrips()">
                         <option value="">All Status</option>
-                        <option value="pending">Pending</option>
-                        <option value="in_progress">In Progress</option>
-                        <option value="completed">Completed</option>
-                        <option value="billed">Billed</option>
-                        <option value="cancelled">Cancelled</option>
+                        <option value="pending" {{ request()->query('status') == 'pending' ? 'selected' : '' }}>Pending</option>
+                        <option value="in_progress" {{ request()->query('status') == 'in_progress' ? 'selected' : '' }}>In Progress</option>
+                        <option value="completed" {{ request()->query('status') == 'completed' ? 'selected' : '' }}>Completed</option>
+                        <option value="billed" {{ request()->query('status') == 'billed' ? 'selected' : '' }}>Billed</option>
+                        <option value="cancelled" {{ request()->query('status') == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
                     </select>
                 </div>
             </div>
@@ -235,12 +235,17 @@ function filterTrips() {
     const category = document.getElementById('filter_category').value;
     const status = document.getElementById('filter_status').value;
 
-    let url = '{{ route('trip-operations.index') }}?';
-    if (month) url += `month=${month}&`;
-    if (year) url += `year=${year}&`;
-    if (warehouse) url += `warehouse_location=${warehouse}&`;
-    if (category) url += `business_category=${category}&`;
-    if (status) url += `status=${status}`;
+    let params = [];
+    if (month) params.push(`month=${month}`);
+    if (year) params.push(`year=${year}`);
+    if (warehouse) params.push(`warehouse_location=${warehouse}`);
+    if (category) params.push(`business_category=${category}`);
+    if (status) params.push(`status=${status}`);
+
+    let url = '{{ route('trip-operations.index') }}';
+    if (params.length > 0) {
+        url += '?' + params.join('&');
+    }
 
     window.location.href = url;
 }

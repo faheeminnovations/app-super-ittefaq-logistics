@@ -45,12 +45,15 @@ class TripOperationController extends Controller
             $query->where('status', $request->status);
         }
 
+        // Clone query for totals calculation (before pagination)
+        $totalsQuery = clone $query;
+
         $tripOperations = $query->with(['vehicle', 'driver', 'customer', 'warehouse'])
             ->orderBy('trip_date', 'desc')
             ->paginate(50);
 
-        // Get all trip operations for totals calculation
-        $allOperations = $query->get();
+        // Get totals from the cloned query
+        $allOperations = $totalsQuery->get();
         $totalKm = $allOperations->sum('kilometers');
         $totalFreight = $allOperations->sum('freight');
 
