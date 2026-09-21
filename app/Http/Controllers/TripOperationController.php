@@ -262,6 +262,8 @@ class TripOperationController extends Controller
                     'gl_number' => 'nullable|string|max:50',
                     'load_id' => 'nullable|string|max:50',
                     'freight_bill_no' => 'nullable|string|max:50',
+                    'loading_point' => 'nullable|string|max:255',
+                    'unloading_point' => 'nullable|string|max:255',
                 ];
 
             case 2: // Distance and Rate
@@ -283,8 +285,6 @@ class TripOperationController extends Controller
 
             case 4: // Additional Details (Final Step)
                 return [
-                    'loading_point' => 'nullable|string|max:255',
-                    'unloading_point' => 'nullable|string|max:255',
                     'phone_number' => 'nullable|string|max:50',
                     'quantity' => 'nullable|integer|min:0',
                     'guarantor' => 'nullable|string|max:255',

@@ -110,11 +110,6 @@
                             <label for="warehouse_location" class="form-label">Warehouse Location</label>
                             <select class="form-select" id="warehouse_location" name="warehouse_location">
                                 <option value="">Select Warehouse</option>
-                                <option value="Depalpur" {{ isset($tripOperation) && $tripOperation->warehouse_location == 'Depalpur' ? 'selected' : '' }}>Depalpur</option>
-                                <option value="Multan" {{ isset($tripOperation) && $tripOperation->warehouse_location == 'Multan' ? 'selected' : '' }}>Multan</option>
-                                <option value="Sahiwal" {{ isset($tripOperation) && $tripOperation->warehouse_location == 'Sahiwal' ? 'selected' : '' }}>Sahiwal</option>
-                                <option value="Manga Mandi" {{ isset($tripOperation) && $tripOperation->warehouse_location == 'Manga Mandi' ? 'selected' : '' }}>Manga Mandi</option>
-                                <option value="Sundar" {{ isset($tripOperation) && $tripOperation->warehouse_location == 'Sundar' ? 'selected' : '' }}>Sundar</option>
                             </select>
                         </div>
                         <div class="col-md-6 mb-3">
@@ -122,12 +117,24 @@
                             <input type="text" class="form-control" id="gl_number" name="gl_number" value="{{ isset($tripOperation) ? $tripOperation->gl_number : '' }}">
                         </div>
                         <div class="col-md-6 mb-3">
+                            <label for="gl_number" class="form-label">GL Number</label>
+                            <input type="text" class="form-control" id="gl_number" name="gl_number" value="{{ isset($tripOperation) ? $tripOperation->gl_number : '' }}">
+                        </div>
+                        <div class="col-md-6 mb-3 d-none" id="load_id_container">
                             <label for="load_id" class="form-label">Load ID</label>
                             <input type="text" class="form-control" id="load_id" name="load_id" value="{{ isset($tripOperation) ? $tripOperation->load_id : '' }}">
                         </div>
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-6 mb-3 d-none" id="freight_bill_no_container">
                             <label for="freight_bill_no" class="form-label">Freight Bill Number</label>
                             <input type="text" class="form-control" id="freight_bill_no" name="freight_bill_no" value="{{ isset($tripOperation) ? $tripOperation->freight_bill_no : '' }}">
+                        </div>
+                        <div class="col-md-6 mb-3 d-none" id="loading_point_container">
+                            <label for="loading_point" class="form-label">Loading Point</label>
+                            <input type="text" class="form-control" id="loading_point" name="loading_point" value="{{ isset($tripOperation) ? $tripOperation->loading_point : '' }}">
+                        </div>
+                        <div class="col-md-6 mb-3 d-none" id="unloading_point_container">
+                            <label for="unloading_point" class="form-label">Unloading Point</label>
+                            <input type="text" class="form-control" id="unloading_point" name="unloading_point" value="{{ isset($tripOperation) ? $tripOperation->unloading_point : '' }}">
                         </div>
                     </div>
                 </div>
@@ -200,14 +207,6 @@
                 <div class="wizard-step {{ isset($tripOperation) && $tripOperation->current_wizard_step == 4 ? 'active' : '' }}" data-step="4">
                     <h4 class="mb-3">Step 4: Final Information</h4>
                     <div class="row">
-                        <div class="col-md-6 mb-3">
-                            <label for="loading_point" class="form-label">Loading Point</label>
-                            <input type="text" class="form-control" id="loading_point" name="loading_point" value="{{ isset($tripOperation) ? $tripOperation->loading_point : '' }}">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="unloading_point" class="form-label">Unloading Point</label>
-                            <input type="text" class="form-control" id="unloading_point" name="unloading_point" value="{{ isset($tripOperation) ? $tripOperation->unloading_point : '' }}">
-                        </div>
                         <div class="col-md-4 mb-3">
                             <label for="phone_number" class="form-label">Phone Number</label>
                             <input type="text" class="form-control" id="phone_number" name="phone_number" value="{{ isset($tripOperation) ? $tripOperation->phone_number : '' }}">
@@ -367,6 +366,33 @@ document.addEventListener('DOMContentLoaded', function() {
     @endif
 
     updateWizardUI();
+
+    // Initialize category-specific fields based on selected business category
+    const businessCategory = document.getElementById('business_category');
+    if (businessCategory && businessCategory.value) {
+        const selectedCategory = businessCategory.value;
+
+        // Hide all category-specific field containers
+        document.getElementById('load_id_container').classList.add('d-none');
+        document.getElementById('freight_bill_no_container').classList.add('d-none');
+        document.getElementById('loading_point_container').classList.add('d-none');
+        document.getElementById('unloading_point_container').classList.add('d-none');
+
+        // Show fields based on selected category
+        if (selectedCategory === 'Buyer Supply Chain') {
+            document.getElementById('load_id_container').classList.remove('d-none');
+            document.getElementById('freight_bill_no_container').classList.remove('d-none');
+        } else if (['Buyer Breading', 'Buyer Marketing Development', 'Buyer S.P.R', 'Syngenta', 'Buyer Seed Supply'].includes(selectedCategory)) {
+            document.getElementById('loading_point_container').classList.remove('d-none');
+            document.getElementById('unloading_point_container').classList.remove('d-none');
+        }
+
+        // Initialize warehouse locations
+        updateWarehouseLocations(selectedCategory);
+    } else {
+        // Initialize warehouse locations with default (empty or first category)
+        updateWarehouseLocations('');
+    }
 });
 
 function calculateFreight() {
@@ -374,6 +400,63 @@ function calculateFreight() {
     const rate = parseFloat(document.getElementById('rate_per_km').value) || 0;
     const freight = km * rate;
     document.getElementById('freight').value = freight.toFixed(2);
+}
+
+// Show/hide category-specific fields
+document.getElementById('business_category').addEventListener('change', function() {
+    const selectedCategory = this.value;
+
+    // Hide all category-specific field containers
+    document.getElementById('load_id_container').classList.add('d-none');
+    document.getElementById('freight_bill_no_container').classList.add('d-none');
+    document.getElementById('loading_point_container').classList.add('d-none');
+    document.getElementById('unloading_point_container').classList.add('d-none');
+
+    // Show fields based on selected category
+    if (selectedCategory === 'Buyer Supply Chain') {
+        document.getElementById('load_id_container').classList.remove('d-none');
+        document.getElementById('freight_bill_no_container').classList.remove('d-none');
+    } else if (['Buyer Breading', 'Buyer Marketing Development', 'Buyer S.P.R', 'Syngenta', 'Buyer Seed Supply'].includes(selectedCategory)) {
+        document.getElementById('loading_point_container').classList.remove('d-none');
+        document.getElementById('unloading_point_container').classList.remove('d-none');
+    }
+    // Open Market Work shows no additional fields
+
+    // Update warehouse locations based on business category
+    updateWarehouseLocations(selectedCategory);
+});
+
+// Warehouse locations by business category
+const warehouseLocationsByCategory = {
+    'Buyer Supply Chain': ['Depalpur', 'Multan', 'Sahiwal', 'Manga Mandi', 'Sundar'],
+    'Buyer Breading': ['Depalpur', 'Multan', 'Sahiwal', 'Manga Mandi', 'Sundar'],
+    'Buyer Marketing Development': ['Depalpur', 'Multan', 'Sahiwal', 'Manga Mandi', 'Sundar'],
+    'Buyer S.P.R': ['Depalpur', 'Multan', 'Sahiwal', 'Manga Mandi', 'Sundar'],
+    'Syngenta': ['Depalpur', 'Multan', 'Sahiwal', 'Manga Mandi', 'Sundar'],
+    'Buyer Seed Supply': ['Depalpur', 'Multan', 'Sahiwal', 'Manga Mandi', 'Sundar'],
+    'Open Market Work': ['Depalpur', 'Multan', 'Sahiwal', 'Manga Mandi', 'Sundar']
+};
+
+function updateWarehouseLocations(category) {
+    const warehouseSelect = document.getElementById('warehouse_location');
+    const currentValue = warehouseSelect.value;
+
+    // Clear existing options
+    warehouseSelect.innerHTML = '<option value="">Select Warehouse</option>';
+
+    // Get warehouse locations for the selected category
+    const locations = warehouseLocationsByCategory[category] || [];
+
+    // Add options
+    locations.forEach(location => {
+        const option = document.createElement('option');
+        option.value = location;
+        option.textContent = location;
+        if (location === currentValue) {
+            option.selected = true;
+        }
+        warehouseSelect.appendChild(option);
+    });
 }
 
 function updateWizardUI() {
