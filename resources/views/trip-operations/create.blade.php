@@ -110,6 +110,9 @@
                             <label for="warehouse_location" class="form-label">Warehouse Location</label>
                             <select class="form-select" id="warehouse_location" name="warehouse_location">
                                 <option value="">Select Warehouse</option>
+                                <option value="Depalpur" {{ isset($tripOperation) && $tripOperation->warehouse_location == 'Depalpur' ? 'selected' : '' }}>Depalpur</option>
+                                <option value="Multan" {{ isset($tripOperation) && $tripOperation->warehouse_location == 'Multan' ? 'selected' : '' }}>Multan</option>
+                                <option value="Sahiwal" {{ isset($tripOperation) && $tripOperation->warehouse_location == 'Sahiwal' ? 'selected' : '' }}>Sahiwal</option>
                                 <option value="Manga Mandi" {{ isset($tripOperation) && $tripOperation->warehouse_location == 'Manga Mandi' ? 'selected' : '' }}>Manga Mandi</option>
                                 <option value="Sundar" {{ isset($tripOperation) && $tripOperation->warehouse_location == 'Sundar' ? 'selected' : '' }}>Sundar</option>
                             </select>
