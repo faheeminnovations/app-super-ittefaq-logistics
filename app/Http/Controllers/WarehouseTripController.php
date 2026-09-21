@@ -6,6 +6,7 @@ use App\Models\WarehouseTrip;
 use App\Models\Vehicle;
 use App\Models\Driver;
 use App\Models\Customer;
+use App\Models\Warehouse;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
@@ -17,26 +18,30 @@ class WarehouseTripController extends Controller
     public function index(Request $request)
     {
         $billingMonth = $request->get('billing_month', date('F-Y'));
-        $warehouseLocation = $request->get('warehouse_location', 'DEPALPUR');
-        
+
+        // Get default warehouse location from database
+        $defaultWarehouse = Warehouse::active()->first();
+        $warehouseLocation = $request->get('warehouse_location', $defaultWarehouse ? $defaultWarehouse->location : '');
+
         $trips = WarehouseTrip::with(['vehicle', 'driver', 'customer'])
             ->byBillingMonth($billingMonth)
             ->where('warehouse_location', $warehouseLocation)
             ->orderBy('trip_date')
             ->paginate(50);
-        
+
         $allTrips = WarehouseTrip::byBillingMonth($billingMonth)
             ->where('warehouse_location', $warehouseLocation)
             ->get();
-        
+
         $vehicles = Vehicle::all();
         $drivers = Driver::all();
         $customers = Customer::all();
-        
+        $warehouses = Warehouse::active()->get();
+
         // Calculate totals
         $totalKm = $allTrips->sum('kilometers');
         $totalFreight = $allTrips->sum('freight');
-        
+
         return view('pages.warehouse-trips', [
             'trips' => $trips,
             'billingMonth' => $billingMonth,
@@ -44,6 +49,7 @@ class WarehouseTripController extends Controller
             'vehicles' => $vehicles,
             'drivers' => $drivers,
             'customers' => $customers,
+            'warehouses' => $warehouses,
             'totalKm' => $totalKm,
             'totalFreight' => $totalFreight,
             'totalTrips' => $allTrips->count(),
@@ -209,8 +215,11 @@ class WarehouseTripController extends Controller
     public function export(Request $request)
     {
         $billingMonth = $request->get('billing_month', date('F-Y'));
-        $warehouseLocation = $request->get('warehouse_location', 'DEPALPUR');
-        
+
+        // Get default warehouse location from database
+        $defaultWarehouse = Warehouse::active()->first();
+        $warehouseLocation = $request->get('warehouse_location', $defaultWarehouse ? $defaultWarehouse->location : '');
+
         $trips = WarehouseTrip::with(['vehicle', 'driver', 'customer'])
             ->byBillingMonth($billingMonth)
             ->where('warehouse_location', $warehouseLocation)
@@ -278,14 +287,17 @@ class WarehouseTripController extends Controller
      */
     public function generateInvoice(Request $request)
     {
+        // Get default warehouse location from database
+        $defaultWarehouse = Warehouse::active()->first();
+
         // Handle both GET parameters and JSON body
         if ($request->isJson()) {
             $data = $request->json()->all();
             $billingMonth = $data['billing_month'] ?? date('F-Y');
-            $warehouseLocation = $data['warehouse_location'] ?? 'DEPALPUR';
+            $warehouseLocation = $data['warehouse_location'] ?? ($defaultWarehouse ? $defaultWarehouse->location : '');
         } else {
             $billingMonth = $request->get('billing_month', date('F-Y'));
-            $warehouseLocation = $request->get('warehouse_location', 'DEPALPUR');
+            $warehouseLocation = $request->get('warehouse_location', $defaultWarehouse ? $defaultWarehouse->location : '');
         }
         
         \Log::info('Generate invoice called', [

@@ -71,9 +71,10 @@
         <div class="col-md-3">
           <label class="form-label">Warehouse Location</label>
           <select class="form-select" id="warehouseLocation" onchange="changeWarehouseLocation()">
-            <option value="DEPALPUR" {{ $warehouseLocation === 'DEPALPUR' ? 'selected' : '' }}>Depalpur</option>
-            <option value="MULTAN" {{ $warehouseLocation === 'MULTAN' ? 'selected' : '' }}>Multan</option>
-            <option value="SAHIWAL" {{ $warehouseLocation === 'SAHIWAL' ? 'selected' : '' }}>Sahiwal</option>
+            <option value="">Select Warehouse</option>
+            @foreach($warehouses as $warehouse)
+              <option value="{{ $warehouse->location }}" {{ $warehouseLocation === $warehouse->location ? 'selected' : '' }}>{{ $warehouse->name }}</option>
+            @endforeach
           </select>
         </div>
         <div class="col-md-3">
@@ -273,9 +274,10 @@
                 <div class="col-md-4 mb-3">
                   <label for="warehouse_location" class="form-label">Warehouse Location</label>
                   <select class="form-select" name="warehouse_location" id="warehouse_location" required>
-                    <option value="DEPALPUR">Depalpur</option>
-                    <option value="MULTAN">Multan</option>
-                    <option value="SAHIWAL">Sahiwal</option>
+                    <option value="">Select Warehouse</option>
+                    @foreach($warehouses as $warehouse)
+                      <option value="{{ $warehouse->location }}" {{ $warehouseLocation === $warehouse->location ? 'selected' : '' }}>{{ $warehouse->name }}</option>
+                    @endforeach
                   </select>
                 </div>
                 <div class="col-md-4 mb-3">
@@ -411,13 +413,22 @@
 
     function changeBillingMonth() {
       const billingMonth = document.getElementById('billingMonth').value;
-      window.location.href = `?billing_month=${billingMonth}`;
+      const warehouseLocation = document.getElementById('warehouseLocation').value;
+      if (warehouseLocation) {
+        window.location.href = `?billing_month=${billingMonth}&warehouse_location=${warehouseLocation}`;
+      } else {
+        window.location.href = `?billing_month=${billingMonth}`;
+      }
     }
 
     function changeWarehouseLocation() {
       const warehouseLocation = document.getElementById('warehouseLocation').value;
       const billingMonth = document.getElementById('billingMonth').value;
-      window.location.href = `?billing_month=${billingMonth}&warehouse_location=${warehouseLocation}`;
+      if (warehouseLocation) {
+        window.location.href = `?billing_month=${billingMonth}&warehouse_location=${warehouseLocation}`;
+      } else {
+        window.location.href = `?billing_month=${billingMonth}`;
+      }
     }
 
     function openCreateModal() {
@@ -500,7 +511,7 @@
         document.getElementById('load_id').value = trip.load_id || '';
         document.getElementById('freight_bill_no').value = trip.freight_bill_no || '';
         document.getElementById('billing_month').value = trip.billing_month || '';
-        document.getElementById('warehouse_location').value = trip.warehouse_location || 'DEPALPUR';
+        document.getElementById('warehouse_location').value = trip.warehouse_location || '';
         document.getElementById('status').value = trip.status || 'pending';
         document.getElementById('notes').value = trip.notes || '';
         
