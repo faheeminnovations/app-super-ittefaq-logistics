@@ -730,4 +730,114 @@ class TripOperationController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Export trip operations to Excel.
+     */
+    public function export(Request $request)
+    {
+        $month = $request->get('month');
+        $year = $request->get('year', date('Y'));
+        $warehouseLocation = $request->get('warehouse_location');
+        $businessCategory = $request->get('business_category');
+        $status = $request->get('status');
+
+        $query = TripOperation::query();
+
+        if ($month) {
+            $query->where('billing_month_number', $month);
+        }
+
+        if ($year) {
+            $query->where('billing_year', $year);
+        }
+
+        if ($warehouseLocation) {
+            $query->where('warehouse_location', $warehouseLocation);
+        }
+
+        if ($businessCategory) {
+            $query->where('business_category', $businessCategory);
+        }
+
+        if ($status) {
+            $query->where('status', $status);
+        }
+
+        $tripOperations = $query->with(['vehicle', 'driver', 'customer', 'warehouse'])
+            ->orderBy('trip_date', 'desc')
+            ->get();
+
+        // Create Excel file using PhpSpreadsheet
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // Set company header
+        $sheet->setCellValue('A1', 'SUPER ITTEFAQ MINI GOODS TRANSPORT COMPANY');
+        $sheet->setCellValue('A2', 'Rizvi Chowk, Bypass Okara Road');
+        $sheet->setCellValue('A3', 'Contact Detail: 0300-6967450');
+        $sheet->setCellValue('A4', 'NTN : 4252472-5');
+
+        $monthName = $month ? Carbon::create()->month($month)->format('F') : 'All Months';
+        $sheet->setCellValue('A5', 'Trip Operations Report - ' . $monthName . ' ' . $year);
+
+        // Set column headers
+        $sheet->setCellValue('A7', 'Trip #');
+        $sheet->setCellValue('B7', 'Date');
+        $sheet->setCellValue('C7', 'Vehicle');
+        $sheet->setCellValue('D7', 'Driver');
+        $sheet->setCellValue('E7', 'Delivery Point');
+        $sheet->setCellValue('F7', 'Warehouse');
+        $sheet->setCellValue('G7', 'Category');
+        $sheet->setCellValue('H7', 'KM');
+        $sheet->setCellValue('I7', 'Freight');
+        $sheet->setCellValue('J7', 'Total Income');
+        $sheet->setCellValue('K7', 'Total Expense');
+        $sheet->setCellValue('L7', 'Net Amount');
+        $sheet->setCellValue('M7', 'Status');
+
+        // Fill data
+        $row = 8;
+        foreach ($tripOperations as $trip) {
+            $sheet->setCellValue('A' . $row, $trip->trip_number);
+            $sheet->setCellValue('B' . $row, $trip->trip_date ? $trip->trip_date->format('d/m/Y') : 'N/A');
+            $sheet->setCellValue('C' . $row, strtoupper($trip->vehicle_number));
+            $sheet->setCellValue('D' . $row, $trip->driver_name ?? '-');
+            $sheet->setCellValue('E' . $row, $trip->delivery_point);
+            $sheet->setCellValue('F' . $row, $trip->warehouse_location ?? '-');
+            $sheet->setCellValue('G' . $row, $trip->business_category ?? '-');
+            $sheet->setCellValue('H' . $row, number_format($trip->kilometers, 2));
+            $sheet->setCellValue('I' . $row, number_format($trip->freight, 2));
+            $sheet->setCellValue('J' . $row, number_format($trip->total_income ?? $trip->freight, 2));
+            $sheet->setCellValue('K' . $row, number_format($trip->total_expense ?? 0, 2));
+            $sheet->setCellValue('L' . $row, number_format($trip->net_amount ?? ($trip->total_income - $trip->total_expense), 2));
+            $sheet->setCellValue('M' . $row, ucfirst(str_replace('_', ' ', $trip->status)));
+            $row++;
+        }
+
+        // Add totals row
+        $row++;
+        $sheet->setCellValue('A' . $row, 'TOTALS');
+        $sheet->setCellValue('H' . $row, number_format($tripOperations->sum('kilometers'), 2));
+        $sheet->setCellValue('I' . $row, number_format($tripOperations->sum('freight'), 2));
+        $sheet->setCellValue('J' . $row, number_format($tripOperations->sum('total_income') ?? $tripOperations->sum('freight'), 2));
+        $sheet->setCellValue('K' . $row, number_format($tripOperations->sum('total_expense') ?? 0, 2));
+        $sheet->setCellValue('L' . $row, number_format($tripOperations->sum('net_amount') ?? ($tripOperations->sum('total_income') - $tripOperations->sum('total_expense')), 2));
+
+        // Auto-size columns
+        foreach (range('A', 'M') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        // Set headers for download
+        $filename = "trip_operations_{$monthName}_{$year}.xlsx";
+
+        // Save to temp file
+        $tempFile = tempnam(sys_get_temp_dir(), 'trip_operations_');
+        $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xlsx');
+        $writer->save($tempFile);
+
+        // Return file download response
+        return response()->download($tempFile, $filename)->deleteFileAfterSend(true);
+    }
 }

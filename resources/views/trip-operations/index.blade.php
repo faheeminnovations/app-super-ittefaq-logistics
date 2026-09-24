@@ -324,8 +324,25 @@ function deleteTrip(id) {
 }
 
 function exportTrips() {
-    // Implement export functionality
-    alert('Export functionality will be implemented soon');
+    const month = document.getElementById('filter_month').value;
+    const year = document.getElementById('filter_year').value;
+    const warehouse = document.getElementById('filter_warehouse').value;
+    const category = document.getElementById('filter_category').value;
+    const status = document.getElementById('filter_status').value;
+
+    let params = [];
+    if (month) params.push(`month=${month}`);
+    if (year) params.push(`year=${year}`);
+    if (warehouse) params.push(`warehouse_location=${warehouse}`);
+    if (category) params.push(`business_category=${category}`);
+    if (status) params.push(`status=${status}`);
+
+    let url = '/trip-operations/export';
+    if (params.length > 0) {
+        url += '?' + params.join('&');
+    }
+
+    window.location.href = url;
 }
 </script>
 @endpush

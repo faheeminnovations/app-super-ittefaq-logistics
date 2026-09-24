@@ -7,9 +7,14 @@
             <div class="card shadow-sm">
                 <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
                     <h4 class="mb-0">Vehicle-wise Report</h4>
-                    <a href="{{ route('transport.dashboard') }}" class="btn btn-secondary btn-sm">
-                        <i class="bi bi-arrow-left"></i> Back to Dashboard
-                    </a>
+                    <div class="d-flex gap-2">
+                        <a href="{{ route('transport.reports.vehicle.export', ['vehicle' => $vehicleNo, 'month' => $month]) }}" class="btn btn-success btn-sm">
+                            <i class="bi bi-download"></i> Export
+                        </a>
+                        <a href="{{ route('transport.dashboard') }}" class="btn btn-secondary btn-sm">
+                            <i class="bi bi-arrow-left"></i> Back to Dashboard
+                        </a>
+                    </div>
                 </div>
                 <div class="card-body">
                     <!-- Filter Form -->

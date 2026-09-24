@@ -114,6 +114,7 @@ Route::middleware(['auth', 'role:admin,dispatcher,manager'])->group(function () 
     Route::get('/warehouse-invoices/{id}/mark-paid', [WarehouseInvoiceController::class, 'markAsPaid'])->name('warehouse.invoices.mark-paid');
 
     // Trip Operations routes (Combined module)
+    Route::get('/trip-operations/export', [TripOperationController::class, 'export'])->name('trip-operations.export');
     Route::resource('trip-operations', TripOperationController::class);
     Route::post('/trip-operations/wizard-step', [TripOperationController::class, 'storeWizardStep'])->name('trip-operations.wizard-step');
     Route::get('/trip-operations/{id}/wizard', [TripOperationController::class, 'continueWizard'])->name('trip-operations.wizard');
@@ -270,6 +271,11 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/transport/reports/vehicle', [TransportManagementController::class, 'vehicleReport'])->name('transport.reports.vehicle');
     Route::get('/transport/reports/driver', [TransportManagementController::class, 'driverReport'])->name('transport.reports.driver');
     Route::get('/transport/reports/category', [TransportManagementController::class, 'categoryReport'])->name('transport.reports.category');
+    
+    // Export routes for transport reports
+    Route::get('/transport/reports/vehicle/export', [TransportManagementController::class, 'exportVehicleReport'])->name('transport.reports.vehicle.export');
+    Route::get('/transport/reports/driver/export', [TransportManagementController::class, 'exportDriverReport'])->name('transport.reports.driver.export');
+    Route::get('/transport/reports/category/export', [TransportManagementController::class, 'exportCategoryReport'])->name('transport.reports.category.export');
     
     // Excel Import
     Route::get('/transport/import', function() {

@@ -255,6 +255,93 @@ class TransportManagementController extends Controller
     }
 
     /**
+     * Export vehicle-wise report to Excel
+     */
+    public function exportVehicleReport(Request $request)
+    {
+        $vehicleNo = $request->vehicle;
+        $month = $request->month ?? Carbon::now()->format('F-Y');
+        $year = Carbon::now()->year;
+
+        $query = TripLog::query();
+        
+        if ($vehicleNo) {
+            $query->byVehicle($vehicleNo);
+        }
+
+        if ($month && $year) {
+            $query->byMonth($month, $year);
+        }
+
+        $tripLogs = $query->orderBy('date', 'desc')->get();
+
+        // Create Excel file using PhpSpreadsheet
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // Set company header
+        $sheet->setCellValue('A1', 'SUPER ITTEFAQ MINI GOODS TRANSPORT COMPANY');
+        $sheet->setCellValue('A2', 'Rizvi Chowk, Bypass Okara Road');
+        $sheet->setCellValue('A3', 'Contact Detail: 0300-6967450');
+        $sheet->setCellValue('A4', 'NTN : 4252472-5');
+        $sheet->setCellValue('A5', 'Vehicle-wise Report - ' . $month);
+        if ($vehicleNo) {
+            $sheet->setCellValue('A6', 'Vehicle: ' . $vehicleNo);
+        }
+
+        // Set column headers
+        $sheet->setCellValue('A8', 'Sr');
+        $sheet->setCellValue('B8', 'Date');
+        $sheet->setCellValue('C8', 'Vehicle No');
+        $sheet->setCellValue('D8', 'GP#');
+        $sheet->setCellValue('E8', 'Delivery Point');
+        $sheet->setCellValue('F8', 'Category');
+        $sheet->setCellValue('G8', 'KM');
+        $sheet->setCellValue('H8', 'Rate');
+        $sheet->setCellValue('I8', 'FRT');
+        $sheet->setCellValue('J8', 'Driver');
+
+        // Fill data
+        $row = 9;
+        foreach ($tripLogs as $tripLog) {
+            $sheet->setCellValue('A' . $row, $tripLog->sr);
+            $sheet->setCellValue('B' . $row, $tripLog->date->format('d/m/Y'));
+            $sheet->setCellValue('C' . $row, $tripLog->vehicle_no);
+            $sheet->setCellValue('D' . $row, $tripLog->gp_number ?? '-');
+            $sheet->setCellValue('E' . $row, $tripLog->delivery_point);
+            $sheet->setCellValue('F' . $row, $tripLog->vehicle_category);
+            $sheet->setCellValue('G' . $row, number_format($tripLog->km, 2));
+            $sheet->setCellValue('H' . $row, number_format($tripLog->rate, 2));
+            $sheet->setCellValue('I' . $row, number_format($tripLog->frt, 2));
+            $sheet->setCellValue('J' . $row, $tripLog->driver_name ?? '-');
+            $row++;
+        }
+
+        // Add totals row
+        $row++;
+        $sheet->setCellValue('A' . $row, 'TOTALS');
+        $sheet->setCellValue('G' . $row, number_format($tripLogs->sum('km'), 2));
+        $sheet->setCellValue('I' . $row, number_format($tripLogs->sum('frt'), 2));
+        $sheet->setCellValue('J' . $row, $tripLogs->count() . ' Trips');
+
+        // Auto-size columns
+        foreach (range('A', 'J') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        // Set headers for download
+        $filename = "vehicle_report_{$month}.xlsx";
+
+        // Save to temp file
+        $tempFile = tempnam(sys_get_temp_dir(), 'vehicle_report_');
+        $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xlsx');
+        $writer->save($tempFile);
+
+        // Return file download response
+        return response()->download($tempFile, $filename)->deleteFileAfterSend(true);
+    }
+
+    /**
      * Driver-wise report
      */
     public function driverReport(Request $request)
@@ -289,6 +376,96 @@ class TransportManagementController extends Controller
             'totalFuel',
             'totalTrips'
         ));
+    }
+
+    /**
+     * Export driver-wise report to Excel
+     */
+    public function exportDriverReport(Request $request)
+    {
+        $driverName = $request->driver;
+        $month = $request->month ?? Carbon::now()->format('F-Y');
+        $year = Carbon::now()->year;
+
+        $query = TripLog::query();
+        
+        if ($driverName) {
+            $query->byDriver($driverName);
+        }
+
+        if ($month && $year) {
+            $query->byMonth($month, $year);
+        }
+
+        $tripLogs = $query->orderBy('date', 'desc')->get();
+
+        // Create Excel file using PhpSpreadsheet
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // Set company header
+        $sheet->setCellValue('A1', 'SUPER ITTEFAQ MINI GOODS TRANSPORT COMPANY');
+        $sheet->setCellValue('A2', 'Rizvi Chowk, Bypass Okara Road');
+        $sheet->setCellValue('A3', 'Contact Detail: 0300-6967450');
+        $sheet->setCellValue('A4', 'NTN : 4252472-5');
+        $sheet->setCellValue('A5', 'Driver-wise Report - ' . $month);
+        if ($driverName) {
+            $sheet->setCellValue('A6', 'Driver: ' . $driverName);
+        }
+
+        // Set column headers
+        $sheet->setCellValue('A8', 'Sr');
+        $sheet->setCellValue('B8', 'Date');
+        $sheet->setCellValue('C8', 'Vehicle No');
+        $sheet->setCellValue('D8', 'GP#');
+        $sheet->setCellValue('E8', 'Delivery Point');
+        $sheet->setCellValue('F8', 'Category');
+        $sheet->setCellValue('G8', 'KM');
+        $sheet->setCellValue('H8', 'Rate');
+        $sheet->setCellValue('I8', 'FRT');
+        $sheet->setCellValue('J8', 'Fuel');
+        $sheet->setCellValue('K8', 'Driver');
+
+        // Fill data
+        $row = 9;
+        foreach ($tripLogs as $tripLog) {
+            $sheet->setCellValue('A' . $row, $tripLog->sr);
+            $sheet->setCellValue('B' . $row, $tripLog->date->format('d/m/Y'));
+            $sheet->setCellValue('C' . $row, $tripLog->vehicle_no);
+            $sheet->setCellValue('D' . $row, $tripLog->gp_number ?? '-');
+            $sheet->setCellValue('E' . $row, $tripLog->delivery_point);
+            $sheet->setCellValue('F' . $row, $tripLog->vehicle_category);
+            $sheet->setCellValue('G' . $row, number_format($tripLog->km, 2));
+            $sheet->setCellValue('H' . $row, number_format($tripLog->rate, 2));
+            $sheet->setCellValue('I' . $row, number_format($tripLog->frt, 2));
+            $sheet->setCellValue('J' . $row, $tripLog->fuel);
+            $sheet->setCellValue('K' . $row, $tripLog->driver_name ?? '-');
+            $row++;
+        }
+
+        // Add totals row
+        $row++;
+        $sheet->setCellValue('A' . $row, 'TOTALS');
+        $sheet->setCellValue('G' . $row, number_format($tripLogs->sum('km'), 2));
+        $sheet->setCellValue('I' . $row, number_format($tripLogs->sum('frt'), 2));
+        $sheet->setCellValue('J' . $row, $tripLogs->where('fuel', '!=', 'CASH')->where('fuel', '!=', 'NILL')->count() . ' Fuel Trips');
+        $sheet->setCellValue('K' . $row, $tripLogs->count() . ' Total Trips');
+
+        // Auto-size columns
+        foreach (range('A', 'K') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        // Set headers for download
+        $filename = "driver_report_{$month}.xlsx";
+
+        // Save to temp file
+        $tempFile = tempnam(sys_get_temp_dir(), 'driver_report_');
+        $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xlsx');
+        $writer->save($tempFile);
+
+        // Return file download response
+        return response()->download($tempFile, $filename)->deleteFileAfterSend(true);
     }
 
     /**
@@ -333,6 +510,93 @@ class TransportManagementController extends Controller
             'totalFreight',
             'totalTrips'
         ));
+    }
+
+    /**
+     * Export category-wise report to Excel
+     */
+    public function exportCategoryReport(Request $request)
+    {
+        $category = $request->category;
+        $month = $request->month ?? Carbon::now()->format('F-Y');
+        $year = Carbon::now()->year;
+
+        $query = TripLog::query();
+        
+        if ($category) {
+            $query->byCategory($category);
+        }
+
+        if ($month && $year) {
+            $query->byMonth($month, $year);
+        }
+
+        $tripLogs = $query->orderBy('date', 'desc')->get();
+
+        // Create Excel file using PhpSpreadsheet
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // Set company header
+        $sheet->setCellValue('A1', 'SUPER ITTEFAQ MINI GOODS TRANSPORT COMPANY');
+        $sheet->setCellValue('A2', 'Rizvi Chowk, Bypass Okara Road');
+        $sheet->setCellValue('A3', 'Contact Detail: 0300-6967450');
+        $sheet->setCellValue('A4', 'NTN : 4252472-5');
+        $sheet->setCellValue('A5', 'Category-wise Report - ' . $month);
+        if ($category) {
+            $sheet->setCellValue('A6', 'Category: ' . $category);
+        }
+
+        // Set column headers
+        $sheet->setCellValue('A8', 'Sr');
+        $sheet->setCellValue('B8', 'Date');
+        $sheet->setCellValue('C8', 'Vehicle No');
+        $sheet->setCellValue('D8', 'GP#');
+        $sheet->setCellValue('E8', 'Delivery Point');
+        $sheet->setCellValue('F8', 'Category');
+        $sheet->setCellValue('G8', 'KM');
+        $sheet->setCellValue('H8', 'Rate');
+        $sheet->setCellValue('I8', 'FRT');
+        $sheet->setCellValue('J8', 'Driver');
+
+        // Fill data
+        $row = 9;
+        foreach ($tripLogs as $tripLog) {
+            $sheet->setCellValue('A' . $row, $tripLog->sr);
+            $sheet->setCellValue('B' . $row, $tripLog->date->format('d/m/Y'));
+            $sheet->setCellValue('C' . $row, $tripLog->vehicle_no);
+            $sheet->setCellValue('D' . $row, $tripLog->gp_number ?? '-');
+            $sheet->setCellValue('E' . $row, $tripLog->delivery_point);
+            $sheet->setCellValue('F' . $row, $tripLog->vehicle_category);
+            $sheet->setCellValue('G' . $row, number_format($tripLog->km, 2));
+            $sheet->setCellValue('H' . $row, number_format($tripLog->rate, 2));
+            $sheet->setCellValue('I' . $row, number_format($tripLog->frt, 2));
+            $sheet->setCellValue('J' . $row, $tripLog->driver_name ?? '-');
+            $row++;
+        }
+
+        // Add totals row
+        $row++;
+        $sheet->setCellValue('A' . $row, 'TOTALS');
+        $sheet->setCellValue('G' . $row, number_format($tripLogs->sum('km'), 2));
+        $sheet->setCellValue('I' . $row, number_format($tripLogs->sum('frt'), 2));
+        $sheet->setCellValue('J' . $row, $tripLogs->count() . ' Trips');
+
+        // Auto-size columns
+        foreach (range('A', 'J') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        // Set headers for download
+        $filename = "category_report_{$month}.xlsx";
+
+        // Save to temp file
+        $tempFile = tempnam(sys_get_temp_dir(), 'category_report_');
+        $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xlsx');
+        $writer->save($tempFile);
+
+        // Return file download response
+        return response()->download($tempFile, $filename)->deleteFileAfterSend(true);
     }
 
     /**
