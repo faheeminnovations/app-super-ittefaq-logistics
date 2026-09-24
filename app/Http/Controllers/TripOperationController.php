@@ -67,6 +67,23 @@ class TripOperationController extends Controller
         $drivers = Driver::active()->pluck('name', 'name');
         $customers = Customer::all();
         $warehouses = Warehouse::active()->get();
+        
+        // Add static warehouse locations to ensure all options are available
+        $staticWarehouses = collect([
+            (object)['location' => 'Depalpur', 'name' => 'Depalpur'],
+            (object)['location' => 'Multan', 'name' => 'Multan'],
+            (object)['location' => 'Sahiwal', 'name' => 'Sahiwal'],
+            (object)['location' => 'Manga Mandi', 'name' => 'Manga Mandi'],
+            (object)['location' => 'Sundar', 'name' => 'Sundar'],
+        ]);
+        
+        // Merge with database warehouses, avoiding duplicates
+        $existingLocations = $warehouses->pluck('location')->toArray();
+        foreach ($staticWarehouses as $staticWarehouse) {
+            if (!in_array($staticWarehouse->location, $existingLocations)) {
+                $warehouses->push($staticWarehouse);
+            }
+        }
 
         // Default categories
         $categories = [
