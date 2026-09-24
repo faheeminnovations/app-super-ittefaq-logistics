@@ -449,7 +449,7 @@ class TripOperationController extends Controller
      */
     public function edit($id)
     {
-        $tripOperation = TripOperation::with(['vehicle', 'driver', 'customer', 'warehouse'])
+        $tripOperation = TripOperation::with(['vehicle', 'driver', 'customer', 'warehouse', 'expenseEntries'])
             ->findOrFail($id);
 
         $vehicles = Vehicle::active()->pluck('reg_no', 'reg_no');
@@ -476,6 +476,17 @@ class TripOperationController extends Controller
             'cancelled' => 'Cancelled'
         ];
 
+        $expenseCategories = [
+            'fuel' => 'Fuel',
+            'toll' => 'Toll',
+            'parking' => 'Parking',
+            'driver_payment' => 'Driver Payment',
+            'maintenance' => 'Maintenance',
+            'loading_charges' => 'Loading Charges',
+            'unloading_charges' => 'Unloading Charges',
+            'other' => 'Other'
+        ];
+
         return view('trip-operations.edit', compact(
             'tripOperation',
             'vehicles',
@@ -484,7 +495,8 @@ class TripOperationController extends Controller
             'warehouses',
             'vehicleCategories',
             'categories',
-            'tripStatuses'
+            'tripStatuses',
+            'expenseCategories'
         ));
     }
 

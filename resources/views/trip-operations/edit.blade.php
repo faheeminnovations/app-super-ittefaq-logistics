@@ -106,6 +106,71 @@
 
                 <hr>
 
+                <!-- Expense Entries Section -->
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h5>Expense Entries</h5>
+                        <button type="button" class="btn btn-sm btn-outline-primary" onclick="addExpenseEntry()">
+                            <i class="bi bi-plus"></i> Add Expense Entry
+                        </button>
+                    </div>
+                    
+                    <div id="expenseEntriesContainer">
+                        @if($tripOperation->expenseEntries && $tripOperation->expenseEntries->count() > 0)
+                            @foreach($tripOperation->expenseEntries as $index => $entry)
+                            <div class="expense-entry-card mb-3 p-3 border rounded" data-entry-id="{{ $entry->id }}">
+                                <div class="row">
+                                    <div class="col-md-3 mb-2">
+                                        <label class="form-label">Expense Category</label>
+                                        <select class="form-select expense-category" name="expense_entries[{{ $index }}][expense_category]" required>
+                                            <option value="">Select Category</option>
+                                            @foreach($expenseCategories as $key => $category)
+                                                <option value="{{ $key }}" {{ $entry->expense_category == $key ? 'selected' : '' }}>{{ $category }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2 mb-2">
+                                        <label class="form-label">Payment Type</label>
+                                        <select class="form-select" name="expense_entries[{{ $index }}][payment_type]">
+                                            <option value="">Select Type</option>
+                                            <option value="credit" {{ $entry->payment_type == 'credit' ? 'selected' : '' }}>Credit</option>
+                                            <option value="cash" {{ $entry->payment_type == 'cash' ? 'selected' : '' }}>Cash</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2 mb-2">
+                                        <label class="form-label">Amount</label>
+                                        <input type="number" step="0.01" class="form-control expense-amount" name="expense_entries[{{ $index }}][amount]" required value="{{ $entry->amount }}" oninput="calculateTotalExpense()">
+                                    </div>
+                                    <div class="col-md-3 mb-2">
+                                        <label class="form-label">Description</label>
+                                        <input type="text" class="form-control" name="expense_entries[{{ $index }}][description]" value="{{ $entry->description }}">
+                                    </div>
+                                    <div class="col-md-2 mb-2">
+                                        <label class="form-label">&nbsp;</label>
+                                        <button type="button" class="btn btn-danger btn-sm w-100" onclick="removeExpenseEntry(this)">
+                                            <i class="bi bi-trash"></i> Remove
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            @endforeach
+                        @else
+                            <div class="text-muted text-center py-3" id="noExpenseEntries">
+                                No expense entries added yet. Click "Add Expense Entry" to add expenses.
+                            </div>
+                        @endif
+                    </div>
+                    
+                    <div class="row mt-3">
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold">Total Expense from Entries:</label>
+                            <input type="number" step="0.01" class="form-control fw-bold" id="totalExpenseFromEntries" readonly value="{{ $tripOperation->total_expense ?? 0 }}">
+                        </div>
+                    </div>
+                </div>
+
+                <hr>
+
                 <div class="row">
                     <!-- Business Details -->
                     <div class="col-md-6 mb-3">
@@ -223,11 +288,97 @@
 
 @push('scripts')
 <script>
+let expenseEntryCount = {{ $tripOperation->expenseEntries ? $tripOperation->expenseEntries->count() : 0 }};
+
 function calculateFreight() {
     const km = parseFloat(document.getElementById('kilometers').value) || 0;
     const rate = parseFloat(document.getElementById('rate_per_km').value) || 0;
     const freight = km * rate;
     document.getElementById('freight').value = freight.toFixed(2);
 }
+
+function addExpenseEntry() {
+    const container = document.getElementById('expenseEntriesContainer');
+    const noEntries = document.getElementById('noExpenseEntries');
+    
+    if (noEntries) {
+        noEntries.remove();
+    }
+    
+    const entryHtml = `
+        <div class="expense-entry-card mb-3 p-3 border rounded">
+            <div class="row">
+                <div class="col-md-3 mb-2">
+                    <label class="form-label">Expense Category</label>
+                    <select class="form-select expense-category" name="expense_entries[${expenseEntryCount}][expense_category]" required>
+                        <option value="">Select Category</option>
+                        <option value="fuel">Fuel</option>
+                        <option value="toll">Toll</option>
+                        <option value="parking">Parking</option>
+                        <option value="driver_payment">Driver Payment</option>
+                        <option value="maintenance">Maintenance</option>
+                        <option value="loading_charges">Loading Charges</option>
+                        <option value="unloading_charges">Unloading Charges</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="col-md-2 mb-2">
+                    <label class="form-label">Payment Type</label>
+                    <select class="form-select" name="expense_entries[${expenseEntryCount}][payment_type]">
+                        <option value="">Select Type</option>
+                        <option value="credit">Credit</option>
+                        <option value="cash">Cash</option>
+                    </select>
+                </div>
+                <div class="col-md-2 mb-2">
+                    <label class="form-label">Amount</label>
+                    <input type="number" step="0.01" class="form-control expense-amount" name="expense_entries[${expenseEntryCount}][amount]" required oninput="calculateTotalExpense()">
+                </div>
+                <div class="col-md-3 mb-2">
+                    <label class="form-label">Description</label>
+                    <input type="text" class="form-control" name="expense_entries[${expenseEntryCount}][description]">
+                </div>
+                <div class="col-md-2 mb-2">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="button" class="btn btn-danger btn-sm w-100" onclick="removeExpenseEntry(this)">
+                        <i class="bi bi-trash"></i> Remove
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    container.insertAdjacentHTML('beforeend', entryHtml);
+    expenseEntryCount++;
+}
+
+function removeExpenseEntry(button) {
+    const entryCard = button.closest('.expense-entry-card');
+    entryCard.remove();
+    calculateTotalExpense();
+    
+    // Check if no entries left
+    const container = document.getElementById('expenseEntriesContainer');
+    if (container.querySelectorAll('.expense-entry-card').length === 0) {
+        container.innerHTML = '<div class="text-muted text-center py-3" id="noExpenseEntries">No expense entries added yet. Click "Add Expense Entry" to add expenses.</div>';
+    }
+}
+
+function calculateTotalExpense() {
+    const amounts = document.querySelectorAll('.expense-amount');
+    let total = 0;
+    
+    amounts.forEach(input => {
+        const value = parseFloat(input.value) || 0;
+        total += value;
+    });
+    
+    document.getElementById('totalExpenseFromEntries').value = total.toFixed(2);
+}
+
+// Calculate total expense on page load
+document.addEventListener('DOMContentLoaded', function() {
+    calculateTotalExpense();
+});
 </script>
 @endpush
