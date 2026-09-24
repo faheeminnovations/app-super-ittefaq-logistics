@@ -18,6 +18,14 @@
     <div class="nav-section-label">Overview</div>
     <a href="{{ url('/dashboard') }}" class="nav-link {{ request()->is('dashboard') ? 'active' : '' }}" data-module="dashboard"><i class="bi bi-speedometer2"></i> Dashboard </a>
     
+      <div class="nav-section-label">Transport Management</div>
+      <a href="{{ url('/transport/dashboard') }}" class="nav-link {{ request()->is('transport/dashboard') ? 'active' : '' }}" data-module="transport dashboard"><i class="bi bi-speedometer2"></i> Transport Dashboard </a>
+      <a href="{{ url('/trip-operations') }}" class="nav-link {{ request()->is('trip-operations') || request()->is('trip-operations/*') ? 'active' : '' }}" data-module="trip operations"><i class="bi bi-layers"></i> Trip Operations </a>
+      <a href="{{ url('/transport/trip-logs') }}" class="nav-link {{ request()->is('transport/trip-logs*') ? 'active' : '' }}" data-module="trip logs"><i class="bi bi-journal-text"></i> Trip Logs </a>
+      <a href="{{ url('/transport/import') }}" class="nav-link {{ request()->is('transport/import') ? 'active' : '' }}" data-module="import excel"><i class="bi bi-upload"></i> Import Excel </a>
+      <a href="{{ url('/transport/rate-management') }}" class="nav-link {{ request()->is('transport/rate-management') ? 'active' : '' }}" data-module="rate management"><i class="bi bi-currency-dollar"></i> Rate Management </a>
+      <a href="{{ url('/transport/reports/vehicle') }}" class="nav-link {{ request()->is('transport/reports*') ? 'active' : '' }}" data-module="reports"><i class="bi bi-bar-chart"></i> Reports </a>
+    
       {{-- Operations Access (Admin, Dispatcher, Manager) --}}
       @if(auth()->user()->hasAnyRole(['admin', 'dispatcher', 'manager']))
       <div class="nav-section-label">Operations</div>
@@ -28,14 +36,6 @@
       <a href="{{ url('/trips') }}" class="nav-link {{ request()->is('trips') ? 'active' : '' }}" data-module="trips"><i class="bi bi-signpost-split"></i> Trips </a>
       <a href="{{ url('/tracking') }}" class="nav-link {{ request()->is('tracking') ? 'active' : '' }}" data-module="tracking live tracking"><i class="bi bi-geo-alt"></i> Live Tracking </a>
       <a href="{{ url('/pod') }}" class="nav-link {{ request()->is('pod') ? 'active' : '' }}" data-module="pod proof of delivery"><i class="bi bi-file-earmark-check"></i> Proof of Delivery </a>
-      
-      <div class="nav-section-label">Transport Management</div>
-      <a href="{{ url('/transport/dashboard') }}" class="nav-link {{ request()->is('transport/dashboard') ? 'active' : '' }}" data-module="transport dashboard"><i class="bi bi-speedometer2"></i> Transport Dashboard </a>
-      <a href="{{ url('/transport/trip-logs') }}" class="nav-link {{ request()->is('transport/trip-logs*') ? 'active' : '' }}" data-module="trip logs"><i class="bi bi-journal-text"></i> Trip Logs </a>
-      <a href="{{ url('/trip-operations') }}" class="nav-link {{ request()->is('trip-operations') || request()->is('trip-operations/*') ? 'active' : '' }}" data-module="trip operations"><i class="bi bi-layers"></i> Trip Operations </a>
-      <a href="{{ url('/transport/import') }}" class="nav-link {{ request()->is('transport/import') ? 'active' : '' }}" data-module="import excel"><i class="bi bi-upload"></i> Import Excel </a>
-      <a href="{{ url('/transport/rate-management') }}" class="nav-link {{ request()->is('transport/rate-management') ? 'active' : '' }}" data-module="rate management"><i class="bi bi-currency-dollar"></i> Rate Management </a>
-      <a href="{{ url('/transport/reports/vehicle') }}" class="nav-link {{ request()->is('transport/reports*') ? 'active' : '' }}" data-module="reports"><i class="bi bi-bar-chart"></i> Reports </a>
       
       <div class="nav-section-label">Fleet & People</div>
       <a href="{{ url('/vehicles') }}" class="nav-link {{ request()->is('vehicles') ? 'active' : '' }}" data-module="vehicles fleet"><i class="bi bi-truck-front"></i> Vehicles / Fleet </a>

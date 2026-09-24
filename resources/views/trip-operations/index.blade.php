@@ -30,7 +30,7 @@
 
     <!-- Statistics Cards -->
     <div class="row g-3 mb-3">
-        <div class="col-6 col-lg-3">
+        <div class="col-6 col-lg-2">
             <div class="stat-card">
                 <div class="icon-badge" style="background:#EAF0FB;color:var(--navy-800);"><i class="bi bi-truck"></i></div>
                 <div class="label">Total Trips</div>
@@ -38,7 +38,7 @@
                 <div class="delta up"><i class="bi bi-arrow-up-short"></i> All time</div>
             </div>
         </div>
-        <div class="col-6 col-lg-3">
+        <div class="col-6 col-lg-2">
             <div class="stat-card">
                 <div class="icon-badge" style="background:#EAF7EF;color:var(--success);"><i class="bi bi-check-circle"></i></div>
                 <div class="label">Completed</div>
@@ -46,20 +46,36 @@
                 <div class="delta up"><i class="bi bi-arrow-up-short"></i> Finished trips</div>
             </div>
         </div>
-        <div class="col-6 col-lg-3">
+        <div class="col-6 col-lg-2">
+            <div class="stat-card">
+                <div class="icon-badge" style="background:#E8F5E9;color:var(--success);"><i class="bi bi-currency-dollar"></i></div>
+                <div class="label">Total Income</div>
+                <div class="value">{{ \App\Helpers\CurrencyHelper::formatCurrency($totalIncome ?? ($totalFreight ?? 0)) }}</div>
+                <div class="delta up"><i class="bi bi-arrow-up-short"></i> Revenue</div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-2">
+            <div class="stat-card">
+                <div class="icon-badge" style="background:#FFEBEE;color:var(--danger);"><i class="bi bi-currency-dollar"></i></div>
+                <div class="label">Total Expense</div>
+                <div class="value">{{ \App\Helpers\CurrencyHelper::formatCurrency($totalExpense ?? 0) }}</div>
+                <div class="delta down"><i class="bi bi-arrow-down-short"></i> Costs</div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-2">
+            <div class="stat-card">
+                <div class="icon-badge" style="background:#E3F2FD;color:var(--primary);"><i class="bi bi-graph-up-arrow"></i></div>
+                <div class="label">Net Amount</div>
+                <div class="value">{{ \App\Helpers\CurrencyHelper::formatCurrency($totalNetAmount ?? 0) }}</div>
+                <div class="delta up"><i class="bi bi-arrow-up-short"></i> Profit/Loss</div>
+            </div>
+        </div>
+        <div class="col-6 col-lg-2">
             <div class="stat-card">
                 <div class="icon-badge" style="background:#FFF3E0;color:var(--warn);"><i class="bi bi-hourglass-split"></i></div>
                 <div class="label">In Progress</div>
                 <div class="value">{{ $tripOperations->where('status', 'in_progress')->count() }}</div>
                 <div class="delta down"><i class="bi bi-arrow-down-short"></i> Active trips</div>
-            </div>
-        </div>
-        <div class="col-6 col-lg-3">
-            <div class="stat-card">
-                <div class="icon-badge" style="background:#FBE9E7;color:var(--danger);"><i class="bi bi-currency-dollar"></i></div>
-                <div class="label">Total Freight</div>
-                <div class="value">{{ \App\Helpers\CurrencyHelper::formatCurrency($totalFreight) }}</div>
-                <div class="delta up"><i class="bi bi-arrow-up-short"></i> {{ number_format($totalKm) }} km total</div>
             </div>
         </div>
     </div>
@@ -135,6 +151,9 @@
                         <th>Category</th>
                         <th>KM</th>
                         <th>Freight</th>
+                        <th>Total Income</th>
+                        <th>Total Expense</th>
+                        <th>Net Amount</th>
                         <th>Status</th>
                         <th>Wizard Progress</th>
                         <th>Actions</th>
@@ -152,6 +171,9 @@
                         <td>{{ $trip->business_category ?? '-' }}</td>
                         <td>{{ number_format($trip->kilometers, 2) }}</td>
                         <td><strong>{{ \App\Helpers\CurrencyHelper::formatCurrency($trip->freight) }}</strong></td>
+                        <td><strong class="text-success">{{ \App\Helpers\CurrencyHelper::formatCurrency($trip->total_income ?? $trip->freight) }}</strong></td>
+                        <td><strong class="text-danger">{{ \App\Helpers\CurrencyHelper::formatCurrency($trip->total_expense ?? 0) }}</strong></td>
+                        <td><strong class="{{ $trip->net_amount >= 0 ? 'text-primary' : 'text-danger' }}">{{ \App\Helpers\CurrencyHelper::formatCurrency($trip->net_amount ?? ($trip->total_income - $trip->total_expense)) }}</strong></td>
                         <td>
                             @switch($trip->status)
                                 @case('pending')
@@ -203,7 +225,7 @@
                         </td>
                     </tr>
                     @empty
-                    <tr class="no-data-row" style="display:none;"><td colspan="12" class="text-center">No trip operations found</td></tr>
+                    <tr class="no-data-row" style="display:none;"><td colspan="15" class="text-center">No trip operations found</td></tr>
                     @endforelse
                 </tbody>
             </table>

@@ -35,7 +35,7 @@
                     </div>
                     <div class="step {{ isset($tripOperation) && $tripOperation->current_wizard_step > 3 ? 'completed' : '' }} {{ isset($tripOperation) && $tripOperation->current_wizard_step == 3 ? 'active' : '' }}" data-step="3">
                         <div class="step-number">3</div>
-                        <div class="step-label">Fuel & Expenses</div>
+                        <div class="step-label">Income & Expense</div>
                     </div>
                     <div class="step {{ isset($tripOperation) && $tripOperation->current_wizard_step > 4 ? 'completed' : '' }} {{ isset($tripOperation) && $tripOperation->current_wizard_step == 4 ? 'active' : '' }}" data-step="4">
                         <div class="step-number">4</div>
@@ -172,33 +172,94 @@
                     </div>
                 </div>
 
-                <!-- Step 3: Fuel and Expenses -->
+                <!-- Step 3: Income and Expense -->
                 <div class="wizard-step {{ isset($tripOperation) && $tripOperation->current_wizard_step == 3 ? 'active' : '' }}" data-step="3">
-                    <h4 class="mb-3">Step 3: Fuel and Expenses</h4>
-                    <div class="row">
-                        <div class="col-md-4 mb-3">
-                            <label for="fuel_type" class="form-label">Fuel Type</label>
-                            <input type="text" class="form-control" id="fuel_type" name="fuel_type" placeholder="e.g., Petrol" value="{{ isset($tripOperation) ? $tripOperation->fuel_type : '' }}">
+                    <h4 class="mb-3">Step 3: Income and Expense</h4>
+
+                    <!-- Income Section -->
+                    <div class="card mb-4" style="background-color: #f8f9fa; border-left: 4px solid #198754;">
+                        <div class="card-body">
+                            <h5 class="card-title text-success mb-3">Income Details</h5>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="total_income" class="form-label fw-bold">Total Income (Freight)</label>
+                                    <input type="number" step="0.01" class="form-control bg-light" id="total_income" name="total_income" readonly value="0.00" style="font-weight: bold; color: #198754;">
+                                    <small class="text-muted">Auto-calculated from Step 2 (KM × Rate)</small>
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-md-4 mb-3">
-                            <label for="fuel" class="form-label">Fuel</label>
-                            <input type="text" class="form-control" id="fuel" name="fuel" placeholder="Amount, cash, or null" value="{{ isset($tripOperation) ? $tripOperation->fuel : '' }}">
+                    </div>
+
+                    <!-- Expense Section -->
+                    <div class="card mb-4" style="background-color: #f8f9fa; border-left: 4px solid #dc3545;">
+                        <div class="card-body">
+                            <h5 class="card-title text-danger mb-3">Expense Details</h5>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="total_expense" class="form-label fw-bold">Total Expense</label>
+                                    <input type="number" step="0.01" class="form-control bg-light" id="total_expense" name="total_expense" readonly value="0.00" style="font-weight: bold; color: #dc3545;">
+                                    <small class="text-muted">Auto-calculated from expense entries below</small>
+                                </div>
+                            </div>
+
+                            <!-- Expense Entries Container -->
+                            <div id="expenseEntriesContainer">
+                                <div class="expense-entry row mb-3 p-3 border rounded" style="background-color: white;">
+                                    <div class="col-md-3 mb-2">
+                                        <label class="form-label">Expense Category</label>
+                                        <select class="form-select expense-category" name="expense_entries[0][expense_category]" required>
+                                            <option value="">Select Category</option>
+                                            <option value="fuel">Fuel</option>
+                                            <option value="toll">Toll</option>
+                                            <option value="parking">Parking</option>
+                                            <option value="driver_payment">Driver Payment</option>
+                                            <option value="maintenance">Maintenance</option>
+                                            <option value="loading_charges">Loading Charges</option>
+                                            <option value="unloading_charges">Unloading Charges</option>
+                                            <option value="other">Other</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3 mb-2">
+                                        <label class="form-label">Payment Type</label>
+                                        <select class="form-select expense-payment-type" name="expense_entries[0][payment_type]">
+                                            <option value="">Select Type</option>
+                                            <option value="credit">Credit</option>
+                                            <option value="cash">Cash</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3 mb-2">
+                                        <label class="form-label">Amount</label>
+                                        <input type="number" step="0.01" class="form-control expense-amount" name="expense_entries[0][amount]" placeholder="0.00" oninput="calculateTotalExpense()">
+                                    </div>
+                                    <div class="col-md-3 mb-2">
+                                        <label class="form-label">Description</label>
+                                        <input type="text" class="form-control expense-description" name="expense_entries[0][description]" placeholder="Description">
+                                    </div>
+                                    <div class="col-12">
+                                        <button type="button" class="btn btn-sm btn-danger d-none remove-expense-entry" onclick="removeExpenseEntry(this)">
+                                            <i class="bi bi-trash"></i> Remove
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <button type="button" class="btn btn-outline-danger btn-sm" onclick="addExpenseEntry()">
+                                <i class="bi bi-plus-circle"></i> Add Expense Entry
+                            </button>
                         </div>
-                        <div class="col-md-4 mb-3">
-                            <label for="fuel_payment_type" class="form-label">Fuel Payment Type</label>
-                            <select class="form-select" id="fuel_payment_type" name="fuel_payment_type">
-                                <option value="">Select Type</option>
-                                <option value="credit" {{ isset($tripOperation) && $tripOperation->fuel_payment_type == 'credit' ? 'selected' : '' }}>Credit</option>
-                                <option value="cash" {{ isset($tripOperation) && $tripOperation->fuel_payment_type == 'cash' ? 'selected' : '' }}>Cash</option>
-                            </select>
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="fuel_payment_amount" class="form-label">Fuel Payment Amount</label>
-                            <input type="number" step="0.01" class="form-control" id="fuel_payment_amount" name="fuel_payment_amount" value="{{ isset($tripOperation) ? $tripOperation->fuel_payment_amount : '' }}">
-                        </div>
-                        <div class="col-md-6 mb-3">
-                            <label for="expenses" class="form-label">Expenses</label>
-                            <input type="number" step="0.01" class="form-control" id="expenses" name="expenses" value="{{ isset($tripOperation) ? $tripOperation->expenses : '' }}">
+                    </div>
+
+                    <!-- Net Amount Section -->
+                    <div class="card" style="background-color: #f8f9fa; border-left: 4px solid #0d6efd;">
+                        <div class="card-body">
+                            <h5 class="card-title text-primary mb-3">Net Amount / Profit</h5>
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="net_amount" class="form-label fw-bold">Net Amount (Profit/Loss)</label>
+                                    <input type="number" step="0.01" class="form-control bg-light" id="net_amount" name="net_amount" readonly value="0.00" style="font-weight: bold; color: #0d6efd;">
+                                    <small class="text-muted">Auto-calculated: Total Income − Total Expense</small>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -367,6 +428,78 @@ document.addEventListener('DOMContentLoaded', function() {
 
     updateWizardUI();
 
+    // Initialize total income and expense fields
+    @if(isset($tripOperation))
+        // Set total income from freight
+        const freight = parseFloat(document.getElementById('freight').value) || 0;
+        document.getElementById('total_income').value = freight.toFixed(2);
+
+        // Load existing expense entries if available
+        @if(isset($tripOperation->expenseEntries) && $tripOperation->expenseEntries->count() > 0)
+            // Clear existing entries
+            const container = document.getElementById('expenseEntriesContainer');
+            container.innerHTML = '';
+
+            // Add existing expense entries
+            @foreach($tripOperation->expenseEntries as $index => $entry)
+                const entry{{ $index }} = document.createElement('div');
+                entry{{ $index }}.className = 'expense-entry row mb-3 p-3 border rounded';
+                entry{{ $index }}.style.backgroundColor = 'white';
+                entry{{ $index }}.innerHTML = `
+                    <div class="col-md-3 mb-2">
+                        <label class="form-label">Expense Category</label>
+                        <select class="form-select expense-category" name="expense_entries[{{ $index }}][expense_category]" required>
+                            <option value="">Select Category</option>
+                            <option value="fuel" {{ $entry->expense_category == 'fuel' ? 'selected' : '' }}>Fuel</option>
+                            <option value="toll" {{ $entry->expense_category == 'toll' ? 'selected' : '' }}>Toll</option>
+                            <option value="parking" {{ $entry->expense_category == 'parking' ? 'selected' : '' }}>Parking</option>
+                            <option value="driver_payment" {{ $entry->expense_category == 'driver_payment' ? 'selected' : '' }}>Driver Payment</option>
+                            <option value="maintenance" {{ $entry->expense_category == 'maintenance' ? 'selected' : '' }}>Maintenance</option>
+                            <option value="loading_charges" {{ $entry->expense_category == 'loading_charges' ? 'selected' : '' }}>Loading Charges</option>
+                            <option value="unloading_charges" {{ $entry->expense_category == 'unloading_charges' ? 'selected' : '' }}>Unloading Charges</option>
+                            <option value="other" {{ $entry->expense_category == 'other' ? 'selected' : '' }}>Other</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <label class="form-label">Payment Type</label>
+                        <select class="form-select expense-payment-type" name="expense_entries[{{ $index }}][payment_type]">
+                            <option value="">Select Type</option>
+                            <option value="credit" {{ $entry->payment_type == 'credit' ? 'selected' : '' }}>Credit</option>
+                            <option value="cash" {{ $entry->payment_type == 'cash' ? 'selected' : '' }}>Cash</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <label class="form-label">Amount</label>
+                        <input type="number" step="0.01" class="form-control expense-amount" name="expense_entries[{{ $index }}][amount]" placeholder="0.00" value="{{ $entry->amount }}" oninput="calculateTotalExpense()">
+                    </div>
+                    <div class="col-md-3 mb-2">
+                        <label class="form-label">Description</label>
+                        <input type="text" class="form-control expense-description" name="expense_entries[{{ $index }}][description]" placeholder="Description" value="{{ $entry->description }}">
+                    </div>
+                    <div class="col-12">
+                        <button type="button" class="btn btn-sm btn-danger remove-expense-entry" onclick="removeExpenseEntry(this)">
+                            <i class="bi bi-trash"></i> Remove
+                        </button>
+                    </div>
+                `;
+                container.appendChild(entry{{ $index }});
+            @endforeach
+
+            // Update remove buttons
+            updateRemoveButtons();
+        @endif
+
+        // Calculate total expense from loaded entries
+        calculateTotalExpense();
+    @else
+        // For new trips, initialize from current values
+        const initialFreight = parseFloat(document.getElementById('freight').value) || 0;
+        document.getElementById('total_income').value = initialFreight.toFixed(2);
+    @endif
+
+    // Call the financial fields update function
+    updateFinancialFields();
+
     // Initialize category-specific fields based on selected business category
     const businessCategory = document.getElementById('business_category');
     if (businessCategory && businessCategory.value) {
@@ -400,6 +533,178 @@ function calculateFreight() {
     const rate = parseFloat(document.getElementById('rate_per_km').value) || 0;
     const freight = km * rate;
     document.getElementById('freight').value = freight.toFixed(2);
+
+    // Update total income field
+    const totalIncomeField = document.getElementById('total_income');
+    if (totalIncomeField) {
+        totalIncomeField.value = freight.toFixed(2);
+    }
+
+    calculateNetAmount();
+}
+
+function calculateTotalExpense() {
+    let totalExpense = 0;
+    const expenseAmounts = document.querySelectorAll('.expense-amount');
+    expenseAmounts.forEach(input => {
+        totalExpense += parseFloat(input.value) || 0;
+    });
+
+    const totalExpenseField = document.getElementById('total_expense');
+    if (totalExpenseField) {
+        totalExpenseField.value = totalExpense.toFixed(2);
+    }
+
+    calculateNetAmount();
+}
+
+function calculateNetAmount() {
+    const totalIncome = parseFloat(document.getElementById('total_income').value) || 0;
+    const totalExpense = parseFloat(document.getElementById('total_expense').value) || 0;
+    const netAmount = totalIncome - totalExpense;
+
+    const netAmountField = document.getElementById('net_amount');
+    if (netAmountField) {
+        netAmountField.value = netAmount.toFixed(2);
+        // Update color based on profit/loss
+        if (netAmount >= 0) {
+            netAmountField.style.color = '#198754'; // Green for profit
+        } else {
+            netAmountField.style.color = '#dc3545'; // Red for loss
+        }
+    }
+}
+
+function addExpenseEntry() {
+    const container = document.getElementById('expenseEntriesContainer');
+    const entries = container.querySelectorAll('.expense-entry');
+    let maxIndex = 0;
+
+    // Find the highest existing index
+    entries.forEach(entry => {
+        const select = entry.querySelector('.expense-category');
+        if (select && select.name) {
+            const match = select.name.match(/expense_entries\[(\d+)\]/);
+            if (match) {
+                const index = parseInt(match[1]);
+                if (index > maxIndex) {
+                    maxIndex = index;
+                }
+            }
+        }
+    });
+
+    const newIndex = maxIndex + 1;
+    const newEntry = document.createElement('div');
+    newEntry.className = 'expense-entry row mb-3 p-3 border rounded';
+    newEntry.style.backgroundColor = 'white';
+    newEntry.innerHTML = `
+        <div class="col-md-3 mb-2">
+            <label class="form-label">Expense Category</label>
+            <select class="form-select expense-category" name="expense_entries[${newIndex}][expense_category]" required>
+                <option value="">Select Category</option>
+                <option value="fuel">Fuel</option>
+                <option value="toll">Toll</option>
+                <option value="parking">Parking</option>
+                <option value="driver_payment">Driver Payment</option>
+                <option value="maintenance">Maintenance</option>
+                <option value="loading_charges">Loading Charges</option>
+                <option value="unloading_charges">Unloading Charges</option>
+                <option value="other">Other</option>
+            </select>
+        </div>
+        <div class="col-md-3 mb-2">
+            <label class="form-label">Payment Type</label>
+            <select class="form-select expense-payment-type" name="expense_entries[${newIndex}][payment_type]">
+                <option value="">Select Type</option>
+                <option value="credit">Credit</option>
+                <option value="cash">Cash</option>
+            </select>
+        </div>
+        <div class="col-md-3 mb-2">
+            <label class="form-label">Amount</label>
+            <input type="number" step="0.01" class="form-control expense-amount" name="expense_entries[${newIndex}][amount]" placeholder="0.00" oninput="calculateTotalExpense()">
+        </div>
+        <div class="col-md-3 mb-2">
+            <label class="form-label">Description</label>
+            <input type="text" class="form-control expense-description" name="expense_entries[${newIndex}][description]" placeholder="Description">
+        </div>
+        <div class="col-12">
+            <button type="button" class="btn btn-sm btn-danger remove-expense-entry" onclick="removeExpenseEntry(this)">
+                <i class="bi bi-trash"></i> Remove
+            </button>
+        </div>
+    `;
+    container.appendChild(newEntry);
+
+    // Recalculate total expense
+    calculateTotalExpense();
+
+    // Show remove buttons for all entries if there are multiple
+    updateRemoveButtons();
+}
+
+function removeExpenseEntry(button) {
+    const entry = button.closest('.expense-entry');
+    entry.remove();
+    calculateTotalExpense();
+    updateRemoveButtons();
+}
+
+function updateRemoveButtons() {
+    const entries = document.querySelectorAll('.expense-entry');
+    const removeButtons = document.querySelectorAll('.remove-expense-entry');
+
+    // Show remove buttons only if there are multiple entries
+    removeButtons.forEach(btn => {
+        if (entries.length > 1) {
+            btn.classList.remove('d-none');
+        } else {
+            btn.classList.add('d-none');
+        }
+    });
+}
+
+function updateTotalIncome() {
+    const freight = parseFloat(document.getElementById('freight').value) || 0;
+    document.getElementById('total_income').value = freight.toFixed(2);
+}
+
+// Ensure total_income and total_expense are always in sync
+if (document.getElementById('freight')) {
+    document.getElementById('freight').addEventListener('input', function() {
+        const freight = parseFloat(this.value) || 0;
+        const totalIncomeField = document.getElementById('total_income');
+        if (totalIncomeField) {
+            totalIncomeField.value = freight.toFixed(2);
+        }
+    });
+}
+
+if (document.getElementById('expenses')) {
+    document.getElementById('expenses').addEventListener('input', function() {
+        const expenses = parseFloat(this.value) || 0;
+        const totalExpenseField = document.getElementById('total_expense');
+        if (totalExpenseField) {
+            totalExpenseField.value = expenses.toFixed(2);
+        }
+    });
+}
+
+// Function to update all financial fields when loading wizard data
+function updateFinancialFields() {
+    const freight = parseFloat(document.getElementById('freight').value) || 0;
+    const expenses = parseFloat(document.getElementById('expenses').value) || 0;
+
+    const totalIncomeField = document.getElementById('total_income');
+    const totalExpenseField = document.getElementById('total_expense');
+
+    if (totalIncomeField) {
+        totalIncomeField.value = freight.toFixed(2);
+    }
+    if (totalExpenseField) {
+        totalExpenseField.value = expenses.toFixed(2);
+    }
 }
 
 // Show/hide category-specific fields
@@ -495,6 +800,11 @@ function updateWizardUI() {
         document.getElementById('nextBtn').classList.remove('d-none');
         document.getElementById('completeBtn').classList.add('d-none');
     }
+
+    // Update financial fields when switching to step 3
+    if (currentStep === 3) {
+        updateFinancialFields();
+    }
 }
 
 async function nextStep() {
@@ -527,7 +837,7 @@ async function nextStep() {
     formData.append('step', currentStep);
 
     try {
-        const response = await fetch('/trip-operations/wizard-step', {
+        const response = await fetch(window.location.origin + '/trip-operations/wizard-step', {
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
@@ -544,7 +854,7 @@ async function nextStep() {
 
             if (data.is_complete || currentStep > 4) {
                 // Wizard complete - redirect
-                window.location.href = '/trip-operations';
+                window.location.href = window.location.origin + '/trip-operations';
             } else {
                 updateWizardUI();
             }
@@ -578,7 +888,7 @@ async function completeWizard() {
     const tripId = document.getElementById('trip_id').value;
 
     try {
-        const response = await fetch(`/trip-operations/${tripId}/complete-wizard`, {
+        const response = await fetch(window.location.origin + `/trip-operations/${tripId}/complete-wizard`, {
             method: 'POST',
             headers: {
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
@@ -595,7 +905,7 @@ async function completeWizard() {
                 text: 'Trip operation completed successfully!',
                 confirmButtonColor: '#198754'
             }).then(() => {
-                window.location.href = '/trip-operations';
+                window.location.href = window.location.origin + '/trip-operations';
             });
         } else {
             Swal.fire({

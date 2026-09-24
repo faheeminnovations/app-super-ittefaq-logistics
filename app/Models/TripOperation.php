@@ -24,10 +24,13 @@ class TripOperation extends Model
         'fuel_type',
         'fuel',
         'fuel_payment_type',
-        'fuel_payment_amount',
         'driver_name',
         'driver_id',
         'load_id',
+        'expense_category',
+        'total_income',
+        'total_expense',
+        'net_amount',
         'freight_bill_no',
         'billing_month',
         'billing_year',
@@ -66,11 +69,13 @@ class TripOperation extends Model
         'kilometers' => 'decimal:2',
         'rate_per_km' => 'decimal:2',
         'freight' => 'decimal:2',
-        'fuel_payment_amount' => 'decimal:2',
         'rent_paid' => 'decimal:2',
         'expenses' => 'decimal:2',
         'initial_amount' => 'decimal:2',
         'amount_changed' => 'decimal:2',
+        'total_income' => 'decimal:2',
+        'total_expense' => 'decimal:2',
+        'net_amount' => 'decimal:2',
         'billing_year' => 'integer',
         'billing_month_number' => 'integer',
         'quantity' => 'integer',
@@ -105,6 +110,11 @@ class TripOperation extends Model
         return $this->belongsTo(Invoice::class);
     }
 
+    public function expenseEntries()
+    {
+        return $this->hasMany(TripExpenseEntry::class);
+    }
+
     // Accessors for formatted currency values
     public function getFormattedFreightAttribute()
     {
@@ -114,6 +124,47 @@ class TripOperation extends Model
     public function getFormattedRatePerKmAttribute()
     {
         return CurrencyHelper::formatCurrency($this->rate_per_km);
+    }
+
+    // Accessors for calculated fields
+    public function getTotalIncomeAttribute($value)
+    {
+        return $value ?? $this->freight ?? 0;
+    }
+
+    public function getTotalExpenseAttribute($value)
+    {
+        // Calculate total expense from expense entries if not set
+        if ($value === null || $value === 0) {
+            return $this->expenseEntries()->sum('amount');
+        }
+        return $value;
+    }
+
+    public function getNetAmountAttribute($value)
+    {
+        // Calculate net amount if not set
+        if ($value === null || $value === 0) {
+            return $this->total_income - $this->total_expense;
+        }
+        return $value;
+    }
+
+    // Calculate net amount (profit/loss)
+    public function calculateNetAmount()
+    {
+        $this->total_expense = $this->expenseEntries()->sum('amount');
+        $this->net_amount = $this->total_income - $this->total_expense;
+        return $this->net_amount;
+    }
+
+    // Recalculate all financial amounts
+    public function recalculateFinancials()
+    {
+        $this->total_income = $this->freight;
+        $this->total_expense = $this->expenseEntries()->sum('amount');
+        $this->net_amount = $this->total_income - $this->total_expense;
+        $this->save();
     }
 
     // Auto-generate trip number

@@ -7,6 +7,7 @@ use App\Models\Vehicle;
 use App\Models\Driver;
 use App\Models\Customer;
 use App\Models\Warehouse;
+use App\Models\TripExpenseEntry;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
 
@@ -57,6 +58,9 @@ class TripOperationController extends Controller
         $allOperations = $totalsQuery->get();
         $totalKm = $allOperations->sum('kilometers');
         $totalFreight = $allOperations->sum('freight');
+        $totalIncome = $allOperations->sum('total_income') ?? $allOperations->sum('freight');
+        $totalExpense = $allOperations->sum('total_expense') ?? 0;
+        $totalNetAmount = $allOperations->sum('net_amount') ?? ($totalIncome - $totalExpense);
 
         // Get filter options
         $vehicles = Vehicle::active()->pluck('reg_no', 'reg_no');
@@ -89,7 +93,10 @@ class TripOperationController extends Controller
             'categories',
             'months',
             'totalKm',
-            'totalFreight'
+            'totalFreight',
+            'totalIncome',
+            'totalExpense',
+            'totalNetAmount'
         ));
     }
 
@@ -142,9 +149,21 @@ class TripOperationController extends Controller
             $step = $request->input('step');
             $tripId = $request->input('trip_id');
 
+            // Log the incoming data for debugging
+            \Log::info('Step ' . $step . ' data - START:', ['step' => $step, 'trip_id' => $tripId]);
+            \Log::info('Step ' . $step . ' data:', $request->all());
+
             // Validate based on current step
             $validationRules = $this->getStepValidationRules($step);
-            $validated = $request->validate($validationRules);
+            \Log::info('Step ' . $step . ' validation rules:', $validationRules);
+
+            try {
+                $validated = $request->validate($validationRules);
+                \Log::info('Step ' . $step . ' validation passed');
+            } catch (\Illuminate\Validation\ValidationException $e) {
+                \Log::error('Step ' . $step . ' validation failed:', $e->errors());
+                throw $e;
+            }
 
         // Auto-calculate billing information
         if (isset($validated['trip_date'])) {
@@ -158,6 +177,32 @@ class TripOperationController extends Controller
         if (isset($validated['kilometers']) && isset($validated['rate_per_km'])) {
             $validated['freight'] = $validated['kilometers'] * $validated['rate_per_km'];
         }
+
+        // Auto-calculate total income (freight)
+        $validated['total_income'] = $validated['freight'] ?? 0;
+
+        // Handle expense entries temporarily (will be saved after trip operation)
+        $expenseEntries = $validated['expense_entries'] ?? [];
+        $totalExpense = 0;
+
+        // Filter out empty expense entries and calculate total expense
+        $validExpenseEntries = [];
+        foreach ($expenseEntries as $entry) {
+            if (isset($entry['amount']) && is_numeric($entry['amount']) && floatval($entry['amount']) > 0) {
+                $validExpenseEntries[] = $entry;
+                $totalExpense += floatval($entry['amount']);
+            }
+        }
+        $expenseEntries = $validExpenseEntries;
+
+        // Auto-calculate total expense from expense entries
+        $validated['total_expense'] = $totalExpense;
+
+        // Calculate net amount
+        $validated['net_amount'] = $validated['total_income'] - $validated['total_expense'];
+
+        // Remove expense entries from validated data to avoid database issues
+        unset($validated['expense_entries']);
 
         // Generate trip number if it's a new trip
         if (!$tripId) {
@@ -175,14 +220,35 @@ class TripOperationController extends Controller
                     $validated['kilometers'] = $validated['kilometers'] ?? 0;
                     $validated['rate_per_km'] = $validated['rate_per_km'] ?? 0;
                     $validated['freight'] = $validated['freight'] ?? 0;
-                    $validated['fuel_payment_amount'] = $validated['fuel_payment_amount'] ?? 0;
                     $validated['expenses'] = $validated['expenses'] ?? 0;
                     $validated['rent_paid'] = $validated['rent_paid'] ?? 0;
                     $validated['initial_amount'] = $validated['initial_amount'] ?? 0;
                     $validated['amount_changed'] = $validated['amount_changed'] ?? 0;
                     $validated['quantity'] = $validated['quantity'] ?? 0;
+                    $validated['total_income'] = $validated['total_income'] ?? 0;
+                    $validated['total_expense'] = $validated['total_expense'] ?? 0;
 
                     $tripOperation = TripOperation::create($validated);
+
+                    // Save expense entries after trip operation is created
+                    try {
+                        $expenseEntries = $validExpenseEntries;
+                        \Log::info('Processing expense entries:', $expenseEntries);
+
+                        foreach ($expenseEntries as $entry) {
+                            TripExpenseEntry::create([
+                                'trip_operation_id' => $tripOperation->id,
+                                'expense_category' => $entry['expense_category'] ?? 'other',
+                                'payment_type' => $entry['payment_type'] ?? null,
+                                'amount' => floatval($entry['amount']),
+                                'description' => $entry['description'] ?? null,
+                                'expense_date' => now(),
+                            ]);
+                        }
+                    } catch (\Exception $e) {
+                        \Log::error('Error saving expense entries: ' . $e->getMessage());
+                        // Continue even if expense entries fail
+                    }
                 } catch (\Illuminate\Database\QueryException $e) {
                     if ($e->getCode() == 23000 && strpos($e->getMessage(), 'trip_number') !== false) {
                         // Duplicate trip number, try again
@@ -206,12 +272,59 @@ class TripOperationController extends Controller
             $validated['kilometers'] = $validated['kilometers'] ?? $tripOperation->kilometers ?? 0;
             $validated['rate_per_km'] = $validated['rate_per_km'] ?? $tripOperation->rate_per_km ?? 0;
             $validated['freight'] = $validated['freight'] ?? $tripOperation->freight ?? 0;
-            $validated['fuel_payment_amount'] = $validated['fuel_payment_amount'] ?? $tripOperation->fuel_payment_amount ?? 0;
             $validated['expenses'] = $validated['expenses'] ?? $tripOperation->expenses ?? 0;
             $validated['rent_paid'] = $validated['rent_paid'] ?? $tripOperation->rent_paid ?? 0;
             $validated['initial_amount'] = $validated['initial_amount'] ?? $tripOperation->initial_amount ?? 0;
             $validated['amount_changed'] = $validated['amount_changed'] ?? $tripOperation->amount_changed ?? 0;
             $validated['quantity'] = $validated['quantity'] ?? $tripOperation->quantity ?? 0;
+
+            // Recalculate freight if kilometers or rate changed
+            if (isset($validated['kilometers']) && isset($validated['rate_per_km'])) {
+                $validated['freight'] = $validated['kilometers'] * $validated['rate_per_km'];
+            }
+
+            // Recalculate total income based on freight
+            $validated['total_income'] = $validated['freight'] ?? $tripOperation->total_income ?? 0;
+
+            // Handle expense entries
+            $expenseEntries = $request->input('expense_entries', []);
+            $totalExpense = 0;
+
+            \Log::info('Updating expense entries for trip ' . $tripOperation->id, $expenseEntries);
+
+            // Filter out empty expense entries
+            $validExpenseEntries = [];
+            foreach ($expenseEntries as $entry) {
+                if (isset($entry['amount']) && is_numeric($entry['amount']) && floatval($entry['amount']) > 0) {
+                    $validExpenseEntries[] = $entry;
+                }
+            }
+
+            // Delete existing expense entries for this trip
+            TripExpenseEntry::where('trip_operation_id', $tripOperation->id)->delete();
+
+            // Create new expense entries
+            foreach ($validExpenseEntries as $entry) {
+                try {
+                    TripExpenseEntry::create([
+                        'trip_operation_id' => $tripOperation->id,
+                        'expense_category' => $entry['expense_category'] ?? 'other',
+                        'payment_type' => $entry['payment_type'] ?? null,
+                        'amount' => floatval($entry['amount']),
+                        'description' => $entry['description'] ?? null,
+                        'expense_date' => now(),
+                    ]);
+                    $totalExpense += floatval($entry['amount']);
+                } catch (\Exception $e) {
+                    \Log::error('Error creating expense entry: ' . $e->getMessage());
+                }
+            }
+
+            // Recalculate total expense based on expense entries
+            $validated['total_expense'] = $totalExpense;
+
+            // Calculate net amount
+            $validated['net_amount'] = $validated['total_income'] - $validated['total_expense'];
 
             $tripOperation->update($validated);
         }
@@ -239,10 +352,24 @@ class TripOperationController extends Controller
             'is_complete' => $step === 4,
             'message' => 'Step saved successfully'
         ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $errors = $e->errors();
+            $errorMessages = [];
+            foreach ($errors as $field => $messages) {
+                if (is_array($messages)) {
+                    $errorMessages = array_merge($errorMessages, $messages);
+                } else {
+                    $errorMessages[] = $messages;
+                }
+            }
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed: ' . implode(', ', $errorMessages)
+            ], 422);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => 'Error saving step data: ' . $e->getMessage()
             ], 500);
         }
     }
@@ -280,11 +407,11 @@ class TripOperationController extends Controller
 
             case 3: // Fuel and Expenses
                 return [
-                    'fuel_type' => 'nullable|string|max:50',
-                    'fuel' => 'nullable|string|max:255',
-                    'fuel_payment_type' => 'nullable|in:credit,cash',
-                    'fuel_payment_amount' => 'nullable|numeric|min:0|max:999999999.99',
-                    'expenses' => 'nullable|numeric|min:0|max:999999999.99',
+                    'expense_entries' => 'nullable|array',
+                    'expense_entries.*.expense_category' => 'nullable|string|in:fuel,toll,parking,driver_payment,maintenance,loading_charges,unloading_charges,other',
+                    'expense_entries.*.payment_type' => 'nullable|in:credit,cash',
+                    'expense_entries.*.amount' => 'nullable|numeric|min:0|max:999999999999999999.99',
+                    'expense_entries.*.description' => 'nullable|string|max:255',
                 ];
 
             case 4: // Additional Details (Final Step)
@@ -378,11 +505,9 @@ class TripOperationController extends Controller
             'vehicle_type' => 'nullable|string|max:50',
             'kilometers' => 'required|numeric|min:0',
             'rate_per_km' => 'required|numeric|min:0',
-            'fuel_type' => 'nullable|string|max:50',
-            'fuel' => 'nullable|string|max:255',
             'fuel_payment_type' => 'nullable|in:credit,cash',
-            'fuel_payment_amount' => 'nullable|numeric|min:0',
             'expenses' => 'nullable|numeric|min:0',
+            'expense_category' => 'nullable|in:fuel,toll,parking',
             'business_category' => 'required|string|max:255',
             'customer_name' => 'nullable|string|max:255',
             'warehouse_location' => 'nullable|string|max:100',
@@ -400,6 +525,11 @@ class TripOperationController extends Controller
             'amount_changed' => 'nullable|numeric|min:0',
             'notes' => 'nullable|string',
             'status' => 'required|in:pending,in_progress,completed,billed,cancelled',
+            'expense_entries' => 'nullable|array',
+            'expense_entries.*.expense_category' => 'required|string|in:fuel,toll,parking,driver_payment,maintenance,loading_charges,unloading_charges,other',
+            'expense_entries.*.payment_type' => 'nullable|in:credit,cash',
+            'expense_entries.*.amount' => 'required|numeric|min:0|max:999999999999999999.99',
+            'expense_entries.*.description' => 'nullable|string|max:255',
         ]);
 
         // Auto-calculate billing information
@@ -410,6 +540,42 @@ class TripOperationController extends Controller
 
         // Auto-calculate freight
         $validated['freight'] = $validated['kilometers'] * $validated['rate_per_km'];
+
+        // Auto-calculate total income (freight)
+        $validated['total_income'] = $validated['freight'];
+
+        // Handle expense entries if provided
+        $expenseEntries = $request->input('expense_entries', []);
+        $totalExpense = 0;
+
+        if (!empty($expenseEntries)) {
+            // Delete existing expense entries for this trip
+            TripExpenseEntry::where('trip_operation_id', $tripOperation->id)->delete();
+
+            // Create new expense entries
+            foreach ($expenseEntries as $entry) {
+                if (isset($entry['amount']) && is_numeric($entry['amount']) && $entry['amount'] > 0) {
+                    TripExpenseEntry::create([
+                        'trip_operation_id' => $tripOperation->id,
+                        'expense_category' => $entry['expense_category'] ?? 'other',
+                        'payment_type' => $entry['payment_type'] ?? null,
+                        'amount' => floatval($entry['amount']),
+                        'description' => $entry['description'] ?? null,
+                        'expense_date' => now(),
+                    ]);
+                    $totalExpense += floatval($entry['amount']);
+                }
+            }
+        } else {
+            // If no expense entries provided, use existing total expense
+            $totalExpense = $tripOperation->total_expense ?? 0;
+        }
+
+        // Auto-calculate total expense from expense entries
+        $validated['total_expense'] = $totalExpense;
+
+        // Calculate net amount
+        $validated['net_amount'] = $validated['total_income'] - $validated['total_expense'];
 
         $tripOperation->update($validated);
 
@@ -456,8 +622,19 @@ class TripOperationController extends Controller
      */
     public function getWizardData($id)
     {
-        $tripOperation = TripOperation::with(['vehicle', 'driver', 'customer', 'warehouse'])
+        $tripOperation = TripOperation::with(['vehicle', 'driver', 'customer', 'warehouse', 'expenseEntries'])
             ->findOrFail($id);
+
+        // Ensure total_income and total_expense are calculated from freight and expense entries
+        if (!$tripOperation->total_income && $tripOperation->freight) {
+            $tripOperation->total_income = $tripOperation->freight;
+        }
+        if (!$tripOperation->total_expense) {
+            $tripOperation->total_expense = $tripOperation->expenseEntries->sum('amount');
+        }
+        if (!$tripOperation->net_amount) {
+            $tripOperation->net_amount = $tripOperation->total_income - $tripOperation->total_expense;
+        }
 
         return response()->json([
             'trip' => $tripOperation,
@@ -532,10 +709,24 @@ class TripOperationController extends Controller
                 'message' => 'Trip operation completed successfully',
                 'trip_id' => $tripOperation->id
             ]);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            $errors = $e->errors();
+            $errorMessages = [];
+            foreach ($errors as $field => $messages) {
+                if (is_array($messages)) {
+                    $errorMessages = array_merge($errorMessages, $messages);
+                } else {
+                    $errorMessages[] = $messages;
+                }
+            }
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation failed: ' . implode(', ', $errorMessages)
+            ], 422);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => 'Error saving step data: ' . $e->getMessage()
             ], 500);
         }
     }
