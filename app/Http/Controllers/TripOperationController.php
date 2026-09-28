@@ -20,16 +20,35 @@ class TripOperationController extends Controller
     {
         $query = TripOperation::query();
 
-        // Filter by month if provided
-        if ($request->filled('month')) {
-            $monthNumber = $request->month;
-            $query->where('billing_month_number', $monthNumber);
+        // Search functionality
+        if ($request->filled('search')) {
+            $search = $request->search;
+            $query->where(function($q) use ($search) {
+                $q->where('trip_number', 'like', "%{$search}%")
+                  ->orWhere('vehicle_number', 'like', "%{$search}%")
+                  ->orWhere('driver_name', 'like', "%{$search}%")
+                  ->orWhere('delivery_point', 'like', "%{$search}%")
+                  ->orWhere('gp_number', 'like', "%{$search}%");
+            });
         }
 
-        // Filter by year if provided
-        if ($request->filled('year')) {
-            $year = $request->year;
-            $query->where('billing_year', $year);
+        // Filter by date range if provided
+        if ($request->filled('date_from')) {
+            $query->where('trip_date', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->where('trip_date', '<=', $request->date_to);
+        }
+
+        // Filter by vehicle if provided
+        if ($request->filled('vehicle_number')) {
+            $query->where('vehicle_number', $request->vehicle_number);
+        }
+
+        // Filter by driver if provided
+        if ($request->filled('driver_name')) {
+            $query->where('driver_name', $request->driver_name);
         }
 
         // Filter by warehouse location if provided
@@ -96,11 +115,6 @@ class TripOperationController extends Controller
             'Syngenta' => 'Syngenta'
         ];
 
-        $months = [];
-        for ($i = 1; $i <= 12; $i++) {
-            $months[$i] = Carbon::create()->month($i)->format('F');
-        }
-
         return view('trip-operations.index', compact(
             'tripOperations',
             'vehicles',
@@ -108,7 +122,6 @@ class TripOperationController extends Controller
             'customers',
             'warehouses',
             'categories',
-            'months',
             'totalKm',
             'totalFreight',
             'totalIncome',
@@ -765,20 +778,42 @@ class TripOperationController extends Controller
      */
     public function export(Request $request)
     {
-        $month = $request->get('month');
-        $year = $request->get('year', date('Y'));
+        $search = $request->get('search');
+        $dateFrom = $request->get('date_from');
+        $dateTo = $request->get('date_to');
+        $vehicleNumber = $request->get('vehicle_number');
+        $driverName = $request->get('driver_name');
         $warehouseLocation = $request->get('warehouse_location');
         $businessCategory = $request->get('business_category');
         $status = $request->get('status');
 
         $query = TripOperation::query();
 
-        if ($month) {
-            $query->where('billing_month_number', $month);
+        // Search functionality
+        if ($search) {
+            $query->where(function($q) use ($search) {
+                $q->where('trip_number', 'like', "%{$search}%")
+                  ->orWhere('vehicle_number', 'like', "%{$search}%")
+                  ->orWhere('driver_name', 'like', "%{$search}%")
+                  ->orWhere('delivery_point', 'like', "%{$search}%")
+                  ->orWhere('gp_number', 'like', "%{$search}%");
+            });
         }
 
-        if ($year) {
-            $query->where('billing_year', $year);
+        if ($dateFrom) {
+            $query->where('trip_date', '>=', $dateFrom);
+        }
+
+        if ($dateTo) {
+            $query->where('trip_date', '<=', $dateTo);
+        }
+
+        if ($vehicleNumber) {
+            $query->where('vehicle_number', $vehicleNumber);
+        }
+
+        if ($driverName) {
+            $query->where('driver_name', $driverName);
         }
 
         if ($warehouseLocation) {
@@ -807,8 +842,10 @@ class TripOperationController extends Controller
         $sheet->setCellValue('A3', 'Contact Detail: 0300-6967450');
         $sheet->setCellValue('A4', 'NTN : 4252472-5');
 
-        $monthName = $month ? Carbon::create()->month($month)->format('F') : 'All Months';
-        $sheet->setCellValue('A5', 'Trip Operations Report - ' . $monthName . ' ' . $year);
+        $dateRange = ($dateFrom && $dateTo) ? 
+            Carbon::parse($dateFrom)->format('d M Y') . ' to ' . Carbon::parse($dateTo)->format('d M Y') : 
+            'All Time';
+        $sheet->setCellValue('A5', 'Trip Operations Report - ' . $dateRange);
 
         // Set column headers
         $sheet->setCellValue('A7', 'Trip #');
@@ -859,7 +896,11 @@ class TripOperationController extends Controller
         }
 
         // Set headers for download
-        $filename = "trip_operations_{$monthName}_{$year}.xlsx";
+        if ($dateFrom && $dateTo) {
+            $filename = "trip_operations_" . Carbon::parse($dateFrom)->format('Y-m-d') . '_to_' . Carbon::parse($dateTo)->format('Y-m-d') . ".xlsx";
+        } else {
+            $filename = "trip_operations_all_time.xlsx";
+        }
 
         // Save to temp file
         $tempFile = tempnam(sys_get_temp_dir(), 'trip_operations_');

@@ -11,6 +11,7 @@ use App\Http\Controllers\DriversController;
 use App\Http\Controllers\DispatchController;
 use App\Http\Controllers\DocumentController;
 use App\Http\Controllers\ExpenseController;
+use App\Http\Controllers\FinancialIncomeController;
 use App\Http\Controllers\GlobalSearchController;
 use App\Http\Controllers\ImportController;
 use App\Http\Controllers\InvoiceController;
@@ -120,6 +121,10 @@ Route::middleware(['auth', 'role:admin,dispatcher,manager'])->group(function () 
     Route::get('/trip-operations/{id}/wizard', [TripOperationController::class, 'continueWizard'])->name('trip-operations.wizard');
     Route::get('/trip-operations/{id}/wizard-data', [TripOperationController::class, 'getWizardData'])->name('trip-operations.wizard-data');
     Route::post('/trip-operations/{id}/complete-wizard', [TripOperationController::class, 'completeWizard'])->name('trip-operations.complete-wizard');
+    
+    // Financial Income routes
+    Route::get('/financial-income/export', [FinancialIncomeController::class, 'export'])->name('financial-income.export');
+    Route::resource('financial-income', FinancialIncomeController::class);
     
     // Trip Claims routes
     Route::get('/trip-claims', [TripClaimController::class, 'index'])->name('trip-claims.index');

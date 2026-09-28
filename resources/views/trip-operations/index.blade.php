@@ -9,6 +9,7 @@
             <div class="sub">Combined trip management system</div>
         </div>
         <div class="d-flex gap-2">
+            <button class="btn btn-outline-navy" onclick="printTable()"><i class="bi bi-printer me-1"></i> Print</button>
             <button class="btn btn-outline-navy" onclick="exportTrips()"><i class="bi bi-download me-1"></i> Export</button>
             <button class="btn btn-navy" onclick="window.location.href='{{ route('trip-operations.create') }}'"><i class="bi bi-plus-lg me-1"></i> New Trip Operation</button>
         </div>
@@ -84,19 +85,40 @@
     <div class="card mb-3">
         <div class="card-body">
             <div class="row g-3">
+                <div class="col-md-12">
+                    <label class="form-label">Search</label>
+                    <input type="text" class="form-control" id="filter_search" value="{{ request()->query('search') }}" placeholder="Search by trip number, vehicle, driver, delivery point, etc." onkeyup="if(event.key === 'Enter') filterTrips()">
+                </div>
+            </div>
+            <div class="row g-3">
                 <div class="col-md-3">
-                    <label class="form-label">Month</label>
-                    <select class="form-select" id="filter_month" onchange="filterTrips()">
-                        <option value="">All Months</option>
-                        @foreach($months as $key => $month)
-                            <option value="{{ $key }}" {{ request()->query('month') == $key ? 'selected' : '' }}>{{ $month }}</option>
+                    <label class="form-label">Date From</label>
+                    <input type="date" class="form-control" id="filter_date_from" value="{{ request()->query('date_from') }}" onchange="filterTrips()">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Date To</label>
+                    <input type="date" class="form-control" id="filter_date_to" value="{{ request()->query('date_to') }}" onchange="filterTrips()">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Vehicle</label>
+                    <select class="form-select" id="filter_vehicle" onchange="filterTrips()">
+                        <option value="">All Vehicles</option>
+                        @foreach($vehicles as $vehicle)
+                            <option value="{{ $vehicle }}" {{ request()->query('vehicle_number') == $vehicle ? 'selected' : '' }}>{{ $vehicle }}</option>
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-2">
-                    <label class="form-label">Year</label>
-                    <input type="number" class="form-control" id="filter_year" value="{{ request()->query('year', date('Y')) }}" onchange="filterTrips()">
+                <div class="col-md-3">
+                    <label class="form-label">Driver</label>
+                    <select class="form-select" id="filter_driver" onchange="filterTrips()">
+                        <option value="">All Drivers</option>
+                        @foreach($drivers as $driver)
+                            <option value="{{ $driver }}" {{ request()->query('driver_name') == $driver ? 'selected' : '' }}>{{ $driver }}</option>
+                        @endforeach
+                    </select>
                 </div>
+            </div>
+            <div class="row g-3">
                 <div class="col-md-3">
                     <label class="form-label">Warehouse Location</label>
                     <select class="form-select" id="filter_warehouse" onchange="filterTrips()">
@@ -106,7 +128,7 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-3">
                     <label class="form-label">Business Category</label>
                     <select class="form-select" id="filter_category" onchange="filterTrips()">
                         <option value="">All Categories</option>
@@ -115,7 +137,7 @@
                         @endforeach
                     </select>
                 </div>
-                <div class="col-md-2">
+                <div class="col-md-3">
                     <label class="form-label">Status</label>
                     <select class="form-select" id="filter_status" onchange="filterTrips()">
                         <option value="">All Status</option>
@@ -125,6 +147,12 @@
                         <option value="billed" {{ request()->query('status') == 'billed' ? 'selected' : '' }}>Billed</option>
                         <option value="cancelled" {{ request()->query('status') == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
                     </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">&nbsp;</label>
+                    <button type="button" class="btn btn-outline-secondary w-100" onclick="clearFilters()">
+                        <i class="bi bi-x-circle"></i> Clear Filters
+                    </button>
                 </div>
             </div>
         </div>
@@ -251,15 +279,21 @@ $(document).ready(function() {
 });
 
 function filterTrips() {
-    const month = document.getElementById('filter_month').value;
-    const year = document.getElementById('filter_year').value;
+    const search = document.getElementById('filter_search').value;
+    const dateFrom = document.getElementById('filter_date_from').value;
+    const dateTo = document.getElementById('filter_date_to').value;
+    const vehicle = document.getElementById('filter_vehicle').value;
+    const driver = document.getElementById('filter_driver').value;
     const warehouse = document.getElementById('filter_warehouse').value;
     const category = document.getElementById('filter_category').value;
     const status = document.getElementById('filter_status').value;
 
     let params = [];
-    if (month) params.push(`month=${month}`);
-    if (year) params.push(`year=${year}`);
+    if (search) params.push(`search=${search}`);
+    if (dateFrom) params.push(`date_from=${dateFrom}`);
+    if (dateTo) params.push(`date_to=${dateTo}`);
+    if (vehicle) params.push(`vehicle_number=${vehicle}`);
+    if (driver) params.push(`driver_name=${driver}`);
     if (warehouse) params.push(`warehouse_location=${warehouse}`);
     if (category) params.push(`business_category=${category}`);
     if (status) params.push(`status=${status}`);
@@ -270,6 +304,10 @@ function filterTrips() {
     }
 
     window.location.href = url;
+}
+
+function clearFilters() {
+    window.location.href = '{{ route('trip-operations.index') }}';
 }
 
 function editTrip(id) {
@@ -324,15 +362,21 @@ function deleteTrip(id) {
 }
 
 function exportTrips() {
-    const month = document.getElementById('filter_month').value;
-    const year = document.getElementById('filter_year').value;
+    const search = document.getElementById('filter_search').value;
+    const dateFrom = document.getElementById('filter_date_from').value;
+    const dateTo = document.getElementById('filter_date_to').value;
+    const vehicle = document.getElementById('filter_vehicle').value;
+    const driver = document.getElementById('filter_driver').value;
     const warehouse = document.getElementById('filter_warehouse').value;
     const category = document.getElementById('filter_category').value;
     const status = document.getElementById('filter_status').value;
 
     let params = [];
-    if (month) params.push(`month=${month}`);
-    if (year) params.push(`year=${year}`);
+    if (search) params.push(`search=${search}`);
+    if (dateFrom) params.push(`date_from=${dateFrom}`);
+    if (dateTo) params.push(`date_to=${dateTo}`);
+    if (vehicle) params.push(`vehicle_number=${vehicle}`);
+    if (driver) params.push(`driver_name=${driver}`);
     if (warehouse) params.push(`warehouse_location=${warehouse}`);
     if (category) params.push(`business_category=${category}`);
     if (status) params.push(`status=${status}`);
@@ -343,6 +387,51 @@ function exportTrips() {
     }
 
     window.location.href = url;
+}
+
+function printTable() {
+    const table = document.getElementById('tripOperationsTable');
+    const dateFrom = document.getElementById('filter_date_from').value;
+    const dateTo = document.getElementById('filter_date_to').value;
+    
+    // Create print content
+    const printContent = `
+        <html>
+        <head>
+            <title>Trip Operations Report</title>
+            <style>
+                body { font-family: Arial, sans-serif; padding: 20px; }
+                h1 { text-align: center; margin-bottom: 10px; }
+                h2 { text-align: center; margin-bottom: 20px; color: #666; }
+                table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+                th, td { border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 12px; }
+                th { background-color: #f4f4f4; font-weight: bold; }
+                .totals { margin-top: 20px; font-weight: bold; }
+                .footer { margin-top: 30px; text-align: center; font-size: 11px; color: #666; }
+                @media print { body { -webkit-print-color-adjust: exact; } }
+            </style>
+        </head>
+        <body>
+            <h1>SUPER ITTEFAQ MINI GOODS TRANSPORT COMPANY</h1>
+            <h2>Trip Operations Report - ${dateFrom && dateTo ? formatDate(dateFrom) + ' to ' + formatDate(dateTo) : 'All Time'}</h2>
+            ${table.outerHTML}
+            <div class="footer">
+                Generated on ${new Date().toLocaleString()}<br>
+                Super Ittefaq Logistics & Transport Management System
+            </div>
+        </body>
+        </html>
+    `;
+    
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    printWindow.print();
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 }
 </script>
 @endpush

@@ -21,6 +21,8 @@
       <div class="nav-section-label">Transport Management</div>
       <a href="{{ url('/transport/dashboard') }}" class="nav-link {{ request()->is('transport/dashboard') ? 'active' : '' }}" data-module="transport dashboard"><i class="bi bi-speedometer2"></i> Transport Dashboard </a>
       <a href="{{ url('/trip-operations') }}" class="nav-link {{ request()->is('trip-operations') || request()->is('trip-operations/*') ? 'active' : '' }}" data-module="trip operations"><i class="bi bi-layers"></i> Trip Operations </a>
+      <a href="{{ url('/financial-income') }}" class="nav-link {{ request()->is('financial-income*') ? 'active' : '' }}" data-module="financial income"><i class="bi bi-currency-dollar"></i> Financial Income </a>
+
       <a href="{{ url('/transport/trip-logs') }}" class="nav-link {{ request()->is('transport/trip-logs*') ? 'active' : '' }}" data-module="trip logs"><i class="bi bi-journal-text"></i> Trip Logs </a>
       <a href="{{ url('/transport/import') }}" class="nav-link {{ request()->is('transport/import') ? 'active' : '' }}" data-module="import excel"><i class="bi bi-upload"></i> Import Excel </a>
       <a href="{{ url('/transport/rate-management') }}" class="nav-link {{ request()->is('transport/rate-management') ? 'active' : '' }}" data-module="rate management"><i class="bi bi-currency-dollar"></i> Rate Management </a>
@@ -42,15 +44,15 @@
       <a href="{{ url('/drivers') }}" class="nav-link {{ request()->is('drivers') ? 'active' : '' }}" data-module="drivers"><i class="bi bi-person-badge"></i> Drivers </a>
       <a href="{{ url('/maintenance') }}" class="nav-link {{ request()->is('maintenance') ? 'active' : '' }}" data-module="maintenance"><i class="bi bi-tools"></i> Maintenance </a>
       
+      {{-- Operations Access (Admin, Dispatcher, Manager) --}}
+      @if(auth()->user()->hasAnyRole(['admin', 'dispatcher', 'manager']))
       <div class="nav-section-label">Accounts</div>
       <a href="{{ url('/customers') }}" class="nav-link {{ request()->is('customers') ? 'active' : '' }}" data-module="customers"><i class="bi bi-people"></i> Customers </a>
       @endif
       
       {{-- Financial Access (Admin, Accounts, Manager) --}}
       @if(auth()->user()->hasAnyRole(['admin', 'accounts', 'manager']))
-      @if(!auth()->user()->hasAnyRole(['admin', 'dispatcher', 'manager']))
-      <div class="nav-section-label">Accounts</div>
-      @endif
+      <div class="nav-section-label">Financial</div>
       <a href="{{ url('/billing') }}" class="nav-link {{ request()->is('billing') ? 'active' : '' }}" data-module="billing management"><i class="bi bi-table"></i> Billing Management </a>
       <a href="{{ url('/invoices') }}" class="nav-link {{ request()->is('invoices') ? 'active' : '' }}" data-module="invoices"><i class="bi bi-receipt"></i> Invoices </a>
       <a href="{{ url('/expenses') }}" class="nav-link {{ request()->is('expenses') ? 'active' : '' }}" data-module="expenses"><i class="bi bi-cash-coin"></i> Expenses </a>
@@ -79,6 +81,7 @@
       <a href="{{ url('/users') }}" class="nav-link {{ request()->is('users') ? 'active' : '' }}" data-module="users permissions"><i class="bi bi-shield-lock"></i> Users & Permissions </a>
       <a href="{{ url('/settings') }}" class="nav-link {{ request()->is('settings') ? 'active' : '' }}" data-module="settings"><i class="bi bi-sliders"></i> System Settings </a>
       @endif
+    @endif
     @endif
   </nav>
   <div class="sidebar-foot">

@@ -126,6 +126,18 @@ class DashboardController extends Controller
             $expenseData[] = $monthlyExpense;
         }
 
+        // Get current month's expenses grouped by category
+        $currentMonthExpenses = \App\Models\Expense::whereYear('expense_date', $now->year)
+            ->whereMonth('expense_date', $now->month)
+            ->selectRaw('category, SUM(amount) as total')
+            ->groupBy('category')
+            ->orderByDesc('total')
+            ->get()
+            ->keyBy('category');
+
+        // Calculate current month total expenses
+        $currentMonthTotalExpense = $currentMonthExpenses->sum('total');
+
         return view('pages.index', [
             // Stat cards
             'activeTrips' => $activeTrips,
@@ -152,6 +164,10 @@ class DashboardController extends Controller
             'revenueData' => $revenueData,
             'expenseData' => $expenseData,
             'chartMonths' => $months,
+
+            // Category-wise expenses for current month
+            'categoryExpenses' => $currentMonthExpenses,
+            'currentMonthTotalExpense' => $currentMonthTotalExpense,
         ]);
     }
 }

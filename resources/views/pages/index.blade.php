@@ -102,6 +102,46 @@
       </div>
     </div>
 
+    <!-- Category-wise Expenses -->
+    <div class="row g-3 mb-3">
+      <div class="col-12">
+        <div class="panel">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <div>
+              <div class="panel-title mb-0">Expenses by Category</div>
+              <div class="panel-sub mb-0">Current month breakdown (PKR)</div>
+            </div>
+            <div class="text-end">
+              <div class="fw-bold text-danger">Total: PKR {{ number_format($currentMonthTotalExpense ?? 0, 2) }}</div>
+            </div>
+          </div>
+          <div class="row g-3">
+            @forelse($categoryExpenses ?? [] as $category => $expense)
+            <div class="col-md-6 col-lg-4">
+              <div class="expense-category-card">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <div class="expense-category-label">{{ ucfirst($category) }}</div>
+                  <div class="expense-category-amount">PKR {{ number_format($expense->total, 2) }}</div>
+                </div>
+                <div class="progress" style="height: 6px;">
+                  <div class="progress-bar" role="progressbar" style="width: {{ ($expense->total / ($currentMonthTotalExpense ?? 1)) * 100 }}%; background-color: var(--gold);" aria-valuenow="{{ ($expense->total / ($currentMonthTotalExpense ?? 1)) * 100 }}" aria-valuemin="0" aria-valuemax="100"></div>
+                </div>
+                <div class="expense-category-percentage">{{ round(($expense->total / ($currentMonthTotalExpense ?? 1)) * 100, 1) }}% of total</div>
+              </div>
+            </div>
+            @empty
+            <div class="col-12">
+              <div class="text-center text-muted py-4">
+                <i class="bi bi-cash-coin fs-4"></i>
+                <p class="mb-0 mt-2">No expenses recorded for current month</p>
+              </div>
+            </div>
+            @endforelse
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Recent trips + expiry alerts -->
     <div class="row g-3 mb-3">
       <div class="col-lg-8">
@@ -233,6 +273,37 @@
 .module-tile:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.expense-category-card {
+  background: #F8F9FA;
+  border: 1px solid #E9ECEF;
+  border-radius: 8px;
+  padding: 12px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.expense-category-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+}
+
+.expense-category-label {
+  font-weight: 600;
+  font-size: 13px;
+  color: var(--navy-800);
+}
+
+.expense-category-amount {
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--danger);
+}
+
+.expense-category-percentage {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 4px;
 }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
