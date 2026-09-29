@@ -16,66 +16,64 @@
   <nav class="sidebar-nav" id="sidebarNav">
     @if(auth()->check())
     <div class="nav-section-label">Overview</div>
-    <a href="{{ url('/dashboard') }}" class="nav-link {{ request()->is('dashboard') ? 'active' : '' }}" data-module="dashboard"><i class="bi bi-speedometer2"></i> Dashboard </a>
+    <!-- <a href="{{ url('/dashboard') }}" class="nav-link {{ request()->is('dashboard') ? 'active' : '' }}" data-module="dashboard"><i class="bi bi-speedometer2"></i> Dashboard </a> -->
     
       <div class="nav-section-label">Transport Management</div>
-      <a href="{{ url('/transport/dashboard') }}" class="nav-link {{ request()->is('transport/dashboard') ? 'active' : '' }}" data-module="transport dashboard"><i class="bi bi-speedometer2"></i> Transport Dashboard </a>
+      <!-- <a href="{{ url('/transport/dashboard') }}" class="nav-link {{ request()->is('transport/dashboard') ? 'active' : '' }}" data-module="transport dashboard"><i class="bi bi-speedometer2"></i> Transport Dashboard </a> -->
       <a href="{{ url('/trip-operations') }}" class="nav-link {{ request()->is('trip-operations') || request()->is('trip-operations/*') ? 'active' : '' }}" data-module="trip operations"><i class="bi bi-layers"></i> Trip Operations </a>
-      <a href="{{ url('/financial-income') }}" class="nav-link {{ request()->is('financial-income*') ? 'active' : '' }}" data-module="financial income"><i class="bi bi-currency-dollar"></i> Financial Income </a>
-
-      <a href="{{ url('/transport/trip-logs') }}" class="nav-link {{ request()->is('transport/trip-logs*') ? 'active' : '' }}" data-module="trip logs"><i class="bi bi-journal-text"></i> Trip Logs </a>
-      <a href="{{ url('/transport/import') }}" class="nav-link {{ request()->is('transport/import') ? 'active' : '' }}" data-module="import excel"><i class="bi bi-upload"></i> Import Excel </a>
-      <a href="{{ url('/transport/rate-management') }}" class="nav-link {{ request()->is('transport/rate-management') ? 'active' : '' }}" data-module="rate management"><i class="bi bi-currency-dollar"></i> Rate Management </a>
-      <a href="{{ url('/transport/reports/vehicle') }}" class="nav-link {{ request()->is('transport/reports*') ? 'active' : '' }}" data-module="reports"><i class="bi bi-bar-chart"></i> Reports </a>
-    
-      {{-- Operations Access (Admin, Dispatcher, Manager) --}}
-      @if(auth()->user()->hasAnyRole(['admin', 'dispatcher', 'manager']))
-      <div class="nav-section-label">Operations</div>
-      <a href="{{ url('/jobs') }}" class="nav-link {{ request()->is('jobs') ? 'active' : '' }}" data-module="jobs bookings"><i class="bi bi-clipboard2-check"></i> Jobs / Bookings </a>
-      <a href="{{ url('/bilties') }}" class="nav-link {{ request()->is('bilties') ? 'active' : '' }}" data-module="bilties receipts"><i class="bi bi-receipt-cutoff"></i> Bilties / Receipts </a>
-      <a href="{{ url('/warehouse-trips') }}" class="nav-link {{ request()->is('warehouse-trips') ? 'active' : '' }}" data-module="warehouse trips excel"><i class="bi bi-table"></i> Warehouse Trips </a>
-      <a href="{{ url('/dispatch') }}" class="nav-link {{ request()->is('dispatch') ? 'active' : '' }}" data-module="dispatch planning"><i class="bi bi-diagram-3"></i> Planning / Dispatch </a>
-      <a href="{{ url('/trips') }}" class="nav-link {{ request()->is('trips') ? 'active' : '' }}" data-module="trips"><i class="bi bi-signpost-split"></i> Trips </a>
-      <a href="{{ url('/tracking') }}" class="nav-link {{ request()->is('tracking') ? 'active' : '' }}" data-module="tracking live tracking"><i class="bi bi-geo-alt"></i> Live Tracking </a>
-      <a href="{{ url('/pod') }}" class="nav-link {{ request()->is('pod') ? 'active' : '' }}" data-module="pod proof of delivery"><i class="bi bi-file-earmark-check"></i> Proof of Delivery </a>
-      
+      <a href="{{ url('/trips') }}" class="nav-link {{ request()->is('transport/trip-logs*') ? 'active' : '' }}" data-module="trip logs"><i class="bi bi-journal-text"></i> Internal Trips  </a>
+      <a href="{{ url('/financial-income') }}" class="nav-link {{ request()->is('financial-income*') ? 'active' : '' }}" data-module="financial income"><i class="bi bi-currency-pkr"></i> Internal Income </a>
       <div class="nav-section-label">Fleet & People</div>
       <a href="{{ url('/vehicles') }}" class="nav-link {{ request()->is('vehicles') ? 'active' : '' }}" data-module="vehicles fleet"><i class="bi bi-truck-front"></i> Vehicles / Fleet </a>
       <a href="{{ url('/drivers') }}" class="nav-link {{ request()->is('drivers') ? 'active' : '' }}" data-module="drivers"><i class="bi bi-person-badge"></i> Drivers </a>
       <a href="{{ url('/maintenance') }}" class="nav-link {{ request()->is('maintenance') ? 'active' : '' }}" data-module="maintenance"><i class="bi bi-tools"></i> Maintenance </a>
       
+      <!-- <a href="{{ url('/transport/import') }}" class="nav-link {{ request()->is('transport/import') ? 'active' : '' }}" data-module="import excel"><i class="bi bi-upload"></i> Import Excel </a>
+      <a href="{{ url('/transport/rate-management') }}" class="nav-link {{ request()->is('transport/rate-management') ? 'active' : '' }}" data-module="rate management"><i class="bi bi-currency-pkr"></i> Rate Management </a>
+      <a href="{{ url('/transport/reports/vehicle') }}" class="nav-link {{ request()->is('transport/reports*') ? 'active' : '' }}" data-module="reports"><i class="bi bi-bar-chart"></i> Reports </a> -->
+
       {{-- Operations Access (Admin, Dispatcher, Manager) --}}
       @if(auth()->user()->hasAnyRole(['admin', 'dispatcher', 'manager']))
-      <div class="nav-section-label">Accounts</div>
-      <a href="{{ url('/customers') }}" class="nav-link {{ request()->is('customers') ? 'active' : '' }}" data-module="customers"><i class="bi bi-people"></i> Customers </a>
-      @endif
+      <div class="nav-section-label">Operations</div>
+      <!-- <a href="{{ url('/jobs') }}" class="nav-link {{ request()->is('jobs') ? 'active' : '' }}" data-module="jobs bookings"><i class="bi bi-clipboard2-check"></i> Jobs / Bookings </a> -->
+      <a href="{{ url('/bilties') }}" class="nav-link {{ request()->is('bilties') ? 'active' : '' }}" data-module="bilties receipts"><i class="bi bi-receipt-cutoff"></i> Bilties / Receipts </a>
+      <a href="{{ url('/pod') }}" class="nav-link {{ request()->is('pod') ? 'active' : '' }}" data-module="pod proof of delivery"><i class="bi bi-file-earmark-check"></i> Proof of Delivery </a>
       
-      {{-- Financial Access (Admin, Accounts, Manager) --}}
+      <!-- <a href="{{ url('/warehouse-trips') }}" class="nav-link {{ request()->is('warehouse-trips') ? 'active' : '' }}" data-module="warehouse trips excel"><i class="bi bi-table"></i> Warehouse Trips </a> -->
+      <!-- <a href="{{ url('/dispatch') }}" class="nav-link {{ request()->is('dispatch') ? 'active' : '' }}" data-module="dispatch planning"><i class="bi bi-diagram-3"></i> Planning / Dispatch </a> -->
+      <!-- <a href="{{ url('/trips') }}" class="nav-link {{ request()->is('trips') ? 'active' : '' }}" data-module="trips"><i class="bi bi-signpost-split"></i> Trips </a> -->
+      <!-- <a href="{{ url('/tracking') }}" class="nav-link {{ request()->is('tracking') ? 'active' : '' }}" data-module="tracking live tracking"><i class="bi bi-geo-alt"></i> Live Tracking </a> -->
+      
+      
+      {{-- Operations Access (Admin, Dispatcher, Manager) --}}
+      @if(auth()->user()->hasAnyRole(['admin', 'dispatcher', 'manager']))
+      <!-- <div class="nav-section-label">Accounts</div>
+      <a href="{{ url('/customers') }}" class="nav-link {{ request()->is('customers') ? 'active' : '' }}" data-module="customers"><i class="bi bi-people"></i> Customers </a>
+      @endif -->
+      
+      <!-- {{-- Financial Access (Admin, Accounts, Manager) --}}
       @if(auth()->user()->hasAnyRole(['admin', 'accounts', 'manager']))
       <div class="nav-section-label">Financial</div>
       <a href="{{ url('/billing') }}" class="nav-link {{ request()->is('billing') ? 'active' : '' }}" data-module="billing management"><i class="bi bi-table"></i> Billing Management </a>
       <a href="{{ url('/invoices') }}" class="nav-link {{ request()->is('invoices') ? 'active' : '' }}" data-module="invoices"><i class="bi bi-receipt"></i> Invoices </a>
       <a href="{{ url('/expenses') }}" class="nav-link {{ request()->is('expenses') ? 'active' : '' }}" data-module="expenses"><i class="bi bi-cash-coin"></i> Expenses </a>
-      @endif
+      @endif -->
       
       <div class="nav-section-label">System</div>
-      
-      {{-- Notifications for all authenticated users --}}
-      <a href="{{ url('/notifications') }}" class="nav-link {{ request()->is('notifications') ? 'active' : '' }}" data-module="notifications"><i class="bi bi-bell"></i> Notifications </a>
       
       {{-- Operations Access for Documents --}}
       @if(auth()->user()->hasAnyRole(['admin', 'dispatcher', 'manager']))
       <a href="{{ url('/documents') }}" class="nav-link {{ request()->is('documents') ? 'active' : '' }}" data-module="documents"><i class="bi bi-folder2-open"></i> Documents </a>
       @endif
       
-      {{-- Financial Access for Reports --}}
+      <!-- {{-- Financial Access for Reports --}}
       @if(auth()->user()->hasAnyRole(['admin', 'accounts', 'manager']))
       <a href="{{ url('/reports') }}" class="nav-link {{ request()->is('reports') ? 'active' : '' }}" data-module="reports"><i class="bi bi-bar-chart-line"></i> Reports </a>
-      @endif
+      @endif -->
       
-      {{-- Notification Settings for all users --}}
+      <!-- {{-- Notification Settings for all users --}}
       <a href="{{ url('/notifications/settings') }}" class="nav-link {{ request()->is('notifications/settings') ? 'active' : '' }}" data-module="notification settings"><i class="bi bi-bell-slash"></i> Notification Settings </a>
-      
+       -->
       {{-- Admin Only --}}
       @if(auth()->user()->isAdmin())
       <a href="{{ url('/users') }}" class="nav-link {{ request()->is('users') ? 'active' : '' }}" data-module="users permissions"><i class="bi bi-shield-lock"></i> Users & Permissions </a>

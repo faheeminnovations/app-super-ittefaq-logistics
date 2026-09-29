@@ -17,7 +17,7 @@ use App\Http\Controllers\ImportController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\JobController;
 use App\Http\Controllers\MaintenanceController;
-use App\Http\Controllers\NotificationController;
+
 use App\Http\Controllers\Auth\PasswordController;
 use App\Http\Controllers\PermissionController;
 use App\Http\Controllers\PodController;
@@ -38,7 +38,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     if (auth()->check()) {
-        return redirect()->route('dashboard');
+        return redirect()->route('trip-operations.index');
     }
     return redirect()->route('login');
 })->name('home');
@@ -51,15 +51,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-    
-    // Notification routes
-    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
-    Route::get('/api/notifications', [NotificationController::class, 'getNotifications'])->name('notifications.get');
-    Route::post('/notifications/mark-read', [NotificationController::class, 'markAsRead'])->name('notifications.mark-read');
-    Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllAsRead'])->name('notifications.mark-all-read');
-    Route::get('/notifications/settings', [NotificationController::class, 'settings'])->name('notifications.settings');
-    Route::post('/notifications/settings', [NotificationController::class, 'updateSettings'])->name('notifications.update-settings');
-    Route::delete('/notifications', [NotificationController::class, 'delete'])->name('notifications.delete');
 });
 
 require __DIR__.'/auth.php';
@@ -229,9 +220,9 @@ Route::middleware(['auth', 'role:admin,dispatcher,manager'])->group(function () 
 });
 
 // Global search - available to all authenticated users
-Route::middleware(['auth'])->group(function () {
-    Route::get('/api/global-search', [GlobalSearchController::class, 'search']);
-});
+// Route::middleware(['auth'])->group(function () {
+//     Route::get('/api/global-search', [GlobalSearchController::class, 'search']);
+// });
 
 Route::middleware(['auth', 'role:admin,accounts,manager'])->group(function () {
     Route::get('/api/invoices/{id}', [InvoiceController::class, 'show']);

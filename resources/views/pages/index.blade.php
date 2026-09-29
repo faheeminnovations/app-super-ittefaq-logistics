@@ -7,7 +7,26 @@
     <!-- Page head -->
     <div class="page-head">
       <div>
-        <div class="eyebrow">Wednesday, 19 August 2026</div>
+        <div class="eyebrow" id="currentDateTime"></div>
+
+<script>
+function updateDateTime() {
+    const now = new Date();
+
+    const options = {
+        weekday: 'long',
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric'
+    };
+
+    document.getElementById('currentDateTime').textContent =
+        now.toLocaleDateString('en-GB', options);
+}
+
+updateDateTime();
+setInterval(updateDateTime, 1000);
+</script>
         <h1>Operations Dashboard</h1>
         <div class="sub">Fleet, drivers, jobs and revenue at a glance</div>
       </div>

@@ -4,8 +4,8 @@
 <div class="page-wrap">
     <div class="page-head">
         <div>
-            <div class="eyebrow">Financial Management</div>
-            <h1>Create Financial Income</h1>
+            <div class="eyebrow">Internnal Income Management</div>
+            <h1>Create Internnal Income</h1>
             <div class="sub">Add new income and expense record</div>
         </div>
         <div class="d-flex gap-2">
@@ -65,14 +65,6 @@
                         </select>
                     </div>
                     <div class="col-md-4 mb-3">
-                        <label for="loading_point" class="form-label">Loading Point</label>
-                        <input type="text" class="form-control" id="loading_point" name="loading_point" value="{{ old('loading_point') }}">
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <label for="uploading_point" class="form-label">Uploading Point</label>
-                        <input type="text" class="form-control" id="uploading_point" name="uploading_point" value="{{ old('uploading_point') }}">
-                    </div>
-                    <div class="col-md-4 mb-3">
                         <label for="fuel" class="form-label">Fuel</label>
                         <input type="number" step="0.01" class="form-control" id="fuel" name="fuel" value="{{ old('fuel') }}">
                     </div>
@@ -99,9 +91,8 @@
                         <textarea class="form-control" id="description" name="description" rows="3">{{ old('description') }}</textarea>
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label for="status" class="form-label">Status</label>
-                        <select class="form-select" id="status" name="status">
-                            <option value="">Select Status</option>
+                        <label for="status" class="form-label">Status *</label>
+                        <select class="form-select" id="status" name="status" required>
                             <option value="pending" {{ old('status') == 'pending' ? 'selected' : '' }}>Pending</option>
                             <option value="completed" {{ old('status') == 'completed' ? 'selected' : '' }}>Completed</option>
                             <option value="cancelled" {{ old('status') == 'cancelled' ? 'selected' : '' }}>Cancelled</option>
@@ -111,7 +102,7 @@
 
                 <div class="mt-4">
                     <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-save"></i> Save Financial Income
+                        <i class="bi bi-save"></i> Save Internal Income
                     </button>
                     <a href="{{ route('financial-income.index') }}" class="btn btn-secondary">
                         <i class="bi bi-x-circle"></i> Cancel

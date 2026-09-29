@@ -4,14 +4,14 @@
 <div class="page-wrap">
     <div class="page-head">
         <div>
-            <div class="eyebrow">Financial Management</div>
-            <h1>Financial Income</h1>
+            <div class="eyebrow">Internal Income Management</div>
+            <h1>Internal Income</h1>
             <div class="sub">Income and expense tracking</div>
         </div>
         <div class="d-flex gap-2">
             <button class="btn btn-outline-navy" onclick="printTable()"><i class="bi bi-printer me-1"></i> Print</button>
             <button class="btn btn-outline-navy" onclick="exportData()"><i class="bi bi-download me-1"></i> Export</button>
-            <button class="btn btn-navy" onclick="window.location.href='{{ route('financial-income.create') }}'"><i class="bi bi-plus-lg me-1"></i> New Financial Income</button>
+            <button class="btn btn-navy" onclick="window.location.href='{{ route('financial-income.create') }}'"><i class="bi bi-plus-lg me-1"></i> New Internal Income</button>
         </div>
     </div>
 
@@ -132,7 +132,7 @@
     <div class="panel">
         <div class="d-flex justify-content-between align-items-center mb-2">
             <div>
-                <div class="panel-title mb-0">Financial Income Records</div>
+                <div class="panel-title mb-0">Internal Income Records</div>
                 <div class="panel-sub mb-0">Income and expense tracking with detailed breakdown</div>
             </div>
         </div>
@@ -201,7 +201,7 @@
                         </td>
                     </tr>
                     @empty
-                    <tr class="no-data-row" style="display:none;"><td colspan="14" class="text-center">No financial income records found</td></tr>
+                    <tr class="no-data-row" style="display:none;"><td colspan="14" class="text-center">No internal  income records found</td></tr>
                     @endforelse
                 </tbody>
             </table>
@@ -212,7 +212,7 @@
         </div>
     </div>
     <div class="text-center text-muted mt-4" style="font-size:11.5px;">
-        &copy; 2026 Super Ittefaq Logistics &middot; Financial Management System
+        &copy; 2026 Super Ittefaq Logistics &middot; Internal  Management System
     </div>
 </div>
 
@@ -322,7 +322,7 @@ function printTable() {
     const printContent = `
         <html>
         <head>
-            <title>Financial Income Report</title>
+            <title>Internal Income Report</title>
             <style>
                 body { font-family: Arial, sans-serif; padding: 20px; }
                 h1 { text-align: center; margin-bottom: 10px; }
@@ -336,11 +336,11 @@ function printTable() {
         </head>
         <body>
             <h1>SUPER ITTEFAQ MINI GOODS TRANSPORT COMPANY</h1>
-            <h2>Financial Income Report - ${dateFrom && dateTo ? formatDate(dateFrom) + ' to ' + formatDate(dateTo) : 'All Time'}</h2>
+            <h2>Internal Income Report - ${dateFrom && dateTo ? formatDate(dateFrom) + ' to ' + formatDate(dateTo) : 'All Time'}</h2>
             ${tableClone.outerHTML}
             <div class="footer">
                 Generated on ${new Date().toLocaleString()}<br>
-                Super Ittefaq Logistics & Financial Management System
+                Super Ittefaq Logistics & Internal Management System
             </div>
         </body>
         </html>

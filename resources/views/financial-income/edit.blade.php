@@ -4,8 +4,8 @@
 <div class="page-wrap">
     <div class="page-head">
         <div>
-            <div class="eyebrow">Financial Management</div>
-            <h1>Edit Financial Income</h1>
+            <div class="eyebrow">Internal Management</div>
+            <h1>Edit Internal Income</h1>
             <div class="sub">Update income and expense record</div>
         </div>
         <div class="d-flex gap-2">
@@ -112,7 +112,7 @@
 
                 <div class="mt-4">
                     <button type="submit" class="btn btn-primary">
-                        <i class="bi bi-save"></i> Update Financial Income
+                        <i class="bi bi-save"></i> Update Internal Income
                     </button>
                     <a href="{{ route('financial-income.index') }}" class="btn btn-secondary">
                         <i class="bi bi-x-circle"></i> Cancel
