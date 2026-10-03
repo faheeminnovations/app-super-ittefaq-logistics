@@ -112,18 +112,20 @@
     <div class="header">
         <div class="company-name">SUPER ITTEFAQ MINI GOODS TRANSPORT COMPANY</div>
         <div class="company-details">
-            Rizvi Chowk, Bypass Okara Road<br>
+            Rizvi Chowk, Bypass Okara Road Depalpur<br>
             Contact: 0300-6967450<br>
-            NTN: 4252472-5
+            Email: zahidafzal5152@gmail.com<br>
+            NTN: 4252472-5<br>
+            VENDOR CODE: 0006781511
         </div>
     </div>
-    
+
     <!-- Invoice Information -->
     <div class="invoice-info">
         <div>
             <div class="invoice-number">Invoice # {{ $invoiceNumber }}</div>
             <div class="billing-info">
-                <strong>Billing Month:</strong> {{ $billingMonth }}<br>
+                <strong>Billing Month:</strong> {{ $trips->first() && $trips->first()->trip_date ? $trips->first()->trip_date->format('F-Y') : $billingMonth }}<br>
                 <strong>Warehouse:</strong> {{ $warehouseLocation }}
             </div>
         </div>

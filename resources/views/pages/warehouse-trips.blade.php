@@ -91,8 +91,8 @@
       </div>
       <div class="row mt-2">
         <div class="col-md-12 text-end">
-          <button class="btn btn-secondary" onclick="applyFilters()">Apply Filters</button>
-          <button class="btn btn-outline-secondary" onclick="clearFilters()">Clear Filters</button>
+          <button class="btn btn-secondary" onclick="applyFilters()" id="applyFiltersBtn" style="pointer-events: auto !important; opacity: 1 !important;">Apply Filters</button>
+          <button class="btn btn-outline-secondary" onclick="clearFilters()" id="clearFiltersBtn" style="pointer-events: auto !important; opacity: 1 !important;">Clear Filters</button>
         </div>
       </div>
     </div>
@@ -300,19 +300,21 @@
                           <option value="">Select Category</option>
                           <option value="fuel">Fuel</option>
                           <option value="toll">Toll</option>
-                          <option value="parking">Parking</option>
+                          <option value="food">Food</option>
+                          <option value="challan">Challan</option>
+                          <option value="police">Police</option>
                           <option value="driver_payment">Driver Payment</option>
                           <option value="maintenance">Maintenance</option>
-                          <option value="loading_charges">Loading Charges</option>
-                          <option value="unloading_charges">Unloading Charges</option>
-                          <option value="other">Other</option>
+                          <option value="loading_charges">Loading</option>
+                          <option value="unloading_charges">Unloading</option>
+                          <option value="other">Others</option>
                         </select>
                       </div>
                       <div class="col-md-3 mb-2">
                         <label class="form-label">Payment Type</label>
                         <select class="form-select expense-payment-type" name="expense_entries[0][payment_type]">
                           <option value="">Select Type</option>
-                          <option value="credit">Credit (Will add 2% interest)</option>
+                          <option value="credit">Credit</option>
                           <option value="cash">Cash</option>
                         </select>
                       </div>
@@ -381,7 +383,23 @@
 
     document.addEventListener('DOMContentLoaded', function() {
       console.log('DOM loaded, initializing...');
-      
+
+      // Enable filter buttons
+      const applyBtn = document.getElementById('applyFiltersBtn');
+      const clearBtn = document.getElementById('clearFiltersBtn');
+      if (applyBtn) {
+        applyBtn.disabled = false;
+        applyBtn.removeAttribute('disabled');
+        applyBtn.style.pointerEvents = 'auto';
+        applyBtn.style.opacity = '1';
+      }
+      if (clearBtn) {
+        clearBtn.disabled = false;
+        clearBtn.removeAttribute('disabled');
+        clearBtn.style.pointerEvents = 'auto';
+        clearBtn.style.opacity = '1';
+      }
+
       // Initialize modals
       tripModal = new bootstrap.Modal(document.getElementById('tripModal'));
       invoiceModal = new bootstrap.Modal(document.getElementById('invoiceModal'));
@@ -479,18 +497,6 @@
           });
         });
       });
-          }
-        })
-        .catch(error => {
-          console.error('Error:', error);
-          Swal.fire({
-            title: 'Error',
-            text: 'Failed to save trip: ' + error.message,
-            icon: 'error',
-            confirmButtonColor: '#d33'
-          });
-        });
-      });
     });
 
     // Global functions
@@ -541,19 +547,21 @@
             <option value="">Select Category</option>
             <option value="fuel">Fuel</option>
             <option value="toll">Toll</option>
-            <option value="parking">Parking</option>
+            <option value="food">Food</option>
+            <option value="challan">Challan</option>
+            <option value="police">Police</option>
             <option value="driver_payment">Driver Payment</option>
             <option value="maintenance">Maintenance</option>
-            <option value="loading_charges">Loading Charges</option>
-            <option value="unloading_charges">Unloading Charges</option>
-            <option value="other">Other</option>
+            <option value="loading_charges">Loading</option>
+            <option value="unloading_charges">Unloading</option>
+            <option value="other">Others</option>
           </select>
         </div>
         <div class="col-md-3 mb-2">
           <label class="form-label">Payment Type</label>
           <select class="form-select expense-payment-type" name="expense_entries[${entryCount}][payment_type]">
             <option value="">Select Type</option>
-            <option value="credit">Credit (Will add 2% interest)</option>
+            <option value="credit">Credit</option>
             <option value="cash">Cash</option>
           </select>
         </div>
