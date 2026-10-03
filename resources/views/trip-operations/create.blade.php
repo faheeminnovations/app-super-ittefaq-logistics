@@ -161,8 +161,9 @@
                             <input type="number" step="0.01" class="form-control" id="kilometers" name="kilometers" required oninput="calculateFreight()" value="{{ isset($tripOperation) ? $tripOperation->kilometers : '' }}" max="999999999">
                         </div>
                         <div class="col-md-6 mb-3">
-                            <label for="rate_per_km" class="form-label">Rate per KM *</label>
-                            <input type="number" step="0.01" class="form-control" id="rate_per_km" name="rate_per_km" required oninput="calculateFreight()" value="{{ isset($tripOperation) ? $tripOperation->rate_per_km : '' }}" max="999999999">
+                            <label for="rate_per_km" class="form-label">Rate per KM (Optional)</label>
+                            <input type="number" step="0.01" class="form-control" id="rate_per_km" name="rate_per_km" oninput="calculateFreight()" value="{{ isset($tripOperation) ? $tripOperation->rate_per_km : '' }}" max="999999999">
+                            <small class="text-muted">Leave blank if rate not applicable</small>
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="freight" class="form-label">Calculated Freight</label>
@@ -542,6 +543,18 @@ function calculateFreight() {
 
     calculateNetAmount();
 }
+
+// Handle case when rate is not provided - set freight to 0
+document.getElementById('rate_per_km').addEventListener('input', function() {
+    if (this.value === '' || this.value === '0') {
+        document.getElementById('freight').value = '0.00';
+        const totalIncomeField = document.getElementById('total_income');
+        if (totalIncomeField) {
+            totalIncomeField.value = '0.00';
+        }
+        calculateNetAmount();
+    }
+});
 
 function calculateTotalExpense() {
     let totalExpense = 0;

@@ -432,7 +432,7 @@ class TripOperationController extends Controller
                     'vehicle_category' => 'nullable|string|max:10',
                     'vehicle_type' => 'nullable|string|max:50',
                     'kilometers' => 'required|numeric|min:0|max:999999999.99',
-                    'rate_per_km' => 'required|numeric|min:0|max:999999999.99',
+                    'rate_per_km' => 'nullable|numeric|min:0|max:999999999.99',
                 ];
 
             case 3: // Fuel and Expenses

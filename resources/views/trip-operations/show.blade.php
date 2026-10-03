@@ -82,29 +82,21 @@
 
             <div class="card mb-3">
                 <div class="card-header">
-                    <h5 class="mb-0">Fuel & Expenses</h5>
+                    <h5 class="mb-0">Financial Summary</h5>
                 </div>
                 <div class="card-body">
                     <div class="row">
                         <div class="col-md-4 mb-3">
-                            <label class="form-label text-muted">Fuel Type</label>
-                            <div class="fw-semibold">{{ $tripOperation->fuel_type ?? 'N/A' }}</div>
+                            <label class="form-label text-muted">Total Income</label>
+                            <div class="fw-semibold text-success">{{ \App\Helpers\CurrencyHelper::formatCurrency($tripOperation->total_income ?? 0) }}</div>
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label class="form-label text-muted">Fuel</label>
-                            <div class="fw-semibold">{{ $tripOperation->fuel ?? 'N/A' }}</div>
+                            <label class="form-label text-muted">Total Expense</label>
+                            <div class="fw-semibold text-danger">{{ \App\Helpers\CurrencyHelper::formatCurrency($tripOperation->total_expense ?? 0) }}</div>
                         </div>
                         <div class="col-md-4 mb-3">
-                            <label class="form-label text-muted">Fuel Payment Type</label>
-                            <div class="fw-semibold">{{ ucfirst($tripOperation->fuel_payment_type ?? 'N/A') }}</div>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label text-muted">Fuel Payment Amount</label>
-                            <div class="fw-semibold">{{ \App\Helpers\CurrencyHelper::formatCurrency($tripOperation->fuel_payment_amount) }}</div>
-                        </div>
-                        <div class="col-md-4 mb-3">
-                            <label class="form-label text-muted">Expenses</label>
-                            <div class="fw-semibold">{{ \App\Helpers\CurrencyHelper::formatCurrency($tripOperation->expenses) }}</div>
+                            <label class="form-label text-muted">Net Amount</label>
+                            <div class="fw-semibold {{ $tripOperation->net_amount >= 0 ? 'text-primary' : 'text-danger' }}">{{ \App\Helpers\CurrencyHelper::formatCurrency($tripOperation->net_amount ?? 0) }}</div>
                         </div>
                     </div>
                 </div>

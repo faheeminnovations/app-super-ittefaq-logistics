@@ -65,42 +65,13 @@
                         <input type="number" step="0.01" class="form-control" id="kilometers" name="kilometers" required value="{{ $tripOperation->kilometers }}" oninput="calculateFreight()">
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label for="rate_per_km" class="form-label">Rate per KM *</label>
-                        <input type="number" step="0.01" class="form-control" id="rate_per_km" name="rate_per_km" required value="{{ $tripOperation->rate_per_km }}" oninput="calculateFreight()">
+                        <label for="rate_per_km" class="form-label">Rate per KM (Optional)</label>
+                        <input type="number" step="0.01" class="form-control" id="rate_per_km" name="rate_per_km" value="{{ $tripOperation->rate_per_km }}" oninput="calculateFreight()">
+                        <small class="text-muted">Leave blank if rate not applicable</small>
                     </div>
                     <div class="col-md-6 mb-3">
                         <label for="freight" class="form-label">Calculated Freight</label>
                         <input type="number" step="0.01" class="form-control" id="freight" name="freight" readonly value="{{ $tripOperation->freight }}">
-                    </div>
-                </div>
-
-                <hr>
-
-                <div class="row">
-                    <!-- Fuel & Expenses -->
-                    <div class="col-md-4 mb-3">
-                        <label for="fuel_type" class="form-label">Fuel Type</label>
-                        <input type="text" class="form-control" id="fuel_type" name="fuel_type" placeholder="e.g., Petrol" value="{{ $tripOperation->fuel_type }}">
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <label for="fuel" class="form-label">Fuel</label>
-                        <input type="text" class="form-control" id="fuel" name="fuel" value="{{ $tripOperation->fuel }}">
-                    </div>
-                    <div class="col-md-4 mb-3">
-                        <label for="fuel_payment_type" class="form-label">Fuel Payment Type</label>
-                        <select class="form-select" id="fuel_payment_type" name="fuel_payment_type">
-                            <option value="">Select Type</option>
-                            <option value="credit" {{ $tripOperation->fuel_payment_type == 'credit' ? 'selected' : '' }}>Credit</option>
-                            <option value="cash" {{ $tripOperation->fuel_payment_type == 'cash' ? 'selected' : '' }}>Cash</option>
-                        </select>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label for="fuel_payment_amount" class="form-label">Fuel Payment Amount</label>
-                        <input type="number" step="0.01" class="form-control" id="fuel_payment_amount" name="fuel_payment_amount" value="{{ $tripOperation->fuel_payment_amount }}">
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label for="expenses" class="form-label">Expenses</label>
-                        <input type="number" step="0.01" class="form-control" id="expenses" name="expenses" value="{{ $tripOperation->expenses }}">
                     </div>
                 </div>
 
@@ -296,6 +267,13 @@ function calculateFreight() {
     const freight = km * rate;
     document.getElementById('freight').value = freight.toFixed(2);
 }
+
+// Handle case when rate is not provided - set freight to 0
+document.getElementById('rate_per_km').addEventListener('input', function() {
+    if (this.value === '' || this.value === '0') {
+        document.getElementById('freight').value = '0.00';
+    }
+});
 
 function addExpenseEntry() {
     const container = document.getElementById('expenseEntriesContainer');
