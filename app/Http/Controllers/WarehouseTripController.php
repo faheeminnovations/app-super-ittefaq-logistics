@@ -19,11 +19,17 @@ class WarehouseTripController extends Controller
      */
     public function index(Request $request)
     {
+        $vehicleNumber = $request->get('vehicle_number');
         $dateFrom = $request->get('date_from');
         $dateTo = $request->get('date_to');
         $warehouseLocation = $request->get('warehouse_location');
 
         $query = WarehouseTrip::with(['vehicle', 'driver', 'customer']);
+
+        // Apply vehicle number filter if provided
+        if ($vehicleNumber) {
+            $query->where('vehicle_number', 'like', '%' . $vehicleNumber . '%');
+        }
 
         // Apply warehouse location filter if provided
         if ($warehouseLocation) {
@@ -38,6 +44,9 @@ class WarehouseTripController extends Controller
         // Clone query for totals calculation
         $totalsQuery = WarehouseTrip::query();
 
+        if ($vehicleNumber) {
+            $totalsQuery->where('vehicle_number', 'like', '%' . $vehicleNumber . '%');
+        }
         if ($warehouseLocation) {
             $totalsQuery->where('warehouse_location', $warehouseLocation);
         }
@@ -87,6 +96,7 @@ class WarehouseTripController extends Controller
                 'rate_per_km' => 'required|numeric|min:0',
                 'driver_name' => 'nullable|string|max:255',
                 'freight_bill_no' => 'nullable|string|max:50',
+                'billing_month' => 'nullable|string|max:50',
                 'warehouse_location' => 'required|string|max:100',
                 'business_category' => 'required|string|max:255',
                 'gl_number' => 'nullable|string|max:50',
@@ -108,9 +118,11 @@ class WarehouseTripController extends Controller
             // Auto-generate trip number
             $validated['trip_number'] = WarehouseTrip::generateTripNumber();
 
-            // Auto-calculate billing month from trip date
-            $date = Carbon::parse($validated['trip_date']);
-            $validated['billing_month'] = $date->format('F-Y');
+            // Auto-calculate billing month from trip date if not provided
+            if (empty($validated['billing_month'])) {
+                $date = Carbon::parse($validated['trip_date']);
+                $validated['billing_month'] = $date->format('F-Y');
+            }
 
             // Calculate freight automatically
             $validated['freight'] = $validated['kilometers'] * $validated['rate_per_km'];
@@ -205,13 +217,19 @@ class WarehouseTripController extends Controller
     public function getEditData($id)
     {
         \Log::info('getEditData called', ['id' => $id]);
-        
+
         $trip = WarehouseTrip::with(['vehicle', 'driver', 'customer'])->findOrFail($id);
-        
-        \Log::info('Trip data for edit', ['trip' => $trip->toArray()]);
-        
+
+        // Format trip_date for the form
+        $tripData = $trip->toArray();
+        if ($trip->trip_date) {
+            $tripData['trip_date'] = $trip->trip_date->format('Y-m-d');
+        }
+
+        \Log::info('Trip data for edit', ['trip' => $tripData]);
+
         return response()->json([
-            'trip' => $trip,
+            'trip' => $tripData,
             'success' => true
         ], 200);
     }
@@ -223,6 +241,13 @@ class WarehouseTripController extends Controller
     {
         $trip = WarehouseTrip::findOrFail($id);
 
+        \Log::info('Update trip request', [
+            'id' => $id,
+            'request_data' => $request->all(),
+            'has_trip_date' => $request->has('trip_date'),
+            'trip_date_value' => $request->input('trip_date')
+        ]);
+
         $validated = $request->validate([
             'trip_date' => 'required|date',
             'vehicle_number' => 'required|string|max:50',
@@ -233,9 +258,10 @@ class WarehouseTripController extends Controller
             'rate_per_km' => 'required|numeric|min:0',
             'driver_name' => 'nullable|string|max:255',
             'freight_bill_no' => 'nullable|string|max:50',
-            'billing_month' => 'required|string|max:50',
+            'billing_month' => 'nullable|string|max:50',
             'warehouse_location' => 'required|string|max:100',
             'gl_number' => 'nullable|string|max:50',
+            'business_category' => 'nullable|string|max:255',
             'business_area' => 'nullable|string|max:255',
             'notes' => 'nullable|string',
             'status' => 'required|in:pending,completed,billed',
@@ -248,6 +274,12 @@ class WarehouseTripController extends Controller
             'expense_entries.*.amount' => 'nullable|numeric',
             'expense_entries.*.description' => 'nullable|string',
         ]);
+
+        // Auto-calculate billing month from trip date if not provided
+        if (empty($validated['billing_month'])) {
+            $date = Carbon::parse($validated['trip_date']);
+            $validated['billing_month'] = $date->format('F-Y');
+        }
 
         // Recalculate freight
         $validated['freight'] = $validated['kilometers'] * $validated['rate_per_km'];
@@ -329,11 +361,17 @@ class WarehouseTripController extends Controller
      */
     public function export(Request $request)
     {
+        $vehicleNumber = $request->get('vehicle_number');
         $dateFrom = $request->get('date_from');
         $dateTo = $request->get('date_to');
         $warehouseLocation = $request->get('warehouse_location');
 
         $query = WarehouseTrip::with(['vehicle', 'driver', 'customer']);
+
+        // Apply vehicle number filter if provided
+        if ($vehicleNumber) {
+            $query->where('vehicle_number', 'like', '%' . $vehicleNumber . '%');
+        }
 
         // Apply warehouse location filter if provided
         if ($warehouseLocation) {
@@ -356,12 +394,13 @@ class WarehouseTripController extends Controller
         $sheet->setCellValue('A4', 'NTN : 4252472-5');
         $sheet->setCellValue('A5', 'Invoice No : 0000');
 
-        // Set date range info
-        if ($dateFrom && $dateTo) {
-            $sheet->setCellValue('A6', 'Date Range : ' . Carbon::parse($dateFrom)->format('d/m/Y') . ' to ' . Carbon::parse($dateTo)->format('d/m/Y'));
-        } else {
-            $sheet->setCellValue('A6', 'Date Range : All Time');
-        }
+        // Set filter info
+        $filterInfo = [];
+        if ($vehicleNumber) $filterInfo[] = "Vehicle: {$vehicleNumber}";
+        if ($dateFrom && $dateTo) $filterInfo[] = "Date: " . Carbon::parse($dateFrom)->format('d/m/Y') . " to " . Carbon::parse($dateTo)->format('d/m/Y');
+        if ($warehouseLocation) $filterInfo[] = "Warehouse: {$warehouseLocation}";
+
+        $sheet->setCellValue('A6', 'Filter: ' . (count($filterInfo) > 0 ? implode(' | ', $filterInfo) : 'All Time'));
 
         // Set column headers
         $sheet->setCellValue('A7', 'Sr');
@@ -422,11 +461,13 @@ class WarehouseTripController extends Controller
             $warehouseLocation = $data['warehouse_location'] ?? $defaultWarehouseLocation;
             $dateFrom = $data['date_from'] ?? null;
             $dateTo = $data['date_to'] ?? null;
+            $vehicleNumber = $data['vehicle_number'] ?? null;
         } else {
             $billingMonth = $request->get('billing_month', date('F-Y'));
             $warehouseLocation = $request->get('warehouse_location', $defaultWarehouseLocation);
             $dateFrom = $request->get('date_from');
             $dateTo = $request->get('date_to');
+            $vehicleNumber = $request->get('vehicle_number');
         }
 
         \Log::info('Generate invoice called', [
@@ -434,6 +475,7 @@ class WarehouseTripController extends Controller
             'warehouse_location' => $warehouseLocation,
             'date_from' => $dateFrom,
             'date_to' => $dateTo,
+            'vehicle_number' => $vehicleNumber,
             'is_ajax' => $request->ajax(),
             'wants_json' => $request->wantsJson()
         ]);
@@ -442,11 +484,19 @@ class WarehouseTripController extends Controller
         $query = WarehouseTrip::with(['vehicle', 'driver', 'customer', 'expenseEntries'])
             ->where('warehouse_location', $warehouseLocation);
 
-        // If date range is provided, use it instead of billing_month
+        // Apply vehicle number filter if provided
+        if ($vehicleNumber) {
+            $query->where('vehicle_number', 'like', '%' . $vehicleNumber . '%');
+        }
+
+        // Apply date range filter if provided
         if ($dateFrom && $dateTo) {
             $query->whereBetween('trip_date', [$dateFrom, $dateTo]);
+        } elseif ($vehicleNumber) {
+            // If vehicle filter is provided but no date range, don't filter by date
+            // Just use the vehicle filter and warehouse location
         } else {
-            // Fall back to billing_month if no date range
+            // Only use billing_month if no other filters are provided
             $query->byBillingMonth($billingMonth);
         }
 
@@ -457,6 +507,7 @@ class WarehouseTripController extends Controller
                 'warehouse_location' => $warehouseLocation,
                 'date_from' => $dateFrom,
                 'date_to' => $dateTo,
+                'vehicle_number' => $vehicleNumber,
                 'billing_month' => $billingMonth
             ]);
             if ($request->ajax() || $request->wantsJson()) {

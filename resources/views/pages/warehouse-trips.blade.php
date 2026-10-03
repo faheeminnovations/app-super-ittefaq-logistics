@@ -63,11 +63,15 @@
     <!-- Filter Section -->
     <div class="panel mb-3">
       <div class="row">
-        <div class="col-md-3">
+        <div class="col-md-2">
+          <label class="form-label">Vhl No</label>
+          <input type="text" class="form-control" id="vehicleNumber" value="{{ request('vehicle_number') }}" placeholder="Vehicle Number">
+        </div>
+        <div class="col-md-2">
           <label class="form-label">Date From</label>
           <input type="date" class="form-control" id="dateFrom" value="{{ request('date_from') }}">
         </div>
-        <div class="col-md-3">
+        <div class="col-md-2">
           <label class="form-label">Date To</label>
           <input type="date" class="form-control" id="dateTo" value="{{ request('date_to') }}">
         </div>
@@ -223,6 +227,9 @@
                   <input type="text" class="form-control" name="gp_number" id="gp_number" required>
                 </div>
               </div>
+
+              <!-- Hidden field for billing_month -->
+              <input type="hidden" name="billing_month" id="billing_month">
 
               <div class="row">
                 <div class="col-md-4 mb-3">
@@ -408,8 +415,13 @@
         console.log('Method:', method);
         console.log('Form data:', Object.fromEntries(formData));
 
+        // Ensure _method is set in FormData
+        if (!formData.has('_method')) {
+          formData.append('_method', method);
+        }
+
         fetch(url, {
-          method: method,
+          method: 'POST',
           headers: {
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
             'Accept': 'application/json'
@@ -418,6 +430,11 @@
         })
         .then(response => {
           console.log('Response status:', response.status);
+          if (!response.ok) {
+            return response.json().then(err => {
+              throw err;
+            });
+          }
           return response.json();
         })
         .then(data => {
@@ -444,6 +461,28 @@
         })
         .catch(error => {
           console.error('Error:', error);
+          let errorMessage = 'Failed to save trip';
+
+          if (error.errors) {
+            // Display validation errors
+            const errorMessages = Object.values(error.errors).flat();
+            errorMessage = errorMessages.join('\n');
+          } else if (error.message) {
+            errorMessage = error.message;
+          }
+
+          Swal.fire({
+            title: 'Error',
+            text: errorMessage,
+            icon: 'error',
+            confirmButtonColor: '#d33'
+          });
+        });
+      });
+          }
+        })
+        .catch(error => {
+          console.error('Error:', error);
           Swal.fire({
             title: 'Error',
             text: 'Failed to save trip: ' + error.message,
@@ -466,6 +505,7 @@
 
     function clearFilters() {
       document.getElementById('searchTrips').value = '';
+      document.getElementById('vehicleNumber').value = '';
       document.getElementById('dateFrom').value = '';
       document.getElementById('dateTo').value = '';
       document.getElementById('warehouseLocation').value = '';
@@ -545,11 +585,13 @@
     }
 
     function applyFilters() {
+      const vehicleNumber = document.getElementById('vehicleNumber').value;
       const warehouseLocation = document.getElementById('warehouseLocation').value;
       const dateFrom = document.getElementById('dateFrom').value;
       const dateTo = document.getElementById('dateTo').value;
 
       let params = new URLSearchParams();
+      if (vehicleNumber) params.append('vehicle_number', vehicleNumber);
       if (warehouseLocation) params.append('warehouse_location', warehouseLocation);
       if (dateFrom) params.append('date_from', dateFrom);
       if (dateTo) params.append('date_to', dateTo);
@@ -563,16 +605,22 @@
       document.getElementById('_method').value = 'POST';
       document.getElementById('tripForm').action = '{{ route('warehouse-trips.store') }}';
       document.getElementById('tripModalLabel').textContent = 'Add New Trip';
-      
+
+      // Set current billing month
+      const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+      const now = new Date();
+      const billingMonth = monthNames[now.getMonth()] + '-' + now.getFullYear();
+      document.getElementById('billing_month').value = billingMonth;
+
       // Load vehicles and drivers
       loadVehicles();
       loadDrivers();
-      
+
       tripModal.show();
     }
 
     function loadVehicles() {
-      fetch('/vehicles')
+      return fetch('/vehicles')
         .then(response => response.json())
         .then(data => {
           const vehicleSelect = document.getElementById('vehicle_number');
@@ -586,11 +634,14 @@
             });
           }
         })
-        .catch(error => console.error('Error loading vehicles:', error));
+        .catch(error => {
+          console.error('Error loading vehicles:', error);
+          throw error;
+        });
     }
 
     function loadDrivers() {
-      fetch('/drivers')
+      return fetch('/drivers')
         .then(response => response.json())
         .then(data => {
           const driverSelect = document.getElementById('driver_name');
@@ -604,13 +655,15 @@
             });
           }
         })
-        .catch(error => console.error('Error loading drivers:', error));
+        .catch(error => {
+          console.error('Error loading drivers:', error);
+          throw error;
+        });
     }
 
     function editTrip(id) {
-      alert('Edit trip function called with ID: ' + id);
       console.log('editTrip called with id:', id);
-      
+
       // Use the dedicated edit data route
       fetch(`/warehouse-trips/${id}/edit-data`, {
         headers: {
@@ -627,8 +680,7 @@
       })
       .then(data => {
         console.log('Edit trip data:', data);
-        alert('Data received: ' + JSON.stringify(data));
-        
+
         if (!data.trip) {
           console.error('No trip data in response');
           Swal.fire({
@@ -645,46 +697,60 @@
         document.getElementById('tripForm').action = `/warehouse-trips/${id}`;
         document.getElementById('tripModalLabel').textContent = 'Edit Trip';
 
-        // Load vehicles and drivers
-        loadVehicles();
-        loadDrivers();
+        // Load vehicles and drivers first, then populate form
+        Promise.all([loadVehicles(), loadDrivers()]).then(() => {
+          // Populate form fields with simple direct assignment
+          console.log('Populating form with trip data:', trip);
 
-        // Populate form fields with simple direct assignment
-        console.log('Populating form with trip data:', trip);
-        
-        // Simple date formatting
-        if (trip.trip_date) {
-          try {
-            const date = new Date(trip.trip_date);
-            if (!isNaN(date)) {
-              document.getElementById('trip_date').value = date.toISOString().split('T')[0];
-            } else {
+          // Simple date formatting
+          if (trip.trip_date) {
+            try {
+              const date = new Date(trip.trip_date);
+              if (!isNaN(date)) {
+                document.getElementById('trip_date').value = date.toISOString().split('T')[0];
+
+                // Calculate and set billing month from trip date
+                const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+                const billingMonth = monthNames[date.getMonth()] + '-' + date.getFullYear();
+                document.getElementById('billing_month').value = billingMonth;
+              } else {
+                document.getElementById('trip_date').value = '';
+                document.getElementById('billing_month').value = '';
+              }
+            } catch (e) {
               document.getElementById('trip_date').value = '';
+              document.getElementById('billing_month').value = '';
             }
-          } catch (e) {
+          } else {
             document.getElementById('trip_date').value = '';
+            document.getElementById('billing_month').value = '';
           }
-        } else {
-          document.getElementById('trip_date').value = '';
-        }
-        
-        document.getElementById('vehicle_number').value = trip.vehicle_number || '';
-        document.getElementById('gp_number').value = trip.gp_number || '';
-        document.getElementById('delivery_point').value = trip.delivery_point || '';
-        document.getElementById('vehicle_type').value = trip.vehicle_type || '2T';
-        document.getElementById('business_category').value = trip.business_category || '';
-        document.getElementById('driver_name').value = trip.driver_name || '';
-        document.getElementById('kilometers').value = trip.kilometers || '';
-        document.getElementById('rate_per_km').value = trip.rate_per_km || '';
-        document.getElementById('freight').value = trip.freight || '';
-        document.getElementById('freight_bill_no').value = trip.freight_bill_no || '';
-        document.getElementById('warehouse_location').value = trip.warehouse_location || '';
-        document.getElementById('status').value = trip.status || 'pending';
-        document.getElementById('notes').value = trip.notes || '';
-        
-        console.log('Form populated successfully');
 
-        tripModal.show();
+          document.getElementById('vehicle_number').value = trip.vehicle_number || '';
+          document.getElementById('gp_number').value = trip.gp_number || '';
+          document.getElementById('delivery_point').value = trip.delivery_point || '';
+          document.getElementById('vehicle_type').value = trip.vehicle_type || '2T';
+          document.getElementById('business_category').value = trip.business_category || '';
+          document.getElementById('driver_name').value = trip.driver_name || '';
+          document.getElementById('kilometers').value = trip.kilometers || '';
+          document.getElementById('rate_per_km').value = trip.rate_per_km || '';
+          document.getElementById('freight').value = trip.freight || '';
+          document.getElementById('freight_bill_no').value = trip.freight_bill_no || '';
+          document.getElementById('warehouse_location').value = trip.warehouse_location || '';
+          document.getElementById('status').value = trip.status || 'pending';
+          document.getElementById('notes').value = trip.notes || '';
+
+          console.log('Form populated successfully');
+
+          tripModal.show();
+        }).catch(error => {
+          console.error('Error loading vehicles/drivers:', error);
+          Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: 'Failed to load vehicle/driver data'
+          });
+        });
       })
       .catch(error => {
         console.error('Error loading trip:', error);
@@ -757,20 +823,23 @@
 
     function exportTrips() {
       console.log('exportTrips function called');
+      const vehicleNumber = document.getElementById('vehicleNumber').value;
       const warehouseLocation = document.getElementById('warehouseLocation').value;
       const dateFrom = document.getElementById('dateFrom').value;
       const dateTo = document.getElementById('dateTo').value;
 
       let params = new URLSearchParams();
+      if (vehicleNumber) params.append('vehicle_number', vehicleNumber);
       if (warehouseLocation) params.append('warehouse_location', warehouseLocation);
       if (dateFrom) params.append('date_from', dateFrom);
       if (dateTo) params.append('date_to', dateTo);
 
-      console.log('Export called with:', { warehouseLocation, dateFrom, dateTo });
+      console.log('Export called with:', { vehicleNumber, warehouseLocation, dateFrom, dateTo });
       window.location.href = `/warehouse-trips/export?${params.toString()}`;
     }
 
     function generateInvoice(invoiceType = 'basic') {
+      const vehicleNumber = document.getElementById('vehicleNumber').value;
       const warehouseLocation = document.getElementById('warehouseLocation').value || 'Depalpur';
       const dateFrom = document.getElementById('dateFrom').value;
       const dateTo = document.getElementById('dateTo').value;
@@ -779,7 +848,8 @@
       let billingMonth = '{{ date('F-Y') }}';
       let useCurrentMonth = false;
 
-      if (dateFrom) {
+      // Check if date range is selected
+      if (dateFrom && dateTo) {
         const date = new Date(dateFrom);
         const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
         billingMonth = monthNames[date.getMonth()] + '-' + date.getFullYear();
@@ -787,30 +857,43 @@
         useCurrentMonth = true;
       }
 
-      console.log('Generate invoice called with:', { billingMonth, warehouseLocation, invoiceType, dateFrom, dateTo, useCurrentMonth });
+      console.log('Generate invoice called with:', { billingMonth, warehouseLocation, invoiceType, dateFrom, dateTo, vehicleNumber, useCurrentMonth });
 
       const invoiceTitle = invoiceType === 'with_expenses' ? 'Invoice with Income & Expense' : 'Generate Invoice';
 
-      // Show warning if no date range selected
-      if (useCurrentMonth) {
+      // Check if any filters are applied
+      const hasFilters = vehicleNumber || warehouseLocation !== 'Depalpur' || (dateFrom && dateTo);
+
+      // Show warning only if no filters at all and no date range
+      if (!hasFilters && useCurrentMonth) {
         Swal.fire({
-          title: 'No Date Range Selected',
-          text: 'You have not selected a date range. The invoice will be generated for the current month (' + billingMonth + '). Do you want to continue?',
+          title: 'No Filters Applied',
+          text: 'You have not selected any filters. The invoice will be generated for the current month (' + billingMonth + ') at ' + warehouseLocation + '. Do you want to continue?',
           icon: 'warning',
           showCancelButton: true,
           confirmButtonColor: '#3085d6',
           cancelButtonColor: '#d33',
-          confirmButtonText: 'Yes, generate for current month',
+          confirmButtonText: 'Yes, generate',
           cancelButtonText: 'Cancel'
         }).then((result) => {
           if (result.isConfirmed) {
-            proceedWithInvoiceGeneration(billingMonth, warehouseLocation, invoiceType, dateFrom, dateTo);
+            proceedWithInvoiceGeneration(billingMonth, warehouseLocation, invoiceType, dateFrom, dateTo, vehicleNumber);
           }
         });
       } else {
+        // Build confirmation message based on filters
+        let confirmText = `Generate ${invoiceType === 'with_expenses' ? 'invoice with income & expense details' : 'basic invoice'}`;
+        if (useCurrentMonth) {
+          confirmText += ` for ${billingMonth}`;
+        }
+        if (vehicleNumber) {
+          confirmText += ` for vehicle ${vehicleNumber}`;
+        }
+        confirmText += ` at ${warehouseLocation}?`;
+
         Swal.fire({
           title: invoiceTitle,
-          text: `Generate ${invoiceType === 'with_expenses' ? 'invoice with income & expense details' : 'basic invoice'} for ${billingMonth} at ${warehouseLocation}?`,
+          text: confirmText,
           icon: 'question',
           showCancelButton: true,
           confirmButtonColor: '#3085d6',
@@ -819,14 +902,14 @@
           cancelButtonText: 'Cancel'
         }).then((result) => {
           if (result.isConfirmed) {
-            proceedWithInvoiceGeneration(billingMonth, warehouseLocation, invoiceType, dateFrom, dateTo);
+            proceedWithInvoiceGeneration(billingMonth, warehouseLocation, invoiceType, dateFrom, dateTo, vehicleNumber);
           }
         });
       }
     }
 
-    function proceedWithInvoiceGeneration(billingMonth, warehouseLocation, invoiceType, dateFrom, dateTo) {
-      console.log('Proceeding with invoice generation:', { billingMonth, warehouseLocation, invoiceType, dateFrom, dateTo });
+    function proceedWithInvoiceGeneration(billingMonth, warehouseLocation, invoiceType, dateFrom, dateTo, vehicleNumber) {
+      console.log('Proceeding with invoice generation:', { billingMonth, warehouseLocation, invoiceType, dateFrom, dateTo, vehicleNumber });
 
       const payload = {
         billing_month: billingMonth,
@@ -834,9 +917,10 @@
         invoice_type: invoiceType
       };
 
-      // Add date range if provided
+      // Add filters if provided
       if (dateFrom) payload.date_from = dateFrom;
       if (dateTo) payload.date_to = dateTo;
+      if (vehicleNumber) payload.vehicle_number = vehicleNumber;
 
       fetch('/warehouse-trips/generate-invoice', {
         method: 'POST',

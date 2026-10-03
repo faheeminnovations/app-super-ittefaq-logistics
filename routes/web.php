@@ -95,10 +95,10 @@ Route::middleware(['auth', 'role:admin,dispatcher,manager'])->group(function () 
     Route::get('/bilties/{bilty}/print', [BiltyController::class, 'print'])->name('bilties.print');
     
     // Warehouse Trip routes
-    Route::resource('warehouse-trips', WarehouseTripController::class);
+    Route::get('/warehouse-trips/{id}/edit-data', [WarehouseTripController::class, 'getEditData'])->name('warehouse-trips.edit-data');
     Route::get('/warehouse-trips/export', [WarehouseTripController::class, 'export'])->name('warehouse-trips.export');
     Route::match(['get', 'post'], '/warehouse-trips/generate-invoice', [WarehouseTripController::class, 'generateInvoice'])->name('warehouse-trips.generate-invoice');
-    Route::get('/warehouse-trips/{id}/edit-data', [WarehouseTripController::class, 'getEditData'])->name('warehouse-trips.edit-data');
+    Route::resource('warehouse-trips', WarehouseTripController::class);
     
     // API routes for warehouse-trips form
     Route::get('/vehicles', [VehicleController::class, 'getVehiclesForSelect']);
