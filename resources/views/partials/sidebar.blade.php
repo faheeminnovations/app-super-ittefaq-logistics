@@ -39,7 +39,7 @@
       <a href="{{ url('/bilties') }}" class="nav-link {{ request()->is('bilties') ? 'active' : '' }}" data-module="bilties receipts"><i class="bi bi-receipt-cutoff"></i> Bilties / Receipts </a>
       <a href="{{ url('/pod') }}" class="nav-link {{ request()->is('pod') ? 'active' : '' }}" data-module="pod proof of delivery"><i class="bi bi-file-earmark-check"></i> Proof of Delivery </a>
       
-      <!-- <a href="{{ url('/warehouse-trips') }}" class="nav-link {{ request()->is('warehouse-trips') ? 'active' : '' }}" data-module="warehouse trips excel"><i class="bi bi-table"></i> Warehouse Trips </a> -->
+      <a href="{{ url('/warehouse-trips') }}" class="nav-link {{ request()->is('warehouse-trips') ? 'active' : '' }}" data-module="warehouse trips excel"><i class="bi bi-table"></i> Warehouse Trips </a> 
       <!-- <a href="{{ url('/dispatch') }}" class="nav-link {{ request()->is('dispatch') ? 'active' : '' }}" data-module="dispatch planning"><i class="bi bi-diagram-3"></i> Planning / Dispatch </a> -->
       <!-- <a href="{{ url('/trips') }}" class="nav-link {{ request()->is('trips') ? 'active' : '' }}" data-module="trips"><i class="bi bi-signpost-split"></i> Trips </a> -->
       <!-- <a href="{{ url('/tracking') }}" class="nav-link {{ request()->is('tracking') ? 'active' : '' }}" data-module="tracking live tracking"><i class="bi bi-geo-alt"></i> Live Tracking </a> -->
