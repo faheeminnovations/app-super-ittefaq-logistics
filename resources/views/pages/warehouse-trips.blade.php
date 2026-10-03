@@ -5,7 +5,7 @@
     <div class="page-head">
       <div>
         <div class="eyebrow">Warehouse Management</div>
-        <h1>Warehouse Trips - {{ $billingMonth }}</h1>
+        <h1>Warehouse Trips</h1>
         <div class="sub">Excel-like trip management for Depalpur Warehouse</div>
       </div>
       <div class="d-flex gap-2">
@@ -15,8 +15,11 @@
         <button class="btn btn-outline-navy" onclick="exportTrips()" id="exportBtn">
           <i class="bi bi-download me-1"></i> Export Excel
         </button>
-        <button class="btn btn-success" onclick="generateInvoice()" id="invoiceBtn">
+        <button class="btn btn-success" onclick="generateInvoice('basic')" id="invoiceBtn">
           <i class="bi bi-file-earmark-text me-1"></i> Generate Invoice
+        </button>
+        <button class="btn btn-info" onclick="generateInvoice('with_expenses')" id="invoiceBtnWithExpenses">
+          <i class="bi bi-file-earmark-text me-1"></i> Invoice with Income & Expense
         </button>
       </div>
     </div>
@@ -61,17 +64,17 @@
     <div class="panel mb-3">
       <div class="row">
         <div class="col-md-3">
-          <label class="form-label">Billing Month</label>
-          <select class="form-select" id="billingMonth" onchange="changeBillingMonth()">
-            @foreach(['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'] as $month)
-              <option value="{{ $month }}-2026" {{ $billingMonth === $month . '-2026' ? 'selected' : '' }}>{{ $month }} 2026</option>
-            @endforeach
-          </select>
+          <label class="form-label">Date From</label>
+          <input type="date" class="form-control" id="dateFrom" value="{{ request('date_from') }}">
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Date To</label>
+          <input type="date" class="form-control" id="dateTo" value="{{ request('date_to') }}">
         </div>
         <div class="col-md-3">
           <label class="form-label">Warehouse Location</label>
           <select class="form-select" id="warehouseLocation" onchange="changeWarehouseLocation()">
-            <option value="">Select Warehouse</option>
+            <option value="">All Warehouses</option>
             @foreach($warehouses as $warehouse)
               <option value="{{ $warehouse->location }}" {{ $warehouseLocation === $warehouse->location ? 'selected' : '' }}>{{ $warehouse->name }}</option>
             @endforeach
@@ -81,9 +84,11 @@
           <label class="form-label">Search</label>
           <input type="text" class="form-control" id="searchTrips" placeholder="Search by vehicle, GP#, or delivery point...">
         </div>
-        <div class="col-md-3">
-          <label class="form-label">&nbsp;</label>
-          <button class="btn btn-secondary w-100" onclick="clearFilters()">Clear Filters</button>
+      </div>
+      <div class="row mt-2">
+        <div class="col-md-12 text-end">
+          <button class="btn btn-secondary" onclick="applyFilters()">Apply Filters</button>
+          <button class="btn btn-outline-secondary" onclick="clearFilters()">Clear Filters</button>
         </div>
       </div>
     </div>
@@ -190,26 +195,41 @@
               <!-- Basic Information -->
               <h6 class="mb-3">Trip Information</h6>
               <div class="row">
-                <div class="col-md-4 mb-3">
+                <div class="col-md-3 mb-3">
                   <label for="trip_date" class="form-label">Date</label>
                   <input type="date" class="form-control" name="trip_date" id="trip_date" required>
                 </div>
-                <div class="col-md-4 mb-3">
-                  <label for="vehicle_number" class="form-label">Vehicle Number</label>
-                  <input type="text" class="form-control" name="vehicle_number" id="vehicle_number" required>
+                <div class="col-md-3 mb-3">
+                  <label for="business_category" class="form-label">Business Category *</label>
+                  <select class="form-select" name="business_category" id="business_category" required>
+                    <option value="">Select Category</option>
+                    <option value="Open Market Work">Open Market Work</option>
+                    <option value="Buyer Supply Chain">Buyer Supply Chain</option>
+                    <option value="Buyer Breading">Buyer Breading</option>
+                    <option value="Buyer Seed Supply">Buyer Seed Supply</option>
+                    <option value="Buyer Marketing Development">Buyer Marketing Development</option>
+                    <option value="Buyer S.P.R">Buyer S.P.R</option>
+                    <option value="Syngenta">Syngenta</option>
+                  </select>
                 </div>
-                <div class="col-md-4 mb-3">
+                <div class="col-md-3 mb-3">
+                  <label for="vehicle_number" class="form-label">Vehicle Number</label>
+                  <select class="form-select" name="vehicle_number" id="vehicle_number" required>
+                    <option value="">Select Vehicle</option>
+                  </select>
+                </div>
+                <div class="col-md-3 mb-3">
                   <label for="gp_number" class="form-label">GP Number</label>
                   <input type="text" class="form-control" name="gp_number" id="gp_number" required>
                 </div>
               </div>
 
               <div class="row">
-                <div class="col-md-6 mb-3">
+                <div class="col-md-4 mb-3">
                   <label for="delivery_point" class="form-label">Delivery Point</label>
                   <input type="text" class="form-control" name="delivery_point" id="delivery_point" required>
                 </div>
-                <div class="col-md-3 mb-3">
+                <div class="col-md-2 mb-3">
                   <label for="vehicle_type" class="form-label">Vehicle Type</label>
                   <select class="form-select" name="vehicle_type" id="vehicle_type" required>
                     <option value="1T">1T</option>
@@ -219,11 +239,18 @@
                   </select>
                 </div>
                 <div class="col-md-3 mb-3">
-                  <label for="billing_month" class="form-label">Billing Month</label>
-                  <select class="form-select" name="billing_month" id="billing_month" required>
-                    @foreach(['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'] as $month)
-                      <option value="{{ $month }}-2026" {{ $billingMonth === $month . '-2026' ? 'selected' : '' }}>{{ $month }} 2026</option>
+                  <label for="warehouse_location" class="form-label">Warehouse Location</label>
+                  <select class="form-select" name="warehouse_location" id="warehouse_location" required>
+                    <option value="">Select Warehouse</option>
+                    @foreach($warehouses as $warehouse)
+                      <option value="{{ $warehouse->location }}" {{ $warehouseLocation === $warehouse->location ? 'selected' : '' }}>{{ $warehouse->name }}</option>
                     @endforeach
+                  </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                  <label for="driver_name" class="form-label">Driver Name</label>
+                  <select class="form-select" name="driver_name" id="driver_name">
+                    <option value="">Select Driver</option>
                   </select>
                 </div>
               </div>
@@ -245,40 +272,71 @@
                 </div>
               </div>
 
+              <!-- Expense Entries -->
+              <h6 class="mb-3 mt-4">Expense Entries</h6>
+              <div class="card mb-3" style="background-color: #f8f9fa; border-left: 4px solid #dc3545;">
+                <div class="card-body">
+                  <div class="row">
+                    <div class="col-md-6 mb-3">
+                      <label for="total_expense" class="form-label fw-bold">Total Expense</label>
+                      <input type="number" step="0.01" class="form-control bg-light" id="total_expense" name="total_expense" readonly value="0.00" style="font-weight: bold; color: #dc3545;">
+                      <small class="text-muted">Auto-calculated from expense entries below</small>
+                    </div>
+                  </div>
+
+                  <!-- Expense Entries Container -->
+                  <div id="expenseEntriesContainer">
+                    <div class="expense-entry row mb-3 p-3 border rounded" style="background-color: white;">
+                      <div class="col-md-3 mb-2">
+                        <label class="form-label">Expense Category</label>
+                        <select class="form-select expense-category" name="expense_entries[0][expense_category]">
+                          <option value="">Select Category</option>
+                          <option value="fuel">Fuel</option>
+                          <option value="toll">Toll</option>
+                          <option value="parking">Parking</option>
+                          <option value="driver_payment">Driver Payment</option>
+                          <option value="maintenance">Maintenance</option>
+                          <option value="loading_charges">Loading Charges</option>
+                          <option value="unloading_charges">Unloading Charges</option>
+                          <option value="other">Other</option>
+                        </select>
+                      </div>
+                      <div class="col-md-3 mb-2">
+                        <label class="form-label">Payment Type</label>
+                        <select class="form-select expense-payment-type" name="expense_entries[0][payment_type]">
+                          <option value="">Select Type</option>
+                          <option value="credit">Credit (Will add 2% interest)</option>
+                          <option value="cash">Cash</option>
+                        </select>
+                      </div>
+                      <div class="col-md-3 mb-2">
+                        <label class="form-label">Amount</label>
+                        <input type="number" step="0.01" class="form-control expense-amount" name="expense_entries[0][amount]" placeholder="0.00" oninput="calculateTotalExpense()">
+                      </div>
+                      <div class="col-md-3 mb-2">
+                        <label class="form-label">Description</label>
+                        <input type="text" class="form-control expense-description" name="expense_entries[0][description]" placeholder="Description">
+                      </div>
+                      <div class="col-12">
+                        <button type="button" class="btn btn-sm btn-danger d-none remove-expense-entry" onclick="removeExpenseEntry(this)">
+                          <i class="bi bi-trash"></i> Remove
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button type="button" class="btn btn-outline-danger btn-sm" onclick="addExpenseEntry()">
+                    <i class="bi bi-plus-circle"></i> Add Expense Entry
+                  </button>
+                </div>
+              </div>
+
               <!-- Additional Information -->
               <h6 class="mb-3 mt-4">Additional Information</h6>
               <div class="row">
                 <div class="col-md-4 mb-3">
-                  <label for="fuel_type" class="form-label">Fuel Type</label>
-                  <select class="form-select" name="fuel_type" id="fuel_type">
-                    <option value="">Select</option>
-                    <option value="CASH">CASH</option>
-                    <option value="CREDIT">CREDIT</option>
-                  </select>
-                </div>
-                <div class="col-md-4 mb-3">
-                  <label for="driver_name" class="form-label">Driver Name</label>
-                  <input type="text" class="form-control" name="driver_name" id="driver_name">
-                </div>
-                <div class="col-md-4 mb-3">
-                  <label for="load_id" class="form-label">Load ID</label>
-                  <input type="text" class="form-control" name="load_id" id="load_id">
-                </div>
-              </div>
-              
-              <div class="row">
-                <div class="col-md-4 mb-3">
                   <label for="freight_bill_no" class="form-label">Freight Bill No</label>
                   <input type="text" class="form-control" name="freight_bill_no" id="freight_bill_no">
-                </div>
-                <div class="col-md-4 mb-3">
-                  <label for="warehouse_location" class="form-label">Warehouse Location</label>
-                  <select class="form-select" name="warehouse_location" id="warehouse_location" required>
-                    <option value="">Select Warehouse</option>
-                    @foreach($warehouses as $warehouse)
-                      <option value="{{ $warehouse->location }}" {{ $warehouseLocation === $warehouse->location ? 'selected' : '' }}>{{ $warehouse->name }}</option>
-                    @endforeach
-                  </select>
                 </div>
                 <div class="col-md-4 mb-3">
                   <label for="status" class="form-label">Status</label>
@@ -408,27 +466,95 @@
 
     function clearFilters() {
       document.getElementById('searchTrips').value = '';
-      filterTrips();
+      document.getElementById('dateFrom').value = '';
+      document.getElementById('dateTo').value = '';
+      document.getElementById('warehouseLocation').value = '';
+      window.location.href = '?';
     }
 
-    function changeBillingMonth() {
-      const billingMonth = document.getElementById('billingMonth').value;
-      const warehouseLocation = document.getElementById('warehouseLocation').value;
-      if (warehouseLocation) {
-        window.location.href = `?billing_month=${billingMonth}&warehouse_location=${warehouseLocation}`;
-      } else {
-        window.location.href = `?billing_month=${billingMonth}`;
-      }
+    function calculateFreight() {
+      const kilometers = parseFloat(document.getElementById('kilometers').value) || 0;
+      const ratePerKm = parseFloat(document.getElementById('rate_per_km').value) || 0;
+      const freight = kilometers * ratePerKm;
+      document.getElementById('freight').value = freight.toFixed(2);
+    }
+
+    function calculateTotalExpense() {
+      const expenseAmounts = document.querySelectorAll('.expense-amount');
+      let total = 0;
+      expenseAmounts.forEach(input => {
+        total += parseFloat(input.value) || 0;
+      });
+      document.getElementById('total_expense').value = total.toFixed(2);
+    }
+
+    function addExpenseEntry() {
+      const container = document.getElementById('expenseEntriesContainer');
+      const entryCount = container.querySelectorAll('.expense-entry').length;
+      const newEntry = document.createElement('div');
+      newEntry.className = 'expense-entry row mb-3 p-3 border rounded';
+      newEntry.style.backgroundColor = 'white';
+      newEntry.innerHTML = `
+        <div class="col-md-3 mb-2">
+          <label class="form-label">Expense Category</label>
+          <select class="form-select expense-category" name="expense_entries[${entryCount}][expense_category]">
+            <option value="">Select Category</option>
+            <option value="fuel">Fuel</option>
+            <option value="toll">Toll</option>
+            <option value="parking">Parking</option>
+            <option value="driver_payment">Driver Payment</option>
+            <option value="maintenance">Maintenance</option>
+            <option value="loading_charges">Loading Charges</option>
+            <option value="unloading_charges">Unloading Charges</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="col-md-3 mb-2">
+          <label class="form-label">Payment Type</label>
+          <select class="form-select expense-payment-type" name="expense_entries[${entryCount}][payment_type]">
+            <option value="">Select Type</option>
+            <option value="credit">Credit (Will add 2% interest)</option>
+            <option value="cash">Cash</option>
+          </select>
+        </div>
+        <div class="col-md-3 mb-2">
+          <label class="form-label">Amount</label>
+          <input type="number" step="0.01" class="form-control expense-amount" name="expense_entries[${entryCount}][amount]" placeholder="0.00" oninput="calculateTotalExpense()">
+        </div>
+        <div class="col-md-3 mb-2">
+          <label class="form-label">Description</label>
+          <input type="text" class="form-control expense-description" name="expense_entries[${entryCount}][description]" placeholder="Description">
+        </div>
+        <div class="col-12">
+          <button type="button" class="btn btn-sm btn-danger" onclick="removeExpenseEntry(this)">
+            <i class="bi bi-trash"></i> Remove
+          </button>
+        </div>
+      `;
+      container.appendChild(newEntry);
+    }
+
+    function removeExpenseEntry(button) {
+      const entry = button.closest('.expense-entry');
+      entry.remove();
+      calculateTotalExpense();
     }
 
     function changeWarehouseLocation() {
+      applyFilters();
+    }
+
+    function applyFilters() {
       const warehouseLocation = document.getElementById('warehouseLocation').value;
-      const billingMonth = document.getElementById('billingMonth').value;
-      if (warehouseLocation) {
-        window.location.href = `?billing_month=${billingMonth}&warehouse_location=${warehouseLocation}`;
-      } else {
-        window.location.href = `?billing_month=${billingMonth}`;
-      }
+      const dateFrom = document.getElementById('dateFrom').value;
+      const dateTo = document.getElementById('dateTo').value;
+
+      let params = new URLSearchParams();
+      if (warehouseLocation) params.append('warehouse_location', warehouseLocation);
+      if (dateFrom) params.append('date_from', dateFrom);
+      if (dateTo) params.append('date_to', dateTo);
+
+      window.location.href = `?${params.toString()}`;
     }
 
     function openCreateModal() {
@@ -437,9 +563,48 @@
       document.getElementById('_method').value = 'POST';
       document.getElementById('tripForm').action = '{{ route('warehouse-trips.store') }}';
       document.getElementById('tripModalLabel').textContent = 'Add New Trip';
-      document.getElementById('billing_month').value = '{{ $billingMonth }}';
-      document.getElementById('warehouse_location').value = '{{ $warehouseLocation }}';
+      
+      // Load vehicles and drivers
+      loadVehicles();
+      loadDrivers();
+      
       tripModal.show();
+    }
+
+    function loadVehicles() {
+      fetch('/vehicles')
+        .then(response => response.json())
+        .then(data => {
+          const vehicleSelect = document.getElementById('vehicle_number');
+          vehicleSelect.innerHTML = '<option value="">Select Vehicle</option>';
+          if (data.vehicles && data.vehicles.length > 0) {
+            data.vehicles.forEach(vehicle => {
+              const option = document.createElement('option');
+              option.value = vehicle.reg_no;
+              option.textContent = vehicle.reg_no;
+              vehicleSelect.appendChild(option);
+            });
+          }
+        })
+        .catch(error => console.error('Error loading vehicles:', error));
+    }
+
+    function loadDrivers() {
+      fetch('/drivers')
+        .then(response => response.json())
+        .then(data => {
+          const driverSelect = document.getElementById('driver_name');
+          driverSelect.innerHTML = '<option value="">Select Driver</option>';
+          if (data.drivers && data.drivers.length > 0) {
+            data.drivers.forEach(driver => {
+              const option = document.createElement('option');
+              option.value = driver.name;
+              option.textContent = driver.name;
+              driverSelect.appendChild(option);
+            });
+          }
+        })
+        .catch(error => console.error('Error loading drivers:', error));
     }
 
     function editTrip(id) {
@@ -480,6 +645,10 @@
         document.getElementById('tripForm').action = `/warehouse-trips/${id}`;
         document.getElementById('tripModalLabel').textContent = 'Edit Trip';
 
+        // Load vehicles and drivers
+        loadVehicles();
+        loadDrivers();
+
         // Populate form fields with simple direct assignment
         console.log('Populating form with trip data:', trip);
         
@@ -503,14 +672,12 @@
         document.getElementById('gp_number').value = trip.gp_number || '';
         document.getElementById('delivery_point').value = trip.delivery_point || '';
         document.getElementById('vehicle_type').value = trip.vehicle_type || '2T';
+        document.getElementById('business_category').value = trip.business_category || '';
+        document.getElementById('driver_name').value = trip.driver_name || '';
         document.getElementById('kilometers').value = trip.kilometers || '';
         document.getElementById('rate_per_km').value = trip.rate_per_km || '';
         document.getElementById('freight').value = trip.freight || '';
-        document.getElementById('fuel_type').value = trip.fuel_type || '';
-        document.getElementById('driver_name').value = trip.driver_name || '';
-        document.getElementById('load_id').value = trip.load_id || '';
         document.getElementById('freight_bill_no').value = trip.freight_bill_no || '';
-        document.getElementById('billing_month').value = trip.billing_month || '';
         document.getElementById('warehouse_location').value = trip.warehouse_location || '';
         document.getElementById('status').value = trip.status || 'pending';
         document.getElementById('notes').value = trip.notes || '';
@@ -590,81 +757,132 @@
 
     function exportTrips() {
       console.log('exportTrips function called');
-      const billingMonth = document.getElementById('billingMonth').value;
       const warehouseLocation = document.getElementById('warehouseLocation').value;
-      console.log('Export called with:', { billingMonth, warehouseLocation });
-      window.location.href = `/warehouse-trips/export?billing_month=${billingMonth}&warehouse_location=${warehouseLocation}`;
+      const dateFrom = document.getElementById('dateFrom').value;
+      const dateTo = document.getElementById('dateTo').value;
+
+      let params = new URLSearchParams();
+      if (warehouseLocation) params.append('warehouse_location', warehouseLocation);
+      if (dateFrom) params.append('date_from', dateFrom);
+      if (dateTo) params.append('date_to', dateTo);
+
+      console.log('Export called with:', { warehouseLocation, dateFrom, dateTo });
+      window.location.href = `/warehouse-trips/export?${params.toString()}`;
     }
 
-    function generateInvoice() {
-      const billingMonth = document.getElementById('billingMonth').value;
-      const warehouseLocation = document.getElementById('warehouseLocation').value;
-      
-      console.log('Generate invoice called with:', { billingMonth, warehouseLocation });
-      
-      Swal.fire({
-        title: 'Generate Invoice?',
-        text: `Generate invoice for ${billingMonth} at ${warehouseLocation}?`,
-        icon: 'question',
-        showCancelButton: true,
-        confirmButtonColor: '#3085d6',
-        cancelButtonColor: '#d33',
-        confirmButtonText: 'Yes, generate!',
-        cancelButtonText: 'Cancel'
-      }).then((result) => {
-        if (result.isConfirmed) {
-          console.log('User confirmed invoice generation');
-          
-          fetch('/warehouse-trips/generate-invoice', {
-            method: 'POST',
-            headers: {
-              'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-              'Content-Type': 'application/json',
-              'Accept': 'application/json'
-            },
-            body: JSON.stringify({
-              billing_month: billingMonth,
-              warehouse_location: warehouseLocation
-            })
-          })
-          .then(response => {
-            console.log('Response received:', response.status);
-            return response.json();
-          })
-          .then(data => {
-            console.log('Response data:', data);
-            if (data.success) {
-              // Show invoice in modal
-              document.getElementById('invoiceContent').innerHTML = data.invoice_html;
-              invoiceModal.show();
-              
-              Swal.fire({
-                title: 'Invoice Generated!',
-                text: data.message,
-                icon: 'success',
-                confirmButtonColor: '#3085d6',
-                timer: 1500,
-                showConfirmButton: false
-              });
-            } else {
-              Swal.fire({
-                title: 'Error',
-                text: data.message || 'Failed to generate invoice',
-                icon: 'error',
-                confirmButtonColor: '#d33'
-              });
-            }
-          })
-          .catch(error => {
-            console.error('Error generating invoice:', error);
-            Swal.fire({
-              title: 'Error',
-              text: 'Failed to generate invoice',
-              icon: 'error',
-              confirmButtonColor: '#d33'
-            });
+    function generateInvoice(invoiceType = 'basic') {
+      const warehouseLocation = document.getElementById('warehouseLocation').value || 'Depalpur';
+      const dateFrom = document.getElementById('dateFrom').value;
+      const dateTo = document.getElementById('dateTo').value;
+
+      // Calculate billing month from date range or use current month
+      let billingMonth = '{{ date('F-Y') }}';
+      let useCurrentMonth = false;
+
+      if (dateFrom) {
+        const date = new Date(dateFrom);
+        const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+        billingMonth = monthNames[date.getMonth()] + '-' + date.getFullYear();
+      } else {
+        useCurrentMonth = true;
+      }
+
+      console.log('Generate invoice called with:', { billingMonth, warehouseLocation, invoiceType, dateFrom, dateTo, useCurrentMonth });
+
+      const invoiceTitle = invoiceType === 'with_expenses' ? 'Invoice with Income & Expense' : 'Generate Invoice';
+
+      // Show warning if no date range selected
+      if (useCurrentMonth) {
+        Swal.fire({
+          title: 'No Date Range Selected',
+          text: 'You have not selected a date range. The invoice will be generated for the current month (' + billingMonth + '). Do you want to continue?',
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonColor: '#3085d6',
+          cancelButtonColor: '#d33',
+          confirmButtonText: 'Yes, generate for current month',
+          cancelButtonText: 'Cancel'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            proceedWithInvoiceGeneration(billingMonth, warehouseLocation, invoiceType, dateFrom, dateTo);
+          }
+        });
+      } else {
+        Swal.fire({
+          title: invoiceTitle,
+          text: `Generate ${invoiceType === 'with_expenses' ? 'invoice with income & expense details' : 'basic invoice'} for ${billingMonth} at ${warehouseLocation}?`,
+          icon: 'question',
+          showCancelButton: true,
+          confirmButtonColor: '#3085d6',
+          cancelButtonColor: '#d33',
+          confirmButtonText: 'Yes, generate!',
+          cancelButtonText: 'Cancel'
+        }).then((result) => {
+          if (result.isConfirmed) {
+            proceedWithInvoiceGeneration(billingMonth, warehouseLocation, invoiceType, dateFrom, dateTo);
+          }
+        });
+      }
+    }
+
+    function proceedWithInvoiceGeneration(billingMonth, warehouseLocation, invoiceType, dateFrom, dateTo) {
+      console.log('Proceeding with invoice generation:', { billingMonth, warehouseLocation, invoiceType, dateFrom, dateTo });
+
+      const payload = {
+        billing_month: billingMonth,
+        warehouse_location: warehouseLocation,
+        invoice_type: invoiceType
+      };
+
+      // Add date range if provided
+      if (dateFrom) payload.date_from = dateFrom;
+      if (dateTo) payload.date_to = dateTo;
+
+      fetch('/warehouse-trips/generate-invoice', {
+        method: 'POST',
+        headers: {
+          'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify(payload)
+      })
+      .then(response => {
+        console.log('Response received:', response.status);
+        return response.json();
+      })
+      .then(data => {
+        console.log('Response data:', data);
+        if (data.success) {
+          // Show invoice in modal
+          document.getElementById('invoiceContent').innerHTML = data.invoice_html;
+          invoiceModal.show();
+
+          Swal.fire({
+            title: 'Invoice Generated!',
+            text: data.message,
+            icon: 'success',
+            confirmButtonColor: '#3085d6',
+            timer: 1500,
+            showConfirmButton: false
+          });
+        } else {
+          Swal.fire({
+            title: 'Error',
+            text: data.message || 'Failed to generate invoice',
+            icon: 'error',
+            confirmButtonColor: '#d33'
           });
         }
+      })
+      .catch(error => {
+        console.error('Error generating invoice:', error);
+        Swal.fire({
+          title: 'Error',
+          text: 'Failed to generate invoice',
+          icon: 'error',
+          confirmButtonColor: '#d33'
+        });
       });
     }
 

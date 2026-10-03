@@ -68,6 +68,30 @@
         font-weight: bold;
     }
     
+    .income-section {
+        background: #f8fff8;
+        border: 2px solid #28a745;
+        padding: 15px;
+        margin: 20px 0;
+        border-radius: 5px;
+    }
+    
+    .expense-section {
+        background: #fff8f8;
+        border: 2px solid #dc3545;
+        padding: 15px;
+        margin: 20px 0;
+        border-radius: 5px;
+    }
+    
+    .net-section {
+        background: #f8f8ff;
+        border: 2px solid #007bff;
+        padding: 15px;
+        margin: 20px 0;
+        border-radius: 5px;
+    }
+    
     .footer {
         margin-top: 30px;
         padding-top: 20px;
@@ -177,6 +201,91 @@
         </tfoot>
     </table>
     
+    <!-- Income Section -->
+    <div class="income-section">
+        <h4 style="color: #28a745; margin-bottom: 15px;">Income Details</h4>
+        <table>
+            <thead>
+                <tr>
+                    <th>Description</th>
+                    <th>Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Total Freight (from trips)</td>
+                    <td>{{ number_format($totalFreight, 2) }}</td>
+                </tr>
+                @if($totalIncome > $totalFreight)
+                <tr>
+                    <td>Interest Income (2% on credit expenses)</td>
+                    <td>{{ number_format($totalIncome - $totalFreight, 2) }}</td>
+                </tr>
+                @endif
+                <tr class="total-row">
+                    <td><strong>Total Income</strong></td>
+                    <td><strong>{{ number_format($totalIncome ?? $totalFreight, 2) }}</strong></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Expense Section -->
+    <div class="expense-section">
+        <h4 style="color: #dc3545; margin-bottom: 15px;">Expense Details</h4>
+        <table>
+            <thead>
+                <tr>
+                    <th>Category</th>
+                    <th>Description</th>
+                    <th>Payment Type</th>
+                    <th>Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if(isset($expenseEntries) && count($expenseEntries) > 0)
+                    @foreach($expenseEntries as $entry)
+                    <tr>
+                        <td>{{ ucfirst($entry['category']) }}</td>
+                        <td>{{ $entry['description'] ?? '-' }}</td>
+                        <td>{{ ucfirst($entry['payment_type'] ?? '-') }}</td>
+                        <td>{{ number_format($entry['amount'], 2) }}</td>
+                    </tr>
+                    @endforeach
+                @else
+                    <tr>
+                        <td colspan="4" class="text-center">No expense entries recorded</td>
+                    </tr>
+                @endif
+                <tr class="total-row">
+                    <td colspan="3"><strong>Total Expense</strong></td>
+                    <td><strong>{{ number_format($totalExpense ?? 0, 2) }}</strong></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
+    <!-- Net Amount Section -->
+    <div class="net-section">
+        <h4 style="color: #007bff; margin-bottom: 15px;">Net Amount / Profit</h4>
+        <table>
+            <tbody>
+                <tr>
+                    <td><strong>Total Income</strong></td>
+                    <td style="text-align: right;"><strong>{{ number_format($totalIncome ?? $totalFreight, 2) }}</strong></td>
+                </tr>
+                <tr>
+                    <td><strong>Total Expense</strong></td>
+                    <td style="text-align: right;"><strong>{{ number_format($totalExpense ?? 0, 2) }}</strong></td>
+                </tr>
+                <tr class="total-row" style="background: #e7f3ff;">
+                    <td><strong>Net Amount (Profit/Loss)</strong></td>
+                    <td style="text-align: right;"><strong>{{ number_format($netAmount ?? ($totalFreight - ($totalExpense ?? 0)), 2) }}</strong></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    
     <!-- Summary -->
     <div style="margin-bottom: 20px;">
         <strong>Summary:</strong>
@@ -184,6 +293,9 @@
             <li>Total Trips: {{ $trips->count() }}</li>
             <li>Total Kilometers: {{ number_format($totalKm, 2) }}</li>
             <li>Total Freight: {{ number_format($totalFreight, 2) }}</li>
+            <li>Total Income: {{ number_format($totalIncome ?? $totalFreight, 2) }}</li>
+            <li>Total Expense: {{ number_format($totalExpense ?? 0, 2) }}</li>
+            <li>Net Amount: {{ number_format($netAmount ?? ($totalFreight - ($totalExpense ?? 0)), 2) }}</li>
             <li>Average Rate per KM: {{ $totalKm > 0 ? number_format($totalFreight / $totalKm, 2) : '0.00' }}</li>
             <li>Warehouse Location: {{ $warehouseLocation }}</li>
         </ul>
@@ -204,7 +316,7 @@
     
     <!-- Footer -->
     <div class="footer">
-        <p>This is a computer-generated invoice.</p>
+        <p>This is a computer-generated invoice with Income & Expense details.</p>
         <p>&copy; {{ date('Y') }} Super Ittefaq Mini Goods / Super Ittefaq Logistics</p>
     </div>
 </div>

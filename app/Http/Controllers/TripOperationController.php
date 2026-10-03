@@ -159,6 +159,9 @@ class TripOperationController extends Controller
             'cancelled' => 'Cancelled'
         ];
 
+        // Set default warehouse location to Depalpur
+        $defaultWarehouseLocation = 'Depalpur';
+
         return view('trip-operations.create', compact(
             'vehicles',
             'drivers',
@@ -166,7 +169,8 @@ class TripOperationController extends Controller
             'warehouses',
             'vehicleCategories',
             'categories',
-            'tripStatuses'
+            'tripStatuses',
+            'defaultWarehouseLocation'
         ));
     }
 
@@ -546,7 +550,7 @@ class TripOperationController extends Controller
             'vehicle_category' => 'nullable|string|max:10',
             'vehicle_type' => 'nullable|string|max:50',
             'kilometers' => 'required|numeric|min:0',
-            'rate_per_km' => 'required|numeric|min:0',
+            'rate_per_km' => 'nullable|numeric|min:0',
             'fuel_payment_type' => 'nullable|in:credit,cash',
             'expenses' => 'nullable|numeric|min:0',
             'expense_category' => 'nullable|in:fuel,toll,parking',

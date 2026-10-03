@@ -231,4 +231,13 @@ class VehicleController extends Controller
         
         return response()->stream($callback, 200, $headers);
     }
+
+    /**
+     * Get vehicles for select dropdown
+     */
+    public function getVehiclesForSelect()
+    {
+        $vehicles = Vehicle::active()->get(['id', 'reg_no']);
+        return response()->json(['vehicles' => $vehicles]);
+    }
 }

@@ -111,6 +111,7 @@
                             <select class="form-select" id="warehouse_location" name="warehouse_location">
                                 <option value="">Select Warehouse</option>
                             </select>
+                            <input type="hidden" id="default_warehouse_location" value="{{ $defaultWarehouseLocation ?? 'Depalpur' }}">
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="gl_number" class="form-label">GL Number</label>
@@ -742,6 +743,17 @@ document.getElementById('business_category').addEventListener('change', function
 
     // Update warehouse locations based on business category
     updateWarehouseLocations(selectedCategory);
+});
+
+// Initialize warehouse location to Depalpur on page load
+document.addEventListener('DOMContentLoaded', function() {
+    const defaultWarehouseLocation = document.getElementById('default_warehouse_location').value || 'Depalpur';
+    const warehouseSelect = document.getElementById('warehouse_location');
+    
+    // Set default value if no value is set
+    if (!warehouseSelect.value) {
+        warehouseSelect.value = defaultWarehouseLocation;
+    }
 });
 
 // Warehouse locations by business category

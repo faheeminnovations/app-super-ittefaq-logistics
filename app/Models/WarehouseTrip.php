@@ -23,14 +23,13 @@ class WarehouseTrip extends Model
         'kilometers',
         'rate_per_km',
         'freight',
-        'fuel_type',
         'driver_name',
-        'load_id',
         'freight_bill_no',
         'billing_month',
         'warehouse_location',
         'gl_number',
         'business_area',
+        'business_category',
         'invoice_number',
         'warehouse_invoice_id',
         'notes',
@@ -38,6 +37,9 @@ class WarehouseTrip extends Model
         'vehicle_id',
         'driver_id',
         'customer_id',
+        'total_income',
+        'total_expense',
+        'net_amount',
     ];
 
     protected $casts = [
@@ -45,6 +47,9 @@ class WarehouseTrip extends Model
         'kilometers' => 'decimal:2',
         'rate_per_km' => 'decimal:2',
         'freight' => 'decimal:2',
+        'total_income' => 'decimal:2',
+        'total_expense' => 'decimal:2',
+        'net_amount' => 'decimal:2',
     ];
 
     // Relationships
@@ -68,6 +73,11 @@ class WarehouseTrip extends Model
         return $this->belongsTo(WarehouseInvoice::class);
     }
 
+    public function expenseEntries()
+    {
+        return $this->hasMany(WarehouseExpenseEntry::class);
+    }
+
     // Accessors for formatted currency values
     public function getFormattedFreightAttribute()
     {
@@ -77,6 +87,42 @@ class WarehouseTrip extends Model
     public function getFormattedRatePerKmAttribute()
     {
         return CurrencyHelper::formatCurrency($this->rate_per_km);
+    }
+
+    // Accessors for calculated fields
+    public function getTotalExpenseAttribute($value)
+    {
+        // Calculate total expense from expense entries if not set
+        if ($value === null || $value === 0) {
+            return $this->expenseEntries()->sum('amount');
+        }
+        return $value;
+    }
+
+    public function getNetAmountAttribute($value)
+    {
+        // Calculate net amount if not set
+        if ($value === null || $value === 0) {
+            return $this->total_income - $this->total_expense;
+        }
+        return $value;
+    }
+
+    // Calculate net amount (profit/loss)
+    public function calculateNetAmount()
+    {
+        $this->total_expense = $this->expenseEntries()->sum('amount');
+        $this->net_amount = $this->total_income - $this->total_expense;
+        return $this->net_amount;
+    }
+
+    // Recalculate all financial amounts
+    public function recalculateFinancials()
+    {
+        $this->total_income = $this->freight;
+        $this->total_expense = $this->expenseEntries()->sum('amount');
+        $this->net_amount = $this->total_income - $this->total_expense;
+        $this->save();
     }
 
     // Auto-generate trip number
@@ -130,5 +176,17 @@ class WarehouseTrip extends Model
     public function scopeByBillingMonth($query, $month)
     {
         return $query->where('billing_month', $month);
+    }
+
+    // Scope for date range filter
+    public function scopeByDateRange($query, $dateFrom = null, $dateTo = null)
+    {
+        if ($dateFrom) {
+            $query->where('trip_date', '>=', $dateFrom);
+        }
+        if ($dateTo) {
+            $query->where('trip_date', '<=', $dateTo);
+        }
+        return $query;
     }
 }

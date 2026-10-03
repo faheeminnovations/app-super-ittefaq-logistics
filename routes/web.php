@@ -100,6 +100,10 @@ Route::middleware(['auth', 'role:admin,dispatcher,manager'])->group(function () 
     Route::match(['get', 'post'], '/warehouse-trips/generate-invoice', [WarehouseTripController::class, 'generateInvoice'])->name('warehouse-trips.generate-invoice');
     Route::get('/warehouse-trips/{id}/edit-data', [WarehouseTripController::class, 'getEditData'])->name('warehouse-trips.edit-data');
     
+    // API routes for warehouse-trips form
+    Route::get('/vehicles', [VehicleController::class, 'getVehiclesForSelect']);
+    Route::get('/drivers', [DriversController::class, 'getDriversForSelect']);
+    
     // Warehouse Invoice routes
     Route::resource('warehouse.invoices', WarehouseInvoiceController::class);
     Route::get('/warehouse-invoices/{id}/mark-sent', [WarehouseInvoiceController::class, 'markAsSent'])->name('warehouse.invoices.mark-sent');

@@ -22,7 +22,7 @@
       <!-- <a href="{{ url('/transport/dashboard') }}" class="nav-link {{ request()->is('transport/dashboard') ? 'active' : '' }}" data-module="transport dashboard"><i class="bi bi-speedometer2"></i> Transport Dashboard </a> -->
       <a href="{{ url('/trip-operations') }}" class="nav-link {{ request()->is('trip-operations') || request()->is('trip-operations/*') ? 'active' : '' }}" data-module="trip operations"><i class="bi bi-layers"></i> Trip Operations </a>
       <a href="{{ url('/trips') }}" class="nav-link {{ request()->is('transport/trip-logs*') ? 'active' : '' }}" data-module="trip logs"><i class="bi bi-journal-text"></i> Internal Trips  </a>
-      <a href="{{ url('/financial-income') }}" class="nav-link {{ request()->is('financial-income*') ? 'active' : '' }}" data-module="financial income"><i class="bi bi-currency-pkr"></i> Internal Income </a>
+      <a href="{{ url('/financial-income') }}" class="nav-link {{ request()->is('financial-income*') ? 'active' : '' }}" data-module="financial income"><i class="bi bi-currency-pkr"></i> Operations Income </a>
       <div class="nav-section-label">Fleet & People</div>
       <a href="{{ url('/vehicles') }}" class="nav-link {{ request()->is('vehicles') ? 'active' : '' }}" data-module="vehicles fleet"><i class="bi bi-truck-front"></i> Vehicles / Fleet </a>
       <a href="{{ url('/drivers') }}" class="nav-link {{ request()->is('drivers') ? 'active' : '' }}" data-module="drivers"><i class="bi bi-person-badge"></i> Drivers </a>

@@ -55,7 +55,10 @@ class WarehouseInvoiceController extends Controller
             ->orderBy('trip_date', 'desc')
             ->get();
 
-        return view('warehouse.invoices.create', compact('unbilledTrips'));
+        // Set default warehouse location to Depalpur
+        $defaultWarehouseLocation = 'Depalpur';
+
+        return view('warehouse.invoices.create', compact('unbilledTrips', 'defaultWarehouseLocation'));
     }
 
     /**

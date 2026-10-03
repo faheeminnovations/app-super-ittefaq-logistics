@@ -306,4 +306,13 @@ class DriversController extends Controller
             ->header('Content-Type', 'text/csv')
             ->header('Content-Disposition', 'attachment; filename="drivers_export_' . date('Y-m-d') . '.csv"');
     }
+
+    /**
+     * Get drivers for select dropdown
+     */
+    public function getDriversForSelect()
+    {
+        $drivers = Driver::active()->get(['id', 'name']);
+        return response()->json(['drivers' => $drivers]);
+    }
 }

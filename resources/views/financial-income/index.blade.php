@@ -4,14 +4,14 @@
 <div class="page-wrap">
     <div class="page-head">
         <div>
-            <div class="eyebrow">Internal Income Management</div>
-            <h1>Internal Income</h1>
+            <div class="eyebrow">Operations Income Management</div>
+            <h1>Operations Income</h1>
             <div class="sub">Income and expense tracking</div>
         </div>
         <div class="d-flex gap-2">
             <button class="btn btn-outline-navy" onclick="printTable()"><i class="bi bi-printer me-1"></i> Print</button>
             <button class="btn btn-outline-navy" onclick="exportData()"><i class="bi bi-download me-1"></i> Export</button>
-            <button class="btn btn-navy" onclick="window.location.href='{{ route('financial-income.create') }}'"><i class="bi bi-plus-lg me-1"></i> New Internal Income</button>
+            <button class="btn btn-navy" onclick="window.location.href='{{ route('financial-income.create') }}'"><i class="bi bi-plus-lg me-1"></i> New Operations Income</button>
         </div>
     </div>
 
@@ -132,7 +132,7 @@
     <div class="panel">
         <div class="d-flex justify-content-between align-items-center mb-2">
             <div>
-                <div class="panel-title mb-0">Internal Income Records</div>
+                <div class="panel-title mb-0">Operations Income Records</div>
                 <div class="panel-sub mb-0">Income and expense tracking with detailed breakdown</div>
             </div>
         </div>
@@ -322,7 +322,7 @@ function printTable() {
     const printContent = `
         <html>
         <head>
-            <title>Internal Income Report</title>
+            <title>Operations Income Report</title>
             <style>
                 body { font-family: Arial, sans-serif; padding: 20px; }
                 h1 { text-align: center; margin-bottom: 10px; }
@@ -336,7 +336,7 @@ function printTable() {
         </head>
         <body>
             <h1>SUPER ITTEFAQ MINI GOODS TRANSPORT COMPANY</h1>
-            <h2>Internal Income Report - ${dateFrom && dateTo ? formatDate(dateFrom) + ' to ' + formatDate(dateTo) : 'All Time'}</h2>
+            <h2>Operations Income Report - ${dateFrom && dateTo ? formatDate(dateFrom) + ' to ' + formatDate(dateTo) : 'All Time'}</h2>
             ${tableClone.outerHTML}
             <div class="footer">
                 Generated on ${new Date().toLocaleString()}<br>
