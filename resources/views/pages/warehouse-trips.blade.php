@@ -920,10 +920,14 @@
       console.log('Proceeding with invoice generation:', { billingMonth, warehouseLocation, invoiceType, dateFrom, dateTo, vehicleNumber });
 
       const payload = {
-        billing_month: billingMonth,
         warehouse_location: warehouseLocation,
         invoice_type: invoiceType
       };
+
+      // Only add billing_month if no date range and no vehicle filter
+      if (!dateFrom && !dateTo && !vehicleNumber) {
+        payload.billing_month = billingMonth;
+      }
 
       // Add filters if provided
       if (dateFrom) payload.date_from = dateFrom;

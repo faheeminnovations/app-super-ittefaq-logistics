@@ -493,7 +493,7 @@ class WarehouseTripController extends Controller
         if ($dateFrom && $dateTo) {
             $query->whereBetween('trip_date', [$dateFrom, $dateTo]);
         } elseif ($vehicleNumber) {
-            // If vehicle filter is provided but no date range, don't filter by date
+            // If vehicle filter is provided but no date range, don't filter by date or billing_month
             // Just use the vehicle filter and warehouse location
         } else {
             // Only use billing_month if no other filters are provided
