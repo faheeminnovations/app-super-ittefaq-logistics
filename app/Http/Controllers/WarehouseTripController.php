@@ -473,11 +473,13 @@ class WarehouseTripController extends Controller
         \Log::info('Generate invoice called', [
             'billing_month' => $billingMonth,
             'warehouse_location' => $warehouseLocation,
+            'warehouse_location_length' => strlen($warehouseLocation),
             'date_from' => $dateFrom,
             'date_to' => $dateTo,
             'vehicle_number' => $vehicleNumber,
             'is_ajax' => $request->ajax(),
-            'wants_json' => $request->wantsJson()
+            'wants_json' => $request->wantsJson(),
+            'all_params' => $request->all()
         ]);
 
         // Build query
@@ -500,20 +502,58 @@ class WarehouseTripController extends Controller
             $query->byBillingMonth($billingMonth);
         }
 
+        // Log the SQL query for debugging
+        \Log::info('SQL Query:', ['sql' => $query->toSql(), 'bindings' => $query->getBindings()]);
+
         $trips = $query->orderBy('trip_date')->get();
 
         if ($trips->isEmpty()) {
-            \Log::info('No trips found for invoice generation', [
+            \Log::info('No trips found for invoice generation with warehouse filter', [
                 'warehouse_location' => $warehouseLocation,
                 'date_from' => $dateFrom,
                 'date_to' => $dateTo,
                 'vehicle_number' => $vehicleNumber,
                 'billing_month' => $billingMonth
             ]);
-            if ($request->ajax() || $request->wantsJson()) {
-                return response()->json(['success' => false, 'message' => 'No trips found for this billing period.']);
+
+            // Try without warehouse location filter (fallback)
+            $query = WarehouseTrip::with(['vehicle', 'driver', 'customer', 'expenseEntries']);
+
+            if ($vehicleNumber) {
+                $query->where('vehicle_number', 'like', '%' . $vehicleNumber . '%');
             }
-            return redirect()->back()->with('error', 'No trips found for this billing period.');
+
+            if ($dateFrom && $dateTo) {
+                $query->whereBetween('trip_date', [$dateFrom, $dateTo]);
+            } elseif ($vehicleNumber) {
+                // No date filter
+            } else {
+                $query->byBillingMonth($billingMonth);
+            }
+
+            \Log::info('Retrying without warehouse filter', ['sql' => $query->toSql(), 'bindings' => $query->getBindings()]);
+            $trips = $query->orderBy('trip_date')->get();
+
+            if ($trips->isEmpty()) {
+                \Log::info('Still no trips found even without warehouse filter');
+
+                // Determine appropriate error message
+                $errorMessage = 'No trips found';
+                if ($dateFrom && $dateTo) {
+                    $errorMessage .= ' for the selected date range';
+                } elseif ($vehicleNumber) {
+                    $errorMessage .= ' for this vehicle';
+                } else {
+                    $errorMessage .= ' for this billing period';
+                }
+
+                if ($request->ajax() || $request->wantsJson()) {
+                    return response()->json(['success' => false, 'message' => $errorMessage]);
+                }
+                return redirect()->back()->with('error', $errorMessage);
+            } else {
+                \Log::info('Found trips without warehouse filter', ['count' => $trips->count()]);
+            }
         }
         
         // Mark all trips as billed
