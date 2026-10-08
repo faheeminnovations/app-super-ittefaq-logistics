@@ -18,6 +18,20 @@
       </div>
     </div>
 
+    @if(session('success'))
+      <div class="alert alert-success alert-dismissible fade show" role="alert">
+        {{ session('success') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    @endif
+
+    @if(session('error'))
+      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        {{ session('error') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    @endif
+
     <!-- Statistics Cards -->
     <div class="row mb-4">
       <div class="col-md-3">
@@ -428,7 +442,28 @@
     function editBilty(id) {
       console.log('editBilty called with id:', id);
       console.log('Loading bilty for edit:', id);
-        fetch(`/api/bilties/${id}`, {
+
+      // Set form to edit mode before fetching data
+      document.getElementById('bilty_id').value = id;
+      document.getElementById('_method').value = 'PUT';
+      document.getElementById('biltyForm').action = `/bilties/${id}`;
+      document.getElementById('biltyModalLabel').textContent = 'Edit Bilty';
+      document.getElementById('submitButtonText').textContent = 'Update Bilty';
+
+      // Show modal first
+      biltyModal.show();
+
+      // Show loading indicator
+      Swal.fire({
+        title: 'Loading...',
+        text: 'Please wait while we load the bilty data',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      fetch(`/bilties/${id}/edit`, {
           headers: {
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
             'Accept': 'application/json'
@@ -444,11 +479,6 @@
           .then(data => {
             console.log('Bilty data received:', data);
             const bilty = data.bilty;
-            document.getElementById('bilty_id').value = bilty.id;
-            document.getElementById('_method').value = 'PUT';
-            document.getElementById('biltyForm').action = `/bilties/${id}`;
-            document.getElementById('biltyModalLabel').textContent = 'Edit Bilty';
-            document.getElementById('submitButtonText').textContent = 'Update Bilty';
 
             // Populate form fields
             document.getElementById('bilty_number').value = bilty.bilty_number || '';
@@ -481,10 +511,16 @@
             document.getElementById('contact_details').value = bilty.contact_details || '';
             document.getElementById('notes').value = bilty.notes || '';
 
-            biltyModal.show();
+            console.log('Form populated with bilty data');
+            console.log('bilty_date value:', document.getElementById('bilty_date').value);
+            console.log('from_location value:', document.getElementById('from_location').value);
+            console.log('to_location value:', document.getElementById('to_location').value);
+
+            Swal.close();
           })
           .catch(error => {
             console.error('Error loading bilty:', error);
+            Swal.close();
             Swal.fire({
               icon: 'error',
               title: 'Error',
@@ -497,7 +533,7 @@
       console.log('viewBilty called with id:', id);
       currentBiltyId = id;
       console.log('Loading bilty for view:', id);
-        fetch(`/api/bilties/${id}`, {
+        fetch(`/bilties/${id}`, {
           headers: {
             'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
             'Accept': 'application/json'
@@ -693,7 +729,7 @@
         })
         .then(response => response.json())
         .then(data => {
-          if (data.success || data.message) {
+          if (data.success) {
             Swal.fire({
               title: 'Success!',
               text: method === 'PUT' ? 'Bilty updated successfully!' : 'Bilty created successfully!',

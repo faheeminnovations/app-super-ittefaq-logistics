@@ -322,7 +322,14 @@ function fillMaintenanceForm(maintenance) {
     $('#maintenance_id').val(maintenance.id);
     $('#vehicle_id').val(maintenance.vehicle_id);
     $('#service_type').val(maintenance.service_type);
-    $('#service_date').val(maintenance.service_date);
+    
+    // Format date for HTML date input (YYYY-MM-DD)
+    if (maintenance.service_date) {
+        var date = new Date(maintenance.service_date);
+        var formattedDate = date.toISOString().split('T')[0];
+        $('#service_date').val(formattedDate);
+    }
+    
     $('#workshop').val(maintenance.workshop);
     $('#cost').val(maintenance.cost);
     $('#status').val(maintenance.status);

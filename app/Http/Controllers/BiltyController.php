@@ -94,11 +94,8 @@ class BiltyController extends Controller
 
             Bilty::create($validated);
 
-            if (request()->ajax() || request()->wantsJson()) {
-                return response()->json(['success' => true, 'message' => 'Bilty created successfully.', 'bilty' => $validated]);
-            }
-
-            return redirect()->route('bilties.index')->with('success', 'Bilty created successfully.');
+            // Always return JSON for AJAX requests
+            return response()->json(['success' => true, 'message' => 'Bilty created successfully.']);
         } catch (\Illuminate\Validation\ValidationException $e) {
             if (request()->ajax() || request()->wantsJson()) {
                 return response()->json(['success' => false, 'errors' => $e->errors()], 422);
@@ -194,11 +191,8 @@ class BiltyController extends Controller
 
             $biltyData->update($validated);
 
-            if (request()->ajax() || request()->wantsJson()) {
-                return response()->json(['success' => true, 'message' => 'Bilty updated successfully.']);
-            }
-
-            return redirect()->route('bilties.index')->with('success', 'Bilty updated successfully.');
+            // Always return JSON for AJAX requests
+            return response()->json(['success' => true, 'message' => 'Bilty updated successfully.']);
         } catch (\Illuminate\Validation\ValidationException $e) {
             if (request()->ajax() || request()->wantsJson()) {
                 return response()->json(['success' => false, 'errors' => $e->errors()], 422);

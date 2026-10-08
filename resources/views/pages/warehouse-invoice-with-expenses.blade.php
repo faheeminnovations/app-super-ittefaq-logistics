@@ -179,26 +179,26 @@
         </thead>
         <tbody>
             @foreach($trips as $index => $trip)
-            <tr>
-                <td>{{ $index + 1 }}</td>
+            <tr data-trip-id="{{ $trip->id }}">
+                <td>{{ $trip->trip_number ?? ($index + 1) }}</td>
                 <td>{{ $trip->trip_date ? $trip->trip_date->format('d/m/Y') : 'N/A' }}</td>
                 <td>{{ $trip->vehicle_number }}</td>
                 <td>{{ $trip->freight_bill_no ?? '-' }}</td>
                 <td>{{ $trip->gp_number }}</td>
                 <td>{{ $trip->delivery_point }}</td>
                 <td>{{ $trip->vehicle_type }}</td>
-                <td>{{ number_format($trip->kilometers, 2) }}</td>
-                <td>{{ number_format($trip->rate_per_km, 2) }}</td>
-                <td>{{ number_format($trip->freight, 2) }}</td>
+                <td><input type="number" step="0.01" value="{{ number_format($trip->kilometers, 2) }}" class="km-input" data-trip-id="{{ $trip->id }}" style="width: 80px; padding: 5px; border: 1px solid #ddd; border-radius: 4px;" oninput="updateFreight(this)"></td>
+                <td><input type="number" step="0.01" value="{{ number_format($trip->rate_per_km, 2) }}" class="rate-input" data-trip-id="{{ $trip->id }}" style="width: 80px; padding: 5px; border: 1px solid #ddd; border-radius: 4px;" oninput="updateFreight(this)"></td>
+                <td class="freight-cell">{{ number_format($trip->freight, 2) }}</td>
             </tr>
             @endforeach
         </tbody>
         <tfoot>
             <tr class="total-row">
                 <td colspan="7" style="text-align: right;"><strong>TOTAL:</strong></td>
-                <td><strong>{{ number_format($totalKm, 2) }}</strong></td>
+                <td><strong id="totalKm">{{ number_format($totalKm, 2) }}</strong></td>
                 <td>-</td>
-                <td><strong>{{ number_format($totalFreight, 2) }}</strong></td>
+                <td><strong id="totalFreight">{{ number_format($totalFreight, 2) }}</strong></td>
             </tr>
         </tfoot>
     </table>

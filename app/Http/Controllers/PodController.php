@@ -39,68 +39,71 @@ class PodController extends Controller
     public function store(Request $request)
     {
         \Log::info('POD Store Request:', $request->all());
-        
-        $validated = $request->validate([
-            'job_number' => 'required|string|max:50',
-            'customer_id' => 'required|exists:customers,id',
-            'driver_id' => 'required|exists:drivers,id',
-            'delivery_datetime' => 'required|date',
-            'has_signature' => 'nullable|boolean',
-            'has_photo' => 'nullable|boolean',
-            'delivery_confirmation' => 'nullable|boolean',
-            'status' => 'required|in:complete,missing_signature,missing_photo,pending',
-            'signature_upload' => 'nullable|image|max:5120', // Max 5MB
-            'photo_upload' => 'nullable|image|max:5120', // Max 5MB
-            'signature_path' => 'nullable|string|max:255',
-            'photo_path' => 'nullable|string|max:255',
-            'notes' => 'nullable|string',
-            'job_id' => 'nullable|integer',
-        ]);
+        \Log::info('Is AJAX:', ['is_ajax' => $request->ajax()]);
+        \Log::info('Wants JSON:', ['wants_json' => $request->wantsJson()]);
 
-        // Handle checkbox defaults
-        $validated['has_signature'] = $request->has('has_signature') ? true : false;
-        $validated['has_photo'] = $request->has('has_photo') ? true : false;
-        $validated['delivery_confirmation'] = $request->has('delivery_confirmation') ? true : false;
+        try {
+            $validated = $request->validate([
+                'job_number' => 'required|string|max:50',
+                'customer_id' => 'required|exists:customers,id',
+                'driver_id' => 'required|exists:drivers,id',
+                'delivery_datetime' => 'required|date',
+                'has_signature' => 'nullable|boolean',
+                'has_photo' => 'nullable|boolean',
+                'delivery_confirmation' => 'nullable|boolean',
+                'status' => 'required|in:complete,missing_signature,missing_photo,pending',
+                'signature_upload' => 'nullable|image|max:5120', // Max 5MB
+                'photo_upload' => 'nullable|image|max:5120', // Max 5MB
+                'signature_path' => 'nullable|string|max:255',
+                'photo_path' => 'nullable|string|max:255',
+                'notes' => 'nullable|string',
+                'job_id' => 'nullable|integer',
+            ]);
 
-        // Handle signature upload
-        if ($request->hasFile('signature_upload')) {
-            $file = $request->file('signature_upload');
-            $fileName = 'signature_' . time() . '_' . $file->getClientOriginalName();
-            $filePath = $file->storeAs('pod/signatures', $fileName, 'public');
-            $validated['signature_path'] = $filePath;
-            $validated['has_signature'] = true;
-            \Log::info('Signature uploaded:', ['path' => $filePath]);
-        }
+            // Handle checkbox defaults
+            $validated['has_signature'] = $request->has('has_signature') ? true : false;
+            $validated['has_photo'] = $request->has('has_photo') ? true : false;
+            $validated['delivery_confirmation'] = $request->has('delivery_confirmation') ? true : false;
 
-        // Handle photo upload
-        if ($request->hasFile('photo_upload')) {
-            $file = $request->file('photo_upload');
-            $fileName = 'photo_' . time() . '_' . $file->getClientOriginalName();
-            $filePath = $file->storeAs('pod/photos', $fileName, 'public');
-            $validated['photo_path'] = $filePath;
-            $validated['has_photo'] = true;
-            \Log::info('Photo uploaded:', ['path' => $filePath]);
-        }
-
-        // If job_id is provided, validate it exists
-        if (!empty($validated['job_id'])) {
-            $jobExists = \App\Models\Job::where('id', $validated['job_id'])->exists();
-            if (!$jobExists) {
-                return redirect()->back()
-                    ->withInput()
-                    ->withErrors(['job_id' => 'The selected job ID is invalid.']);
+            // Handle signature upload
+            if ($request->hasFile('signature_upload')) {
+                $file = $request->file('signature_upload');
+                $fileName = 'signature_' . time() . '_' . $file->getClientOriginalName();
+                $filePath = $file->storeAs('pod/signatures', $fileName, 'public');
+                $validated['signature_path'] = $filePath;
+                $validated['has_signature'] = true;
+                \Log::info('Signature uploaded:', ['path' => $filePath]);
             }
-        }
 
-        \Log::info('Creating POD with data:', $validated);
-        
-        Pod::create($validated);
-        
-        if ($request->ajax() || $request->wantsJson()) {
+            // Handle photo upload
+            if ($request->hasFile('photo_upload')) {
+                $file = $request->file('photo_upload');
+                $fileName = 'photo_' . time() . '_' . $file->getClientOriginalName();
+                $filePath = $file->storeAs('pod/photos', $fileName, 'public');
+                $validated['photo_path'] = $filePath;
+                $validated['has_photo'] = true;
+                \Log::info('Photo uploaded:', ['path' => $filePath]);
+            }
+
+            \Log::info('Creating POD with data:', $validated);
+
+            Pod::create($validated);
+
+            // Always return JSON for file upload forms
             return response()->json(['success' => true, 'message' => 'POD created successfully.']);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Validation error:', ['errors' => $e->errors()]);
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'errors' => $e->errors()], 422);
+            }
+            return redirect()->back()->withErrors($e->errors())->withInput();
+        } catch (\Exception $e) {
+            \Log::error('Error creating POD:', ['message' => $e->getMessage()]);
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Error creating POD: ' . $e->getMessage()], 500);
+            }
+            return redirect()->back()->with('error', 'Error creating POD: ' . $e->getMessage())->withInput();
         }
-        
-        return redirect()->route('pod.index')->with('success', 'POD created successfully.');
     }
 
     public function show(string $id)
@@ -127,80 +130,81 @@ class PodController extends Controller
 
     public function update(Request $request, string $id)
     {
-        $pod = Pod::findOrFail($id);
-        $validated = $request->validate([
-            'job_number' => 'required|string|max:50',
-            'customer_id' => 'required|exists:customers,id',
-            'driver_id' => 'required|exists:drivers,id',
-            'delivery_datetime' => 'required|date',
-            'has_signature' => 'nullable|boolean',
-            'has_photo' => 'nullable|boolean',
-            'delivery_confirmation' => 'nullable|boolean',
-            'status' => 'required|in:complete,missing_signature,missing_photo,pending',
-            'signature_upload' => 'nullable|image|max:5120', // Max 5MB
-            'photo_upload' => 'nullable|image|max:5120', // Max 5MB
-            'signature_path' => 'nullable|string|max:255',
-            'photo_path' => 'nullable|string|max:255',
-            'notes' => 'nullable|string',
-            'job_id' => 'nullable|integer',
-        ]);
+        try {
+            $pod = Pod::findOrFail($id);
+            $validated = $request->validate([
+                'job_number' => 'required|string|max:50',
+                'customer_id' => 'required|exists:customers,id',
+                'driver_id' => 'required|exists:drivers,id',
+                'delivery_datetime' => 'required|date',
+                'has_signature' => 'nullable|boolean',
+                'has_photo' => 'nullable|boolean',
+                'delivery_confirmation' => 'nullable|boolean',
+                'status' => 'required|in:complete,missing_signature,missing_photo,pending',
+                'signature_upload' => 'nullable|image|max:5120', // Max 5MB
+                'photo_upload' => 'nullable|image|max:5120', // Max 5MB
+                'signature_path' => 'nullable|string|max:255',
+                'photo_path' => 'nullable|string|max:255',
+                'notes' => 'nullable|string',
+                'job_id' => 'nullable|integer',
+            ]);
 
-        // Handle checkbox defaults
-        $validated['has_signature'] = $request->has('has_signature') ? true : false;
-        $validated['has_photo'] = $request->has('has_photo') ? true : false;
-        $validated['delivery_confirmation'] = $request->has('delivery_confirmation') ? true : false;
+            // Handle checkbox defaults
+            $validated['has_signature'] = $request->has('has_signature') ? true : false;
+            $validated['has_photo'] = $request->has('has_photo') ? true : false;
+            $validated['delivery_confirmation'] = $request->has('delivery_confirmation') ? true : false;
 
-        // Handle signature upload
-        if ($request->hasFile('signature_upload')) {
-            // Delete old signature if exists
-            if ($pod->signature_path) {
-                $oldPath = storage_path('app/public/' . $pod->signature_path);
-                if (file_exists($oldPath)) {
-                    unlink($oldPath);
+            // Handle signature upload
+            if ($request->hasFile('signature_upload')) {
+                // Delete old signature if exists
+                if ($pod->signature_path) {
+                    $oldPath = storage_path('app/public/' . $pod->signature_path);
+                    if (file_exists($oldPath)) {
+                        unlink($oldPath);
+                    }
                 }
-            }
-            
-            $file = $request->file('signature_upload');
-            $fileName = 'signature_' . time() . '_' . $file->getClientOriginalName();
-            $filePath = $file->storeAs('pod/signatures', $fileName, 'public');
-            $validated['signature_path'] = $filePath;
-            $validated['has_signature'] = true;
-        }
 
-        // Handle photo upload
-        if ($request->hasFile('photo_upload')) {
-            // Delete old photo if exists
-            if ($pod->photo_path) {
-                $oldPath = storage_path('app/public/' . $pod->photo_path);
-                if (file_exists($oldPath)) {
-                    unlink($oldPath);
+                $file = $request->file('signature_upload');
+                $fileName = 'signature_' . time() . '_' . $file->getClientOriginalName();
+                $filePath = $file->storeAs('pod/signatures', $fileName, 'public');
+                $validated['signature_path'] = $filePath;
+                $validated['has_signature'] = true;
+            }
+
+            // Handle photo upload
+            if ($request->hasFile('photo_upload')) {
+                // Delete old photo if exists
+                if ($pod->photo_path) {
+                    $oldPath = storage_path('app/public/' . $pod->photo_path);
+                    if (file_exists($oldPath)) {
+                        unlink($oldPath);
+                    }
                 }
-            }
-            
-            $file = $request->file('photo_upload');
-            $fileName = 'photo_' . time() . '_' . $file->getClientOriginalName();
-            $filePath = $file->storeAs('pod/photos', $fileName, 'public');
-            $validated['photo_path'] = $filePath;
-            $validated['has_photo'] = true;
-        }
 
-        // If job_id is provided, validate it exists
-        if (!empty($validated['job_id'])) {
-            $jobExists = \App\Models\Job::where('id', $validated['job_id'])->exists();
-            if (!$jobExists) {
-                return redirect()->back()
-                    ->withInput()
-                    ->withErrors(['job_id' => 'The selected job ID is invalid.']);
+                $file = $request->file('photo_upload');
+                $fileName = 'photo_' . time() . '_' . $file->getClientOriginalName();
+                $filePath = $file->storeAs('pod/photos', $fileName, 'public');
+                $validated['photo_path'] = $filePath;
+                $validated['has_photo'] = true;
             }
-        }
 
-        $pod->update($validated);
-        
-        if ($request->ajax() || $request->wantsJson()) {
+            $pod->update($validated);
+
+            // Always return JSON for AJAX requests
             return response()->json(['success' => true, 'message' => 'POD updated successfully.']);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            \Log::error('Validation error:', ['errors' => $e->errors()]);
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'errors' => $e->errors()], 422);
+            }
+            return redirect()->back()->withErrors($e->errors())->withInput();
+        } catch (\Exception $e) {
+            \Log::error('Error updating POD:', ['message' => $e->getMessage()]);
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Error updating POD: ' . $e->getMessage()], 500);
+            }
+            return redirect()->back()->with('error', 'Error updating POD: ' . $e->getMessage())->withInput();
         }
-        
-        return redirect()->route('pod.index')->with('success', 'POD updated successfully.');
     }
 
     public function destroy(string $id)

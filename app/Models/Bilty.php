@@ -124,18 +124,19 @@ class Bilty extends Model
         $prefix = 'BLT';
         $year = date('Y');
         $month = date('m');
-        
-        $lastBilty = self::where('bilty_number', 'like', "{$prefix}-{$year}-{$month}-%")
+
+        $lastBilty = self::withTrashed()
+            ->where('bilty_number', 'like', "{$prefix}-{$year}-{$month}-%")
             ->orderBy('id', 'desc')
             ->first();
-        
+
         if ($lastBilty) {
             $lastNumber = (int) substr($lastBilty->bilty_number, -4);
             $newNumber = str_pad($lastNumber + 1, 4, '0', STR_PAD_LEFT);
         } else {
             $newNumber = '0001';
         }
-        
+
         return "{$prefix}-{$year}-{$month}-{$newNumber}";
     }
 

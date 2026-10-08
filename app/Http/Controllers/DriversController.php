@@ -78,23 +78,22 @@ class DriversController extends Controller
                 $data['license_picture_back'] = $path;
             }
         } catch (\Exception $e) {
-            \Log::error('File upload failed: ' . $e->getMessage());
+            \Log::error('File upload failed:', ['message' => $e->getMessage()]);
             // Continue without file uploads if they fail
         }
 
         try {
-            \Log::info('Creating driver with data: ', $data);
+            \Log::info('Creating driver with data: ', ['data' => $data]);
             $driver = Driver::create($data);
-            \Log::info('Driver created successfully with ID: ' . $driver->id);
+            \Log::info('Driver created successfully with ID: ' . $driver->id, ['driver_id' => $driver->id]);
 
             // Always return JSON response since this is called via AJAX
             return response()->json(['success' => true, 'message' => 'Driver created successfully']);
         } catch (\Illuminate\Validation\ValidationException $e) {
-            \Log::error('Validation error: ' . $e->getMessage());
+            \Log::error('Validation error:', ['message' => $e->getMessage()]);
             return response()->json(['success' => false, 'message' => 'Validation failed: ' . $e->getMessage(), 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
-            \Log::error('Error creating driver: ' . $e->getMessage());
-            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            \Log::error('Error creating driver:', ['message' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return response()->json(['success' => false, 'message' => 'Error creating driver: ' . $e->getMessage()], 500);
         }
     }
@@ -209,22 +208,21 @@ class DriversController extends Controller
                 $data['license_picture_back'] = $path;
             }
         } catch (\Exception $e) {
-            \Log::error('File upload failed: ' . $e->getMessage());
+            \Log::error('File upload failed:', ['message' => $e->getMessage()]);
             // Continue without file uploads if they fail
         }
 
         try {
-            \Log::info('Updating driver with ID: ' . $driver->id . ' data: ', $data);
+            \Log::info('Updating driver with ID: ' . $driver->id . ' data: ', ['data' => $data]);
             $driver->update($data);
-            \Log::info('Driver updated successfully with ID: ' . $driver->id);
+            \Log::info('Driver updated successfully with ID: ' . $driver->id, ['driver_id' => $driver->id]);
 
             return response()->json(['success' => true, 'message' => 'Driver updated successfully']);
         } catch (\Illuminate\Validation\ValidationException $e) {
-            \Log::error('Validation error during update: ' . $e->getMessage());
+            \Log::error('Validation error during update:', ['message' => $e->getMessage()]);
             return response()->json(['success' => false, 'message' => 'Validation failed: ' . $e->getMessage(), 'errors' => $e->errors()], 422);
         } catch (\Exception $e) {
-            \Log::error('Error updating driver: ' . $e->getMessage());
-            \Log::error('Stack trace: ' . $e->getTraceAsString());
+            \Log::error('Error updating driver:', ['message' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return response()->json(['success' => false, 'message' => 'Error updating driver: ' . $e->getMessage()], 500);
         }
     }

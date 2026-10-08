@@ -33,7 +33,10 @@ class WarehouseTripController extends Controller
 
         // Apply warehouse location filter if provided
         if ($warehouseLocation) {
-            $query->where('warehouse_location', $warehouseLocation);
+            $query->where(function($q) use ($warehouseLocation) {
+                $q->where('warehouse_location', $warehouseLocation)
+                  ->orWhereNull('warehouse_location');
+            });
         }
 
         // Apply date range filter if provided
@@ -48,7 +51,10 @@ class WarehouseTripController extends Controller
             $totalsQuery->where('vehicle_number', 'like', '%' . $vehicleNumber . '%');
         }
         if ($warehouseLocation) {
-            $totalsQuery->where('warehouse_location', $warehouseLocation);
+            $totalsQuery->where(function($q) use ($warehouseLocation) {
+                $q->where('warehouse_location', $warehouseLocation)
+                  ->orWhereNull('warehouse_location');
+            });
         }
         $totalsQuery->byDateRange($dateFrom, $dateTo);
 
@@ -97,7 +103,7 @@ class WarehouseTripController extends Controller
                 'driver_name' => 'nullable|string|max:255',
                 'freight_bill_no' => 'nullable|string|max:50',
                 'billing_month' => 'nullable|string|max:50',
-                'warehouse_location' => 'required|string|max:100',
+                'warehouse_location' => 'nullable|string|max:100',
                 'business_category' => 'required|string|max:255',
                 'gl_number' => 'nullable|string|max:50',
                 'business_area' => 'nullable|string|max:255',
@@ -173,7 +179,7 @@ class WarehouseTripController extends Controller
                     ]);
                 }
             } catch (\Exception $e) {
-                \Log::error('Error saving expense entries: ' . $e->getMessage());
+                \Log::error('Error saving expense entries:', ['message' => $e->getMessage()]);
                 // Continue even if expense entries fail
             }
 
@@ -218,7 +224,7 @@ class WarehouseTripController extends Controller
     {
         \Log::info('getEditData called', ['id' => $id]);
 
-        $trip = WarehouseTrip::with(['vehicle', 'driver', 'customer'])->findOrFail($id);
+        $trip = WarehouseTrip::with(['vehicle', 'driver', 'customer', 'expenseEntries'])->findOrFail($id);
 
         // Format trip_date for the form
         $tripData = $trip->toArray();
@@ -259,7 +265,7 @@ class WarehouseTripController extends Controller
             'driver_name' => 'nullable|string|max:255',
             'freight_bill_no' => 'nullable|string|max:50',
             'billing_month' => 'nullable|string|max:50',
-            'warehouse_location' => 'required|string|max:100',
+            'warehouse_location' => 'nullable|string|max:100',
             'gl_number' => 'nullable|string|max:50',
             'business_category' => 'nullable|string|max:255',
             'business_area' => 'nullable|string|max:255',
@@ -330,7 +336,7 @@ class WarehouseTripController extends Controller
                 ]);
             }
         } catch (\Exception $e) {
-            \Log::error('Error saving expense entries: ' . $e->getMessage());
+            \Log::error('Error saving expense entries:', ['message' => $e->getMessage()]);
             // Continue even if expense entries fail
         }
 
@@ -346,14 +352,29 @@ class WarehouseTripController extends Controller
      */
     public function destroy($id)
     {
-        $trip = WarehouseTrip::findOrFail($id);
-        $trip->delete();
+        try {
+            $trip = WarehouseTrip::findOrFail($id);
 
-        if (request()->ajax() || request()->wantsJson()) {
-            return response()->json(['success' => true, 'message' => 'Trip deleted successfully.']);
+            // Delete expense entries first
+            $trip->expenseEntries()->delete();
+
+            // Delete the trip
+            $trip->delete();
+
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => true, 'message' => 'Trip deleted successfully.']);
+            }
+
+            return redirect()->back()->with('success', 'Trip deleted successfully.');
+        } catch (\Exception $e) {
+            \Log::error('Error deleting trip:', ['message' => $e->getMessage()]);
+
+            if (request()->ajax() || request()->wantsJson()) {
+                return response()->json(['success' => false, 'message' => 'Failed to delete trip: ' . $e->getMessage()], 500);
+            }
+
+            return redirect()->back()->with('error', 'Failed to delete trip: ' . $e->getMessage());
         }
-
-        return redirect()->back()->with('success', 'Trip deleted successfully.');
     }
 
     /**
@@ -473,22 +494,27 @@ class WarehouseTripController extends Controller
         \Log::info('Generate invoice called', [
             'billing_month' => $billingMonth,
             'warehouse_location' => $warehouseLocation,
-            'warehouse_location_length' => strlen($warehouseLocation),
             'date_from' => $dateFrom,
             'date_to' => $dateTo,
             'vehicle_number' => $vehicleNumber,
             'is_ajax' => $request->ajax(),
-            'wants_json' => $request->wantsJson(),
-            'all_params' => $request->all()
+            'wants_json' => $request->wantsJson()
         ]);
 
         // Build query
-        $query = WarehouseTrip::with(['vehicle', 'driver', 'customer', 'expenseEntries'])
-            ->where('warehouse_location', $warehouseLocation);
+        $query = WarehouseTrip::with(['vehicle', 'driver', 'customer', 'expenseEntries']);
 
         // Apply vehicle number filter if provided
         if ($vehicleNumber) {
             $query->where('vehicle_number', 'like', '%' . $vehicleNumber . '%');
+        }
+
+        // Apply warehouse location filter only if vehicle is NOT filtered and warehouse is provided
+        if (!$vehicleNumber && $warehouseLocation) {
+            $query->where(function($q) use ($warehouseLocation) {
+                $q->where('warehouse_location', $warehouseLocation)
+                  ->orWhereNull('warehouse_location');
+            });
         }
 
         // Apply date range filter if provided
@@ -496,19 +522,16 @@ class WarehouseTripController extends Controller
             $query->whereBetween('trip_date', [$dateFrom, $dateTo]);
         } elseif ($vehicleNumber) {
             // If vehicle filter is provided but no date range, don't filter by date or billing_month
-            // Just use the vehicle filter and warehouse location
+            // Just use the vehicle filter
         } else {
             // Only use billing_month if no other filters are provided
             $query->byBillingMonth($billingMonth);
         }
 
-        // Log the SQL query for debugging
-        \Log::info('SQL Query:', ['sql' => $query->toSql(), 'bindings' => $query->getBindings()]);
-
         $trips = $query->orderBy('trip_date')->get();
 
         if ($trips->isEmpty()) {
-            \Log::info('No trips found for invoice generation with warehouse filter', [
+            \Log::info('No trips found for invoice generation', [
                 'warehouse_location' => $warehouseLocation,
                 'date_from' => $dateFrom,
                 'date_to' => $dateTo,
@@ -516,44 +539,20 @@ class WarehouseTripController extends Controller
                 'billing_month' => $billingMonth
             ]);
 
-            // Try without warehouse location filter (fallback)
-            $query = WarehouseTrip::with(['vehicle', 'driver', 'customer', 'expenseEntries']);
-
-            if ($vehicleNumber) {
-                $query->where('vehicle_number', 'like', '%' . $vehicleNumber . '%');
-            }
-
+            // Determine appropriate error message
+            $errorMessage = 'No trips found';
             if ($dateFrom && $dateTo) {
-                $query->whereBetween('trip_date', [$dateFrom, $dateTo]);
+                $errorMessage .= ' for the selected date range';
             } elseif ($vehicleNumber) {
-                // No date filter
+                $errorMessage .= ' for this vehicle';
             } else {
-                $query->byBillingMonth($billingMonth);
+                $errorMessage .= ' for this billing period';
             }
 
-            \Log::info('Retrying without warehouse filter', ['sql' => $query->toSql(), 'bindings' => $query->getBindings()]);
-            $trips = $query->orderBy('trip_date')->get();
-
-            if ($trips->isEmpty()) {
-                \Log::info('Still no trips found even without warehouse filter');
-
-                // Determine appropriate error message
-                $errorMessage = 'No trips found';
-                if ($dateFrom && $dateTo) {
-                    $errorMessage .= ' for the selected date range';
-                } elseif ($vehicleNumber) {
-                    $errorMessage .= ' for this vehicle';
-                } else {
-                    $errorMessage .= ' for this billing period';
-                }
-
-                if ($request->ajax() || $request->wantsJson()) {
-                    return response()->json(['success' => false, 'message' => $errorMessage]);
-                }
-                return redirect()->back()->with('error', $errorMessage);
-            } else {
-                \Log::info('Found trips without warehouse filter', ['count' => $trips->count()]);
+            if ($request->ajax() || $request->wantsJson()) {
+                return response()->json(['success' => false, 'message' => $errorMessage]);
             }
+            return redirect()->back()->with('error', $errorMessage);
         }
         
         // Mark all trips as billed
