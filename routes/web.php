@@ -67,8 +67,27 @@ Route::middleware(['auth', 'role:admin'])->group(function () {
 // Dispatcher & Manager - Operations access
 Route::middleware(['auth', 'role:admin,dispatcher,manager'])->group(function () {
     Route::resource('customers', CustomerController::class);
-    Route::resource('vehicles', VehicleController::class);
-    Route::resource('drivers', DriversController::class);
+    Route::prefix('vehicles')->group(function () {
+        Route::get('/', [VehicleController::class, 'index'])->name('vehicles.index');
+        Route::get('/create', [VehicleController::class, 'create'])->name('vehicles.create');
+        Route::post('/', [VehicleController::class, 'store'])->name('vehicles.store');
+        Route::get('/{vehicle}', [VehicleController::class, 'show'])->name('vehicles.show');
+        Route::get('/{vehicle}/edit', [VehicleController::class, 'edit'])->name('vehicles.edit');
+        Route::put('/{vehicle}', [VehicleController::class, 'update'])->name('vehicles.update');
+        Route::delete('/{vehicle}', [VehicleController::class, 'destroy'])->name('vehicles.destroy');
+        Route::post('/export', [VehicleController::class, 'export'])->name('vehicles.export');
+    });
+    Route::prefix('drivers')->group(function () {
+        Route::get('/', [DriversController::class, 'index'])->name('drivers.index');
+        Route::get('/create', [DriversController::class, 'create'])->name('drivers.create');
+        Route::post('/', [DriversController::class, 'store'])->name('drivers.store');
+        Route::get('/{driver}', [DriversController::class, 'show'])->name('drivers.show');
+        Route::get('/{driver}/edit', [DriversController::class, 'edit'])->name('drivers.edit');
+        Route::put('/{driver}', [DriversController::class, 'update'])->name('drivers.update');
+        Route::delete('/{driver}', [DriversController::class, 'destroy'])->name('drivers.destroy');
+        Route::post('/export', [DriversController::class, 'export'])->name('drivers.export');
+        Route::get('/check-new-fields', [DriversController::class, 'checkNewFields'])->name('drivers.check-new-fields');
+    });
     Route::resource('jobs', JobController::class);
     Route::resource('trips', TripController::class);
     Route::resource('dispatch', DispatchController::class);
@@ -85,9 +104,6 @@ Route::middleware(['auth', 'role:admin,dispatcher,manager'])->group(function () 
     Route::post('/pod/export', [PodController::class, 'export'])->name('pod.export');
     Route::post('/jobs/export', [JobController::class, 'export'])->name('jobs.export');
     Route::post('/customers/export', [CustomerController::class, 'export'])->name('customers.export');
-    Route::post('/vehicles/export', [VehicleController::class, 'export'])->name('vehicles.export');
-    Route::post('/drivers/export', [DriversController::class, 'export'])->name('drivers.export');
-    Route::get('/drivers/check-new-fields', [DriversController::class, 'checkNewFields'])->name('drivers.check-new-fields');
     
     // Bilty routes
     Route::resource('bilties', BiltyController::class);
@@ -101,8 +117,8 @@ Route::middleware(['auth', 'role:admin,dispatcher,manager'])->group(function () 
     Route::resource('warehouse-trips', WarehouseTripController::class);
     
     // API routes for warehouse-trips form
-    Route::get('/vehicles', [VehicleController::class, 'getVehiclesForSelect']);
-    Route::get('/drivers', [DriversController::class, 'getDriversForSelect']);
+    Route::get('/select-vehicles', [VehicleController::class, 'getVehiclesForSelect']);
+    Route::get('/select-drivers', [DriversController::class, 'getDriversForSelect']);
     
     // Warehouse Invoice routes
     Route::resource('warehouse.invoices', WarehouseInvoiceController::class);

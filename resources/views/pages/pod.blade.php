@@ -21,6 +21,13 @@
       </div>
     @endif
 
+    @if(session('error'))
+      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        {{ session('error') }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+      </div>
+    @endif
+
     <div class="row g-3 mb-3">
       <div class="col-6 col-lg-3">
         <div class="stat-card">
@@ -381,20 +388,35 @@ $(document).ready(function() {
             },
             success: function(response) {
                 console.log('POD saved successfully:', response);
-                $('#podModal').modal('hide');
-                location.reload();
+                if (response.success) {
+                    $('#podModal').modal('hide');
+                    // Show success alert before reload
+                    var alertHtml = '<div class="alert alert-success alert-dismissible fade show" role="alert">' +
+                        response.message +
+                        '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
+                        '</div>';
+                    $('.page-wrap').prepend(alertHtml);
+                    // Reload after short delay to show alert
+                    setTimeout(function() {
+                        location.reload();
+                    }, 1500);
+                }
             },
             error: function(xhr) {
                 console.error('Error saving POD:', xhr);
                 var errors = xhr.responseJSON ? xhr.responseJSON.errors : null;
-                var errorMessage = 'Error saving POD';
+                var errorMessage = xhr.responseJSON ? xhr.responseJSON.message : 'Error saving POD';
                 if (errors) {
                     errorMessage = '';
                     $.each(errors, function(key, value) {
-                        errorMessage += value + '\n';
+                        errorMessage += value + '<br>';
                     });
                 }
-                alert(errorMessage);
+                var alertHtml = '<div class="alert alert-danger alert-dismissible fade show" role="alert">' +
+                    errorMessage +
+                    '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>' +
+                    '</div>';
+                $('.page-wrap').prepend(alertHtml);
             }
         });
     });

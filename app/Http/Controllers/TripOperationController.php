@@ -193,7 +193,7 @@ class TripOperationController extends Controller
 
             try {
                 $validated = $request->validate($validationRules);
-                \Log::info('Step ' . $step . ' validation passed');
+                \Log::info('Step ' . $step . ' validation passed', ['step' => $step]);
             } catch (\Illuminate\Validation\ValidationException $e) {
                 \Log::error('Step ' . $step . ' validation failed:', $e->errors());
                 throw $e;
@@ -280,7 +280,7 @@ class TripOperationController extends Controller
                             ]);
                         }
                     } catch (\Exception $e) {
-                        \Log::error('Error saving expense entries: ' . $e->getMessage());
+                        \Log::error('Error saving expense entries:', ['message' => $e->getMessage()]);
                         // Continue even if expense entries fail
                     }
                 } catch (\Illuminate\Database\QueryException $e) {
@@ -324,7 +324,7 @@ class TripOperationController extends Controller
             $expenseEntries = $request->input('expense_entries', []);
             $totalExpense = 0;
 
-            \Log::info('Updating expense entries for trip ' . $tripOperation->id, $expenseEntries);
+            \Log::info('Updating expense entries for trip ' . $tripOperation->id, ['expense_entries' => $expenseEntries]);
 
             // Filter out empty expense entries
             $validExpenseEntries = [];
@@ -350,7 +350,7 @@ class TripOperationController extends Controller
                     ]);
                     $totalExpense += floatval($entry['amount']);
                 } catch (\Exception $e) {
-                    \Log::error('Error creating expense entry: ' . $e->getMessage());
+                    \Log::error('Error creating expense entry:', ['message' => $e->getMessage()]);
                 }
             }
 

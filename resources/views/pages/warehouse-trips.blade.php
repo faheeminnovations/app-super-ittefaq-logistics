@@ -5,7 +5,7 @@
     <div class="page-head">
       <div>
         <div class="eyebrow">Warehouse Management</div>
-        <h1>Warehouse Trips</h1>
+        <h1>Trips-Details</h1>
         <div class="sub">Excel-like trip management for Depalpur Warehouse</div>
       </div>
       <div class="d-flex gap-2">
@@ -247,7 +247,7 @@
                 </div>
                 <div class="col-md-3 mb-3">
                   <label for="warehouse_location" class="form-label">Warehouse Location</label>
-                  <select class="form-select" name="warehouse_location" id="warehouse_location" required>
+                  <select class="form-select" name="warehouse_location" id="warehouse_location">
                     <option value="">Select Warehouse</option>
                     @foreach($warehouses as $warehouse)
                       <option value="{{ $warehouse->location }}" {{ $warehouseLocation === $warehouse->location ? 'selected' : '' }}>{{ $warehouse->name }}</option>
@@ -536,7 +536,8 @@
 
     function addExpenseEntry() {
       const container = document.getElementById('expenseEntriesContainer');
-      const entryCount = container.querySelectorAll('.expense-entry').length;
+      const entries = container.querySelectorAll('.expense-entry');
+      const entryCount = entries.length;
       const newEntry = document.createElement('div');
       newEntry.className = 'expense-entry row mb-3 p-3 border rounded';
       newEntry.style.backgroundColor = 'white';
@@ -580,12 +581,33 @@
         </div>
       `;
       container.appendChild(newEntry);
+      // Re-index all entries to ensure proper numbering
+      reindexExpenseEntries();
     }
 
     function removeExpenseEntry(button) {
       const entry = button.closest('.expense-entry');
       entry.remove();
+      // Re-index all expense entries after removal
+      reindexExpenseEntries();
       calculateTotalExpense();
+    }
+
+    function reindexExpenseEntries() {
+      const container = document.getElementById('expenseEntriesContainer');
+      const entries = container.querySelectorAll('.expense-entry');
+      entries.forEach((entry, index) => {
+        // Update the name attributes for all inputs in this entry
+        const categorySelect = entry.querySelector('.expense-category');
+        const paymentSelect = entry.querySelector('.expense-payment-type');
+        const amountInput = entry.querySelector('.expense-amount');
+        const descriptionInput = entry.querySelector('.expense-description');
+
+        if (categorySelect) categorySelect.name = `expense_entries[${index}][expense_category]`;
+        if (paymentSelect) paymentSelect.name = `expense_entries[${index}][payment_type]`;
+        if (amountInput) amountInput.name = `expense_entries[${index}][amount]`;
+        if (descriptionInput) descriptionInput.name = `expense_entries[${index}][description]`;
+      });
     }
 
     function changeWarehouseLocation() {
@@ -620,6 +642,56 @@
       const billingMonth = monthNames[now.getMonth()] + '-' + now.getFullYear();
       document.getElementById('billing_month').value = billingMonth;
 
+      // Reset expense entries to default state
+      const expenseEntriesContainer = document.getElementById('expenseEntriesContainer');
+      expenseEntriesContainer.innerHTML = '';
+      const newEntry = document.createElement('div');
+      newEntry.className = 'expense-entry row mb-3 p-3 border rounded';
+      newEntry.style.backgroundColor = 'white';
+      newEntry.innerHTML = `
+        <div class="col-md-3 mb-2">
+          <label class="form-label">Expense Category</label>
+          <select class="form-select expense-category" name="expense_entries[0][expense_category]">
+            <option value="">Select Category</option>
+            <option value="fuel">Fuel</option>
+            <option value="toll">Toll</option>
+            <option value="food">Food</option>
+            <option value="challan">Challan</option>
+            <option value="police">Police</option>
+            <option value="driver_payment">Driver Payment</option>
+            <option value="maintenance">Maintenance</option>
+            <option value="loading_charges">Loading</option>
+            <option value="unloading_charges">Unloading</option>
+            <option value="other">Others</option>
+          </select>
+        </div>
+        <div class="col-md-3 mb-2">
+          <label class="form-label">Payment Type</label>
+          <select class="form-select expense-payment-type" name="expense_entries[0][payment_type]">
+            <option value="">Select Type</option>
+            <option value="credit">Credit</option>
+            <option value="cash">Cash</option>
+          </select>
+        </div>
+        <div class="col-md-3 mb-2">
+          <label class="form-label">Amount</label>
+          <input type="number" step="0.01" class="form-control expense-amount" name="expense_entries[0][amount]" placeholder="0.00" oninput="calculateTotalExpense()">
+        </div>
+        <div class="col-md-3 mb-2">
+          <label class="form-label">Description</label>
+          <input type="text" class="form-control expense-description" name="expense_entries[0][description]" placeholder="Description">
+        </div>
+        <div class="col-12">
+          <button type="button" class="btn btn-sm btn-danger d-none remove-expense-entry" onclick="removeExpenseEntry(this)">
+            <i class="bi bi-trash"></i> Remove
+          </button>
+        </div>
+      `;
+      expenseEntriesContainer.appendChild(newEntry);
+
+      // Reset total expense
+      document.getElementById('total_expense').value = '0.00';
+
       // Load vehicles and drivers
       loadVehicles();
       loadDrivers();
@@ -628,7 +700,7 @@
     }
 
     function loadVehicles() {
-      return fetch('/vehicles')
+      return fetch('/select-vehicles')
         .then(response => response.json())
         .then(data => {
           const vehicleSelect = document.getElementById('vehicle_number');
@@ -649,7 +721,7 @@
     }
 
     function loadDrivers() {
-      return fetch('/drivers')
+      return fetch('/select-drivers')
         .then(response => response.json())
         .then(data => {
           const driverSelect = document.getElementById('driver_name');
@@ -747,6 +819,109 @@
           document.getElementById('warehouse_location').value = trip.warehouse_location || '';
           document.getElementById('status').value = trip.status || 'pending';
           document.getElementById('notes').value = trip.notes || '';
+
+          // Load expense entries if they exist
+          const expenseEntriesContainer = document.getElementById('expenseEntriesContainer');
+          expenseEntriesContainer.innerHTML = ''; // Clear existing entries
+
+          if (trip.expense_entries && trip.expense_entries.length > 0) {
+            trip.expense_entries.forEach((entry, index) => {
+              const newEntry = document.createElement('div');
+              newEntry.className = 'expense-entry row mb-3 p-3 border rounded';
+              newEntry.style.backgroundColor = 'white';
+              newEntry.innerHTML = `
+                <div class="col-md-3 mb-2">
+                  <label class="form-label">Expense Category</label>
+                  <select class="form-select expense-category" name="expense_entries[${index}][expense_category]">
+                    <option value="">Select Category</option>
+                    <option value="fuel" ${entry.expense_category === 'fuel' ? 'selected' : ''}>Fuel</option>
+                    <option value="toll" ${entry.expense_category === 'toll' ? 'selected' : ''}>Toll</option>
+                    <option value="food" ${entry.expense_category === 'food' ? 'selected' : ''}>Food</option>
+                    <option value="challan" ${entry.expense_category === 'challan' ? 'selected' : ''}>Challan</option>
+                    <option value="police" ${entry.expense_category === 'police' ? 'selected' : ''}>Police</option>
+                    <option value="driver_payment" ${entry.expense_category === 'driver_payment' ? 'selected' : ''}>Driver Payment</option>
+                    <option value="maintenance" ${entry.expense_category === 'maintenance' ? 'selected' : ''}>Maintenance</option>
+                    <option value="loading_charges" ${entry.expense_category === 'loading_charges' ? 'selected' : ''}>Loading</option>
+                    <option value="unloading_charges" ${entry.expense_category === 'unloading_charges' ? 'selected' : ''}>Unloading</option>
+                    <option value="other" ${entry.expense_category === 'other' ? 'selected' : ''}>Others</option>
+                  </select>
+                </div>
+                <div class="col-md-3 mb-2">
+                  <label class="form-label">Payment Type</label>
+                  <select class="form-select expense-payment-type" name="expense_entries[${index}][payment_type]">
+                    <option value="">Select Type</option>
+                    <option value="credit" ${entry.payment_type === 'credit' ? 'selected' : ''}>Credit</option>
+                    <option value="cash" ${entry.payment_type === 'cash' ? 'selected' : ''}>Cash</option>
+                  </select>
+                </div>
+                <div class="col-md-3 mb-2">
+                  <label class="form-label">Amount</label>
+                  <input type="number" step="0.01" class="form-control expense-amount" name="expense_entries[${index}][amount]" placeholder="0.00" value="${entry.amount || ''}" oninput="calculateTotalExpense()">
+                </div>
+                <div class="col-md-3 mb-2">
+                  <label class="form-label">Description</label>
+                  <input type="text" class="form-control expense-description" name="expense_entries[${index}][description]" placeholder="Description" value="${entry.description || ''}">
+                </div>
+                <div class="col-12">
+                  <button type="button" class="btn btn-sm btn-danger" onclick="removeExpenseEntry(this)">
+                    <i class="bi bi-trash"></i> Remove
+                  </button>
+                </div>
+              `;
+              expenseEntriesContainer.appendChild(newEntry);
+            });
+          } else {
+            // Add one empty expense entry if none exist
+            const newEntry = document.createElement('div');
+            newEntry.className = 'expense-entry row mb-3 p-3 border rounded';
+            newEntry.style.backgroundColor = 'white';
+            newEntry.innerHTML = `
+              <div class="col-md-3 mb-2">
+                <label class="form-label">Expense Category</label>
+                <select class="form-select expense-category" name="expense_entries[0][expense_category]">
+                  <option value="">Select Category</option>
+                  <option value="fuel">Fuel</option>
+                  <option value="toll">Toll</option>
+                  <option value="food">Food</option>
+                  <option value="challan">Challan</option>
+                  <option value="police">Police</option>
+                  <option value="driver_payment">Driver Payment</option>
+                  <option value="maintenance">Maintenance</option>
+                  <option value="loading_charges">Loading</option>
+                  <option value="unloading_charges">Unloading</option>
+                  <option value="other">Others</option>
+                </select>
+              </div>
+              <div class="col-md-3 mb-2">
+                <label class="form-label">Payment Type</label>
+                <select class="form-select expense-payment-type" name="expense_entries[0][payment_type]">
+                  <option value="">Select Type</option>
+                  <option value="credit">Credit</option>
+                  <option value="cash">Cash</option>
+                </select>
+              </div>
+              <div class="col-md-3 mb-2">
+                <label class="form-label">Amount</label>
+                <input type="number" step="0.01" class="form-control expense-amount" name="expense_entries[0][amount]" placeholder="0.00" oninput="calculateTotalExpense()">
+              </div>
+              <div class="col-md-3 mb-2">
+                <label class="form-label">Description</label>
+                <input type="text" class="form-control expense-description" name="expense_entries[0][description]" placeholder="Description">
+              </div>
+              <div class="col-12">
+                <button type="button" class="btn btn-sm btn-danger d-none remove-expense-entry" onclick="removeExpenseEntry(this)">
+                  <i class="bi bi-trash"></i> Remove
+                </button>
+              </div>
+            `;
+            expenseEntriesContainer.appendChild(newEntry);
+          }
+
+          // Calculate total expense from loaded entries
+          calculateTotalExpense();
+
+          // Re-index expense entries to ensure proper numbering
+          reindexExpenseEntries();
 
           console.log('Form populated successfully');
 
@@ -984,16 +1159,34 @@
 
     function printInvoice() {
       console.log('printInvoice function called');
-      const invoiceContent = document.getElementById('invoiceContent').innerHTML;
+
+      // Clone the invoice content to preserve current state
+      const invoiceContentDiv = document.getElementById('invoiceContent');
+      const clonedContent = invoiceContentDiv.cloneNode(true);
+
+      // Replace input fields with their current values for printing
+      clonedContent.querySelectorAll('input.km-input').forEach(input => {
+        const span = document.createElement('span');
+        span.textContent = input.value;
+        input.parentNode.replaceChild(span, input);
+      });
+
+      clonedContent.querySelectorAll('input.rate-input').forEach(input => {
+        const span = document.createElement('span');
+        span.textContent = input.value;
+        input.parentNode.replaceChild(span, input);
+      });
+
+      const invoiceContent = clonedContent.innerHTML;
       console.log('Invoice content length:', invoiceContent.length);
-      
+
       const printWindow = window.open('', '_blank');
       if (!printWindow) {
         console.error('Failed to open print window');
         alert('Please allow popups for this site to print invoices');
         return;
       }
-      
+
       var htmlContent = '<!DOCTYPE html><html><head><title>Warehouse Invoice</title>';
       htmlContent += '<style>body{font-family:Arial,sans-serif;margin:20px;background:#f0f0f0}';
       htmlContent += '.invoice-container{max-width:900px;margin:0 auto;background:white;padding:30px;border:1px solid #ddd;box-shadow:0 0 10px rgba(0,0,0,0.1)}';
@@ -1019,10 +1212,55 @@
       htmlContent += '<div class="invoice-container">' + invoiceContent + '</div>';
       htmlContent += '<script>window.onload=function(){setTimeout(function(){window.print()},500)}<\/script>';
       htmlContent += '</body></html>';
-      
+
       printWindow.document.write(htmlContent);
       printWindow.document.close();
       console.log('Print window created and closed');
+    }
+
+    // Invoice calculation functions (must be in main page for modal to work)
+    function updateFreight(input) {
+      const row = input.closest('tr');
+      const km = parseFloat(row.querySelector('.km-input').value) || 0;
+      const rate = parseFloat(row.querySelector('.rate-input').value) || 0;
+      const freight = km * rate;
+
+      // Update freight cell
+      const freightCell = row.querySelector('.freight-cell');
+      if (freightCell) {
+        freightCell.textContent = freight.toFixed(2);
+      }
+
+      // Update totals
+      updateTotals();
+    }
+
+    function updateTotals() {
+      let totalKm = 0;
+      let totalFreight = 0;
+
+      const rows = document.querySelectorAll('#invoiceContent tbody tr');
+      if (rows.length > 0) {
+        rows.forEach(row => {
+          const kmInput = row.querySelector('.km-input');
+          const rateInput = row.querySelector('.rate-input');
+          
+          if (kmInput && rateInput) {
+            const km = parseFloat(kmInput.value) || 0;
+            const rate = parseFloat(rateInput.value) || 0;
+            const freight = km * rate;
+
+            totalKm += km;
+            totalFreight += freight;
+          }
+        });
+      }
+
+      const totalKmEl = document.getElementById('totalKm');
+      const totalFreightEl = document.getElementById('totalFreight');
+
+      if (totalKmEl) totalKmEl.textContent = totalKm.toFixed(2);
+      if (totalFreightEl) totalFreightEl.textContent = totalFreight.toFixed(2);
     }
   </script>
 @endsection

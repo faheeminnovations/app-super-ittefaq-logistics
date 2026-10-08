@@ -20,9 +20,12 @@
     
       <div class="nav-section-label">Transport Management</div>
       <!-- <a href="{{ url('/transport/dashboard') }}" class="nav-link {{ request()->is('transport/dashboard') ? 'active' : '' }}" data-module="transport dashboard"><i class="bi bi-speedometer2"></i> Transport Dashboard </a> -->
-      <a href="{{ url('/trip-operations') }}" class="nav-link {{ request()->is('trip-operations') || request()->is('trip-operations/*') ? 'active' : '' }}" data-module="trip operations"><i class="bi bi-layers"></i> Trip Operations </a>
-      <a href="{{ url('/trips') }}" class="nav-link {{ request()->is('transport/trip-logs*') ? 'active' : '' }}" data-module="trip logs"><i class="bi bi-journal-text"></i> Internal Trips  </a>
-      <a href="{{ url('/financial-income') }}" class="nav-link {{ request()->is('financial-income*') ? 'active' : '' }}" data-module="financial income"><i class="bi bi-currency-pkr"></i> Operations Income </a>
+      <a href="{{ url('/warehouse-trips') }}" class="nav-link {{ request()->is('warehouse-trips') ? 'active' : '' }}" data-module="trips details"><i class="bi bi-table"></i> Trips-Details </a> 
+      <!-- <a href="{{ url('/trip-operations') }}" class="nav-link {{ request()->is('trip-operations') || request()->is('trip-operations/*') ? 'active' : '' }}" data-module="trip operations"><i class="bi bi-layers"></i> Trip Operations </a>
+       -->
+      <!-- <a href="{{ url('/trips') }}" class="nav-link {{ request()->is('transport/trip-logs*') ? 'active' : '' }}" data-module="trip logs"><i class="bi bi-journal-text"></i> Internal Trips  </a>
+       -->
+      <!-- <a href="{{ url('/financial-income') }}" class="nav-link {{ request()->is('financial-income*') ? 'active' : '' }}" data-module="financial income"><i class="bi bi-currency-pkr"></i> Operations Income </a> -->
       <div class="nav-section-label">Fleet & People</div>
       <a href="{{ url('/vehicles') }}" class="nav-link {{ request()->is('vehicles') ? 'active' : '' }}" data-module="vehicles fleet"><i class="bi bi-truck-front"></i> Vehicles / Fleet </a>
       <a href="{{ url('/drivers') }}" class="nav-link {{ request()->is('drivers') ? 'active' : '' }}" data-module="drivers"><i class="bi bi-person-badge"></i> Drivers </a>
@@ -36,10 +39,11 @@
       @if(auth()->user()->hasAnyRole(['admin', 'dispatcher', 'manager']))
       <div class="nav-section-label">Operations</div>
       <!-- <a href="{{ url('/jobs') }}" class="nav-link {{ request()->is('jobs') ? 'active' : '' }}" data-module="jobs bookings"><i class="bi bi-clipboard2-check"></i> Jobs / Bookings </a> -->
-      <a href="{{ url('/bilties') }}" class="nav-link {{ request()->is('bilties') ? 'active' : '' }}" data-module="bilties receipts"><i class="bi bi-receipt-cutoff"></i> Bilties / Receipts </a>
-      <a href="{{ url('/pod') }}" class="nav-link {{ request()->is('pod') ? 'active' : '' }}" data-module="pod proof of delivery"><i class="bi bi-file-earmark-check"></i> Proof of Delivery </a>
       
-      <a href="{{ url('/warehouse-trips') }}" class="nav-link {{ request()->is('warehouse-trips') ? 'active' : '' }}" data-module="warehouse trips excel"><i class="bi bi-table"></i> Warehouse Trips </a> 
+      <a href="{{ url('/bilties') }}" class="nav-link {{ request()->is('bilties') ? 'active' : '' }}" data-module="bilties receipts"><i class="bi bi-receipt-cutoff"></i> Bilties / Receipts </a>
+      
+      <!-- <a href="{{ url('/pod') }}" class="nav-link {{ request()->is('pod') ? 'active' : '' }}" data-module="pod proof of delivery"><i class="bi bi-file-earmark-check"></i> Proof of Delivery </a> -->
+      
       <!-- <a href="{{ url('/dispatch') }}" class="nav-link {{ request()->is('dispatch') ? 'active' : '' }}" data-module="dispatch planning"><i class="bi bi-diagram-3"></i> Planning / Dispatch </a> -->
       <!-- <a href="{{ url('/trips') }}" class="nav-link {{ request()->is('trips') ? 'active' : '' }}" data-module="trips"><i class="bi bi-signpost-split"></i> Trips </a> -->
       <!-- <a href="{{ url('/tracking') }}" class="nav-link {{ request()->is('tracking') ? 'active' : '' }}" data-module="tracking live tracking"><i class="bi bi-geo-alt"></i> Live Tracking </a> -->
