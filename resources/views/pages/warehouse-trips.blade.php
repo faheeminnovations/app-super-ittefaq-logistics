@@ -8,25 +8,25 @@
         <h1>Trips-Details</h1>
         <div class="sub">Excel-like trip management for Depalpur Warehouse</div>
       </div>
-      <div class="d-flex gap-2">
-        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#tripModal">
+      <div class="d-flex flex-wrap gap-2">
+        <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#tripModal">
           <i class="bi bi-plus-lg me-1"></i> Add Trip
         </button>
-        <button class="btn btn-outline-navy" onclick="exportTrips()" id="exportBtn">
-          <i class="bi bi-download me-1"></i> Export Excel
+        <button class="btn btn-outline-navy btn-sm" onclick="exportTrips()" id="exportBtn">
+          <i class="bi bi-download me-1"></i> Export
         </button>
-        <button class="btn btn-success" onclick="generateInvoice('basic')" id="invoiceBtn">
-          <i class="bi bi-file-earmark-text me-1"></i> Generate Invoice
+        <button class="btn btn-success btn-sm" onclick="generateInvoice('basic')" id="invoiceBtn">
+          <i class="bi bi-file-earmark-text me-1"></i> Invoice
         </button>
-        <button class="btn btn-info" onclick="generateInvoice('with_expenses')" id="invoiceBtnWithExpenses">
-          <i class="bi bi-file-earmark-text me-1"></i> Invoice with Income & Expense
+        <button class="btn btn-info btn-sm" onclick="generateInvoice('with_expenses')" id="invoiceBtnWithExpenses">
+          <i class="bi bi-file-earmark-text me-1"></i> Invoice w/ Exp
         </button>
       </div>
     </div>
 
     <!-- Statistics Cards -->
     <div class="row mb-4">
-      <div class="col-md-3">
+      <div class="col-6 col-md-2">
         <div class="card stat-card">
           <div class="card-body">
             <div class="stat-label">Total Trips</div>
@@ -34,27 +34,35 @@
           </div>
         </div>
       </div>
-      <div class="col-md-3">
+      <div class="col-6 col-md-2">
         <div class="card stat-card">
           <div class="card-body">
-            <div class="stat-label">Total Kilometers</div>
+            <div class="stat-label">Total Km</div>
             <div class="stat-value text-info">{{ number_format($totalKm, 2) }}</div>
           </div>
         </div>
       </div>
-      <div class="col-md-3">
+      <div class="col-6 col-md-2">
         <div class="card stat-card">
           <div class="card-body">
             <div class="stat-label">Total Freight</div>
-            <div class="stat-value text-success">{{ $totalFreight }}</div>
+            <div class="stat-value text-success">{{ number_format($totalFreight, 2) }}</div>
           </div>
         </div>
       </div>
-      <div class="col-md-3">
+      <div class="col-6 col-md-2">
         <div class="card stat-card">
           <div class="card-body">
-            <div class="stat-label">Average Rate</div>
-            <div class="stat-value text-warning">{{ $totalTrips > 0 ? number_format($totalFreight / $totalKm, 2) : '0.00' }}</div>
+            <div class="stat-label">Total Expense</div>
+            <div class="stat-value text-danger">{{ number_format($totalExpense, 2) }}</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-6 col-md-2">
+        <div class="card stat-card">
+          <div class="card-body">
+            <div class="stat-label">Net Amount</div>
+            <div class="stat-value {{ $netAmount >= 0 ? 'text-success' : 'text-danger' }}">{{ number_format($netAmount, 2) }}</div>
           </div>
         </div>
       </div>
@@ -63,19 +71,19 @@
     <!-- Filter Section -->
     <div class="panel mb-3">
       <div class="row">
-        <div class="col-md-2">
+        <div class="col-6 col-md-2">
           <label class="form-label">Vhl No</label>
           <input type="text" class="form-control" id="vehicleNumber" value="{{ request('vehicle_number') }}" placeholder="Vehicle Number">
         </div>
-        <div class="col-md-2">
+        <div class="col-6 col-md-2">
           <label class="form-label">Date From</label>
           <input type="date" class="form-control" id="dateFrom" value="{{ request('date_from') }}">
         </div>
-        <div class="col-md-2">
+        <div class="col-6 col-md-2">
           <label class="form-label">Date To</label>
           <input type="date" class="form-control" id="dateTo" value="{{ request('date_to') }}">
         </div>
-        <div class="col-md-3">
+        <div class="col-6 col-md-3">
           <label class="form-label">Warehouse Location</label>
           <select class="form-select" id="warehouseLocation" onchange="changeWarehouseLocation()">
             <option value="">All Warehouses</option>
@@ -84,13 +92,13 @@
             @endforeach
           </select>
         </div>
-        <div class="col-md-3">
+        <div class="col-12 col-md-3">
           <label class="form-label">Search</label>
           <input type="text" class="form-control" id="searchTrips" placeholder="Search by vehicle, GP#, or delivery point...">
         </div>
       </div>
       <div class="row mt-2">
-        <div class="col-md-12 text-end">
+        <div class="col-12 text-end">
           <button class="btn btn-secondary" onclick="applyFilters()" id="applyFiltersBtn" style="pointer-events: auto !important; opacity: 1 !important;">Apply Filters</button>
           <button class="btn btn-outline-secondary" onclick="clearFilters()" id="clearFiltersBtn" style="pointer-events: auto !important; opacity: 1 !important;">Clear Filters</button>
         </div>
@@ -100,32 +108,32 @@
     <!-- Excel-like Table -->
     <div class="panel">
       <div class="table-responsive">
-        <table class="table table-bordered table-hover" id="tripsTable">
+        <table class="table table-bordered table-hover table-sm" id="tripsTable">
           <thead class="table-light">
             <tr>
-              <th style="width: 50px;">Sr</th>
-              <th style="width: 100px;">Date</th>
-              <th style="width: 120px;">Vhl No</th>
-              <th style="width: 100px;">GP#</th>
-              <th style="width: 200px;">Drop/Delivery Point</th>
-              <th style="width: 80px;">Vhl</th>
-              <th style="width: 80px;">Km</th>
-              <th style="width: 80px;">Rate</th>
-              <th style="width: 100px;">FRT</th>
-              <th style="width: 100px;">Actions</th>
+              <th class="d-none d-md-table-cell">Sr</th>
+              <th>Date</th>
+              <th>Vhl No</th>
+              <th>GP#</th>
+              <th class="d-none d-md-table-cell">Drop/Delivery Point</th>
+              <th class="d-none d-md-table-cell">Vhl</th>
+              <th>Km</th>
+              <th class="d-none d-md-table-cell">Rate</th>
+              <th>FRT</th>
+              <th>Actions</th>
             </tr>
           </thead>
           <tbody>
             @foreach($trips as $index => $trip)
               <tr>
-                <td>{{ $index + 1 }}</td>
+                <td class="d-none d-md-table-cell">{{ $index + 1 }}</td>
                 <td>{{ $trip->trip_date->format('d/m/Y') }}</td>
                 <td>{{ $trip->vehicle_number }}</td>
                 <td>{{ $trip->gp_number }}</td>
-                <td>{{ $trip->delivery_point }}</td>
-                <td>{{ $trip->vehicle_type }}</td>
+                <td class="d-none d-md-table-cell">{{ $trip->delivery_point }}</td>
+                <td class="d-none d-md-table-cell">{{ $trip->vehicle_type }}</td>
                 <td>{{ number_format($trip->kilometers, 2) }}</td>
-                <td>{{ number_format($trip->rate_per_km, 2) }}</td>
+                <td class="d-none d-md-table-cell">{{ number_format($trip->rate_per_km, 2) }}</td>
                 <td><strong>{{ number_format($trip->freight, 2) }}</strong></td>
                 <td>
                   <div class="btn-group btn-group-sm">
@@ -142,10 +150,20 @@
           </tbody>
           <tfoot class="table-light">
             <tr>
-              <td colspan="6" class="text-end"><strong>TOTAL:</strong></td>
+              <td class="d-none d-md-table-cell"></td>
+              <td colspan="4" class="text-end"><strong>TOTAL:</strong></td>
+              <td class="d-none d-md-table-cell"></td>
               <td><strong>{{ number_format($totalKm, 2) }}</strong></td>
-              <td>-</td>
+              <td class="d-none d-md-table-cell">-</td>
               <td><strong>{{ number_format($totalFreight, 2) }}</strong></td>
+              <td></td>
+            </tr>
+            <tr>
+              <td class="d-none d-md-table-cell"></td>
+              <td colspan="4" class="text-end"><strong>Total Expense:</strong></td>
+              <td class="d-none d-md-table-cell"></td>
+              <td colspan="2" class="text-end"><strong class="text-danger">{{ number_format($totalExpense, 2) }}</strong></td>
+              <td colspan="2" class="text-end"><strong class="{{ $netAmount >= 0 ? 'text-success' : 'text-danger' }}">{{ number_format($netAmount, 2) }}</strong></td>
               <td></td>
             </tr>
           </tfoot>
