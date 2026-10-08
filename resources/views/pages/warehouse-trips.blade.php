@@ -958,14 +958,27 @@
       }).then((result) => {
         if (result.isConfirmed) {
           fetch(`/warehouse-trips/${id}`, {
-            method: 'DELETE',
+            method: 'POST',
             headers: {
               'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
-              'Content-Type': 'application/json'
-            }
+              'Content-Type': 'application/json',
+              'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+              _method: 'DELETE'
+            })
           })
-          .then(response => response.json())
+          .then(response => {
+            console.log('Delete response status:', response.status);
+            if (!response.ok) {
+              return response.json().then(err => {
+                throw err;
+              });
+            }
+            return response.json();
+          })
           .then(data => {
+            console.log('Delete response data:', data);
             if (data.success) {
               Swal.fire({
                 title: 'Deleted!',
@@ -978,7 +991,7 @@
             } else {
               Swal.fire({
                 title: 'Error',
-                text: 'Failed to delete trip',
+                text: data.message || 'Failed to delete trip',
                 icon: 'error',
                 confirmButtonColor: '#d33'
               });
@@ -986,9 +999,13 @@
           })
           .catch(error => {
             console.error('Error deleting trip:', error);
+            let errorMessage = 'Failed to delete trip';
+            if (error.message) {
+              errorMessage = error.message;
+            }
             Swal.fire({
               title: 'Error',
-              text: 'Failed to delete trip',
+              text: errorMessage,
               icon: 'error',
               confirmButtonColor: '#d33'
             });
