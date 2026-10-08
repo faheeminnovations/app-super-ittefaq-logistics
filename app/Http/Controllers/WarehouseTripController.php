@@ -68,6 +68,9 @@ class WarehouseTripController extends Controller
         // Calculate totals
         $totalKm = $allTrips->sum('kilometers');
         $totalFreight = $allTrips->sum('freight');
+        $totalIncome = $allTrips->sum('total_income');
+        $totalExpense = $allTrips->sum('total_expense');
+        $netAmount = $totalIncome - $totalExpense;
 
         return view('pages.warehouse-trips', [
             'trips' => $trips,
@@ -78,6 +81,9 @@ class WarehouseTripController extends Controller
             'warehouses' => $warehouses,
             'totalKm' => $totalKm,
             'totalFreight' => $totalFreight,
+            'totalIncome' => $totalIncome,
+            'totalExpense' => $totalExpense,
+            'netAmount' => $netAmount,
             'totalTrips' => $allTrips->count(),
             'billingMonth' => date('F-Y'),
         ]);
