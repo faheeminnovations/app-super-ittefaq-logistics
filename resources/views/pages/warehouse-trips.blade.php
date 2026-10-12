@@ -111,7 +111,7 @@
         <table class="table table-bordered table-hover table-sm" id="tripsTable">
           <thead class="table-light">
             <tr>
-              <th class="d-none d-md-table-cell">Sr</th>
+              <th>Sr</th>
               <th>Date</th>
               <th>Vhl No</th>
               <th>GP#</th>
@@ -124,9 +124,23 @@
             </tr>
           </thead>
           <tbody>
-            @foreach($trips as $index => $trip)
+            @php
+              $currentDate = null;
+              $srNumber = ($trips->currentPage() - 1) * $trips->perPage() + 1;
+            @endphp
+            @foreach($trips as $trip)
+              @php
+                $tripDate = $trip->trip_date->format('d/m/Y');
+                $showDateRow = ($currentDate !== $tripDate);
+                $currentDate = $tripDate;
+              @endphp
+              @if($showDateRow)
+                <tr class="table-light fw-bold">
+                  <td colspan="10">{{ $tripDate }}</td>
+                </tr>
+              @endif
               <tr>
-                <td class="d-none d-md-table-cell">{{ $index + 1 }}</td>
+                <td>{{ $srNumber++ }}</td>
                 <td>{{ $trip->trip_date->format('d/m/Y') }}</td>
                 <td>{{ $trip->vehicle_number }}</td>
                 <td>{{ $trip->gp_number }}</td>
@@ -150,21 +164,36 @@
           </tbody>
           <tfoot class="table-light">
             <tr>
-              <td class="d-none d-md-table-cell"></td>
-              <td colspan="4" class="text-end"><strong>TOTAL:</strong></td>
+              <td colspan="5" class="text-end"><strong>Total Km:</strong></td>
               <td class="d-none d-md-table-cell"></td>
               <td><strong>{{ number_format($totalKm, 2) }}</strong></td>
-              <td class="d-none d-md-table-cell">-</td>
+              <td class="d-none d-md-table-cell"></td>
+              <td></td>
+              <td></td>
+            </tr>
+            <tr>
+              <td colspan="5" class="text-end"><strong>Total Freight:</strong></td>
+              <td class="d-none d-md-table-cell"></td>
+              <td></td>
+              <td class="d-none d-md-table-cell"></td>
               <td><strong>{{ number_format($totalFreight, 2) }}</strong></td>
               <td></td>
             </tr>
             <tr>
+              <td colspan="5" class="text-end"><strong>Total Expense:</strong></td>
               <td class="d-none d-md-table-cell"></td>
-              <td colspan="4" class="text-end"><strong>Total Expense:</strong></td>
-              <td class="d-none d-md-table-cell"></td>
-              <td colspan="2" class="text-end"><strong class="text-danger">{{ number_format($totalExpense, 2) }}</strong></td>
-              <td colspan="2" class="text-end"><strong class="{{ $netAmount >= 0 ? 'text-success' : 'text-danger' }}">{{ number_format($netAmount, 2) }}</strong></td>
               <td></td>
+              <td class="d-none d-md-table-cell"></td>
+              <td></td>
+              <td><strong class="text-danger">{{ number_format($totalExpense, 2) }}</strong></td>
+            </tr>
+            <tr>
+              <td colspan="5" class="text-end"><strong>Net Amount:</strong></td>
+              <td class="d-none d-md-table-cell"></td>
+              <td></td>
+              <td class="d-none d-md-table-cell"></td>
+              <td></td>
+              <td><strong class="{{ $netAmount >= 0 ? 'text-success' : 'text-danger' }}">{{ number_format($netAmount, 2) }}</strong></td>
             </tr>
           </tfoot>
         </table>
@@ -175,7 +204,29 @@
         <div class="text-muted">
           Showing {{ $trips->firstItem() }} to {{ $trips->lastItem() }} of {{ $trips->total() }} entries
         </div>
-        {{ $trips->links() }}
+        <nav>
+          <ul class="pagination pagination-sm mb-0">
+            @if ($trips->onFirstPage())
+              <li class="page-item disabled"><span class="page-link">Previous</span></li>
+            @else
+              <li class="page-item"><a class="page-link" href="{{ $trips->previousPageUrl() }}">Previous</a></li>
+            @endif
+
+            @foreach ($trips->getUrlRange(1, $trips->lastPage()) as $page => $url)
+              @if ($page == $trips->currentPage())
+                <li class="page-item active"><span class="page-link">{{ $page }}</span></li>
+              @else
+                <li class="page-item"><a class="page-link" href="{{ $url }}">{{ $page }}</a></li>
+              @endif
+            @endforeach
+
+            @if ($trips->hasMorePages())
+              <li class="page-item"><a class="page-link" href="{{ $trips->nextPageUrl() }}">Next</a></li>
+            @else
+              <li class="page-item disabled"><span class="page-link">Next</span></li>
+            @endif
+          </ul>
+        </nav>
       </div>
     </div>
 
@@ -1058,35 +1109,32 @@
 
     function generateInvoice(invoiceType = 'basic') {
       const vehicleNumber = document.getElementById('vehicleNumber').value;
-      const warehouseLocation = document.getElementById('warehouseLocation').value || 'Depalpur';
+      const warehouseLocation = document.getElementById('warehouseLocation').value;
       const dateFrom = document.getElementById('dateFrom').value;
       const dateTo = document.getElementById('dateTo').value;
 
-      // Calculate billing month from date range or use current month
-      let billingMonth = '{{ date('F-Y') }}';
-      let useCurrentMonth = false;
+      // Calculate billing month from date range only
+      let billingMonth = null;
 
       // Check if date range is selected
       if (dateFrom && dateTo) {
         const date = new Date(dateFrom);
         const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
         billingMonth = monthNames[date.getMonth()] + '-' + date.getFullYear();
-      } else {
-        useCurrentMonth = true;
       }
 
-      console.log('Generate invoice called with:', { billingMonth, warehouseLocation, invoiceType, dateFrom, dateTo, vehicleNumber, useCurrentMonth });
+      console.log('Generate invoice called with:', { billingMonth, warehouseLocation, invoiceType, dateFrom, dateTo, vehicleNumber });
 
       const invoiceTitle = invoiceType === 'with_expenses' ? 'Invoice with Income & Expense' : 'Generate Invoice';
 
       // Check if any filters are applied
-      const hasFilters = vehicleNumber || warehouseLocation !== 'Depalpur' || (dateFrom && dateTo);
+      const hasFilters = vehicleNumber || warehouseLocation || (dateFrom && dateTo);
 
-      // Show warning only if no filters at all and no date range
-      if (!hasFilters && useCurrentMonth) {
+      // Show warning only if no filters at all
+      if (!hasFilters) {
         Swal.fire({
           title: 'No Filters Applied',
-          text: 'You have not selected any filters. The invoice will be generated for the current month (' + billingMonth + ') at ' + warehouseLocation + '. Do you want to continue?',
+          text: 'You have not selected any filters. The invoice will be generated for ALL records (all months, all warehouses). Do you want to continue?',
           icon: 'warning',
           showCancelButton: true,
           confirmButtonColor: '#3085d6',
@@ -1095,19 +1143,22 @@
           cancelButtonText: 'Cancel'
         }).then((result) => {
           if (result.isConfirmed) {
-            proceedWithInvoiceGeneration(billingMonth, warehouseLocation, invoiceType, dateFrom, dateTo, vehicleNumber);
+            proceedWithInvoiceGeneration(null, null, invoiceType, dateFrom, dateTo, vehicleNumber);
           }
         });
       } else {
         // Build confirmation message based on filters
         let confirmText = `Generate ${invoiceType === 'with_expenses' ? 'invoice with income & expense details' : 'basic invoice'}`;
-        if (useCurrentMonth) {
+        if (billingMonth) {
           confirmText += ` for ${billingMonth}`;
         }
         if (vehicleNumber) {
           confirmText += ` for vehicle ${vehicleNumber}`;
         }
-        confirmText += ` at ${warehouseLocation}?`;
+        if (warehouseLocation) {
+          confirmText += ` at ${warehouseLocation}`;
+        }
+        confirmText += '?';
 
         Swal.fire({
           title: invoiceTitle,
@@ -1130,12 +1181,16 @@
       console.log('Proceeding with invoice generation:', { billingMonth, warehouseLocation, invoiceType, dateFrom, dateTo, vehicleNumber });
 
       const payload = {
-        warehouse_location: warehouseLocation,
         invoice_type: invoiceType
       };
 
-      // Only add billing_month if no date range and no vehicle filter
-      if (!dateFrom && !dateTo && !vehicleNumber) {
+      // Only add warehouse_location if it's provided and we have some filter
+      if (warehouseLocation && warehouseLocation !== '' && (dateFrom || dateTo || vehicleNumber || billingMonth)) {
+        payload.warehouse_location = warehouseLocation;
+      }
+
+      // Only add billing_month if no date range, no vehicle filter, and billingMonth is set
+      if (!dateFrom && !dateTo && !vehicleNumber && billingMonth) {
         payload.billing_month = billingMonth;
       }
 
@@ -1143,6 +1198,8 @@
       if (dateFrom) payload.date_from = dateFrom;
       if (dateTo) payload.date_to = dateTo;
       if (vehicleNumber) payload.vehicle_number = vehicleNumber;
+
+      console.log('Payload being sent:', payload);
 
       fetch('/warehouse-trips/generate-invoice', {
         method: 'POST',
