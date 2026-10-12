@@ -7,48 +7,48 @@
         border: 1px solid #ddd;
         box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
-    
+
     .header {
         text-align: center;
         border-bottom: 2px solid #333;
         padding-bottom: 20px;
         margin-bottom: 20px;
     }
-    
+
     .company-name {
         font-size: 24px;
         font-weight: bold;
         color: #0066cc;
         margin-bottom: 5px;
     }
-    
+
     .company-details {
         font-size: 14px;
         color: #666;
         margin-bottom: 10px;
     }
-    
+
     .invoice-info {
         display: flex;
         justify-content: space-between;
         margin-bottom: 20px;
     }
-    
+
     .invoice-number {
         font-size: 18px;
         font-weight: bold;
     }
-    
+
     .billing-info {
         font-size: 14px;
     }
-    
+
     table {
         width: 100%;
         border-collapse: collapse;
         margin-bottom: 20px;
     }
-    
+
     th {
         background: #0066cc;
         color: white;
@@ -57,17 +57,17 @@
         font-weight: bold;
         border: 1px solid #0055aa;
     }
-    
+
     td {
         padding: 10px;
         border: 1px solid #ddd;
     }
-    
+
     .total-row {
         background: #f0f8ff;
         font-weight: bold;
     }
-    
+
     .footer {
         margin-top: 30px;
         padding-top: 20px;
@@ -76,30 +76,126 @@
         font-size: 12px;
         color: #666;
     }
-    
+
     .signature-section {
         margin-top: 40px;
         display: flex;
         justify-content: space-between;
     }
-    
+
     .signature-box {
         width: 200px;
         text-align: center;
     }
-    
+
     .signature-line {
         border-top: 1px solid #333;
         margin-top: 60px;
         padding-top: 5px;
     }
-    
+
+    /* Mobile Responsive Styles */
+    @media (max-width: 768px) {
+        .invoice-container {
+            padding: 15px;
+            margin: 10px;
+            max-width: none;
+        }
+
+        .company-name {
+            font-size: 18px;
+        }
+
+        .company-details {
+            font-size: 12px;
+        }
+
+        .invoice-info {
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .invoice-number {
+            font-size: 16px;
+        }
+
+        .billing-info {
+            font-size: 12px;
+        }
+
+        /* Make table scrollable on mobile */
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        table {
+            font-size: 12px;
+            min-width: 800px;
+        }
+
+        th, td {
+            padding: 8px 6px;
+            font-size: 11px;
+        }
+
+        .km-input, .rate-input {
+            width: 60px !important;
+            padding: 3px !important;
+            font-size: 11px !important;
+        }
+
+        .signature-section {
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .signature-box {
+            width: 100%;
+        }
+
+        .signature-line {
+            margin-top: 40px;
+        }
+
+        ul {
+            font-size: 12px;
+            padding-left: 20px;
+        }
+    }
+
+    @media (max-width: 480px) {
+        .invoice-container {
+            padding: 10px;
+            margin: 5px;
+        }
+
+        .company-name {
+            font-size: 16px;
+        }
+
+        .company-details {
+            font-size: 11px;
+        }
+
+        th, td {
+            padding: 6px 4px;
+            font-size: 10px;
+        }
+
+        .km-input, .rate-input {
+            width: 50px !important;
+            padding: 2px !important;
+            font-size: 10px !important;
+        }
+    }
+
     @media print {
         body {
             background: white;
             padding: 0;
         }
-        
+
         .invoice-container {
             border: none;
             box-shadow: none;
@@ -125,8 +221,8 @@
         <div>
             <div class="invoice-number">Invoice # {{ $invoiceNumber }}</div>
             <div class="billing-info">
-                <strong>Billing Month:</strong> {{ $trips->first() && $trips->first()->trip_date ? $trips->first()->trip_date->format('F-Y') : $billingMonth }}<br>
-                <strong>Warehouse:</strong> {{ $warehouseLocation }}
+                <strong>Billing Period:</strong> {{ $billingMonth ? $billingMonth : 'All Time' }}<br>
+                <strong>Warehouse:</strong> {{ $warehouseLocation ?? 'All Warehouses' }}
             </div>
         </div>
         <div style="text-align: right;">
@@ -138,7 +234,8 @@
     </div>
     
     <!-- Trips Table -->
-    <table>
+    <div class="table-responsive">
+        <table>
         <thead>
             <tr>
                 <th>Sr</th>
@@ -156,7 +253,7 @@
         <tbody>
             @foreach($trips as $index => $trip)
             <tr data-trip-id="{{ $trip->id }}">
-                <td>{{ $trip->trip_number ?? ($index + 1) }}</td>
+                <td>{{ $index + 1 }}</td>
                 <td>{{ $trip->trip_date ? $trip->trip_date->format('d/m/Y') : 'N/A' }}</td>
                 <td>{{ $trip->vehicle_number }}</td>
                 <td>{{ $trip->freight_bill_no ?? '-' }}</td>
@@ -178,6 +275,7 @@
             </tr>
         </tfoot>
     </table>
+    </div>
     
     <!-- Summary -->
     <div style="margin-bottom: 20px;">
@@ -187,7 +285,7 @@
             <li>Total Kilometers: {{ number_format($totalKm, 2) }}</li>
             <li>Total Freight: {{ number_format($totalFreight, 2) }}</li>
             <li>Average Rate per KM: {{ $totalKm > 0 ? number_format($totalFreight / $totalKm, 2) : '0.00' }}</li>
-            <li>Warehouse Location: {{ $warehouseLocation }}</li>
+            <li>Warehouse Location: {{ $warehouseLocation ?? 'All Warehouses' }}</li>
         </ul>
     </div>
     

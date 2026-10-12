@@ -42,7 +42,7 @@ class WarehouseTripController extends Controller
         // Apply date range filter if provided
         $query->byDateRange($dateFrom, $dateTo);
 
-        $trips = $query->orderBy('trip_date')->paginate(50);
+        $trips = $query->orderBy('trip_date', 'asc')->paginate(50);
 
         // Clone query for totals calculation
         $totalsQuery = WarehouseTrip::query();
@@ -400,15 +400,26 @@ class WarehouseTripController extends Controller
             $query->where('vehicle_number', 'like', '%' . $vehicleNumber . '%');
         }
 
-        // Apply warehouse location filter if provided
-        if ($warehouseLocation) {
-            $query->where('warehouse_location', $warehouseLocation);
+        // Apply date range filter if provided
+        if ($dateFrom && $dateTo) {
+            $query->whereBetween('trip_date', [$dateFrom, $dateTo]);
+
+            // Apply warehouse location filter only when date range is provided
+            if ($warehouseLocation) {
+                $query->where(function($q) use ($warehouseLocation) {
+                    $q->where('warehouse_location', $warehouseLocation)
+                      ->orWhereNull('warehouse_location');
+                });
+            }
+        } elseif ($vehicleNumber) {
+            // If vehicle filter is provided but no date range, don't filter by date
+            // Just use the vehicle filter
+        } else {
+            // No filters at all - export all records
+            // Don't apply any filters
         }
 
-        // Apply date range filter if provided
-        $query->byDateRange($dateFrom, $dateTo);
-
-        $trips = $query->orderBy('trip_date')->get();
+        $trips = $query->orderBy('trip_date', 'asc')->get();
 
         // Create Excel file using PhpSpreadsheet
         $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
@@ -478,20 +489,17 @@ class WarehouseTripController extends Controller
      */
     public function generateInvoice(Request $request)
     {
-        // Set default warehouse location to Depalpur
-        $defaultWarehouseLocation = 'Depalpur';
-
         // Handle both GET parameters and JSON body
         if ($request->isJson()) {
             $data = $request->json()->all();
-            $billingMonth = $data['billing_month'] ?? date('F-Y');
-            $warehouseLocation = $data['warehouse_location'] ?? $defaultWarehouseLocation;
+            $billingMonth = $data['billing_month'] ?? null;
+            $warehouseLocation = $data['warehouse_location'] ?? null;
             $dateFrom = $data['date_from'] ?? null;
             $dateTo = $data['date_to'] ?? null;
             $vehicleNumber = $data['vehicle_number'] ?? null;
         } else {
-            $billingMonth = $request->get('billing_month', date('F-Y'));
-            $warehouseLocation = $request->get('warehouse_location', $defaultWarehouseLocation);
+            $billingMonth = $request->get('billing_month');
+            $warehouseLocation = $request->get('warehouse_location');
             $dateFrom = $request->get('date_from');
             $dateTo = $request->get('date_to');
             $vehicleNumber = $request->get('vehicle_number');
@@ -504,7 +512,8 @@ class WarehouseTripController extends Controller
             'date_to' => $dateTo,
             'vehicle_number' => $vehicleNumber,
             'is_ajax' => $request->ajax(),
-            'wants_json' => $request->wantsJson()
+            'wants_json' => $request->wantsJson(),
+            'all_request_data' => $request->all()
         ]);
 
         // Build query
@@ -515,26 +524,40 @@ class WarehouseTripController extends Controller
             $query->where('vehicle_number', 'like', '%' . $vehicleNumber . '%');
         }
 
-        // Apply warehouse location filter only if vehicle is NOT filtered and warehouse is provided
-        if (!$vehicleNumber && $warehouseLocation) {
-            $query->where(function($q) use ($warehouseLocation) {
-                $q->where('warehouse_location', $warehouseLocation)
-                  ->orWhereNull('warehouse_location');
-            });
-        }
-
         // Apply date range filter if provided
         if ($dateFrom && $dateTo) {
             $query->whereBetween('trip_date', [$dateFrom, $dateTo]);
+            \Log::info('Date range filter applied', ['date_from' => $dateFrom, 'date_to' => $dateTo]);
+
+            // Apply warehouse location filter only when date range is provided
+            if ($warehouseLocation) {
+                $query->where(function($q) use ($warehouseLocation) {
+                    $q->where('warehouse_location', $warehouseLocation)
+                      ->orWhereNull('warehouse_location');
+                });
+            }
         } elseif ($vehicleNumber) {
             // If vehicle filter is provided but no date range, don't filter by date or billing_month
             // Just use the vehicle filter
-        } else {
-            // Only use billing_month if no other filters are provided
+        } elseif ($billingMonth) {
+            // Only use billing_month if no other filters are provided and billing_month is explicitly set
             $query->byBillingMonth($billingMonth);
-        }
 
-        $trips = $query->orderBy('trip_date')->get();
+            // Apply warehouse location filter only when using billing month (no date range)
+            if ($warehouseLocation) {
+                $query->where(function($q) use ($warehouseLocation) {
+                    $q->where('warehouse_location', $warehouseLocation)
+                      ->orWhereNull('warehouse_location');
+                });
+            }
+        }
+        // If billingMonth is null and no other filters, return all records without any date filter
+
+        \Log::info('Invoice query SQL', ['sql' => $query->toSql(), 'bindings' => $query->getBindings()]);
+
+        $trips = $query->orderBy('trip_date', 'asc')->get();
+
+        \Log::info('Trips found', ['count' => $trips->count(), 'first_trip' => $trips->first()]);
 
         if ($trips->isEmpty()) {
             \Log::info('No trips found for invoice generation', [
@@ -551,7 +574,7 @@ class WarehouseTripController extends Controller
                 $errorMessage .= ' for the selected date range';
             } elseif ($vehicleNumber) {
                 $errorMessage .= ' for this vehicle';
-            } else {
+            } elseif ($billingMonth) {
                 $errorMessage .= ' for this billing period';
             }
 
@@ -601,7 +624,9 @@ class WarehouseTripController extends Controller
         }
         
         // Generate invoice number
-        $invoiceNumber = 'INV-' . strtoupper(substr($billingMonth, 0, 3)) . '-' . date('Y') . '-' . str_pad(count($trips), 4, '0', STR_PAD_LEFT);
+        $invoicePrefix = $billingMonth ? strtoupper(substr($billingMonth, 0, 3)) : 'ALL';
+        $invoiceYear = $billingMonth ? substr($billingMonth, -4) : date('Y');
+        $invoiceNumber = 'INV-' . $invoicePrefix . '-' . $invoiceYear . '-' . str_pad(count($trips), 4, '0', STR_PAD_LEFT);
         
         \Log::info('Invoice data prepared', [
             'trips_count' => $trips->count(),
