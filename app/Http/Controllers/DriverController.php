@@ -55,6 +55,11 @@ class DriverController extends Controller
 
             $validated = $request->validate($rules);
 
+            // Set default status if not provided
+            if (!isset($validated['status']) || $validated['status'] === null || $validated['status'] === '') {
+                $validated['status'] = 'on_duty';
+            }
+
             // Remove null values to let database defaults apply
             $validated = array_filter($validated, function($value) {
                 return $value !== null && $value !== '';
@@ -134,6 +139,11 @@ class DriverController extends Controller
             }
 
             $validated = $request->validate($rules);
+
+            // Set default status if not provided
+            if (!isset($validated['status']) || $validated['status'] === null || $validated['status'] === '') {
+                $validated['status'] = 'on_duty';
+            }
 
             // Remove null values to let database defaults apply
             $validated = array_filter($validated, function($value) {
