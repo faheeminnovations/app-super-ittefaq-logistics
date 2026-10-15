@@ -23,12 +23,18 @@ class WarehouseTripController extends Controller
         $dateFrom = $request->get('date_from');
         $dateTo = $request->get('date_to');
         $warehouseLocation = $request->get('warehouse_location');
+        $businessCategory = $request->get('business_category');
 
         $query = WarehouseTrip::with(['vehicle', 'driver', 'customer']);
 
         // Apply vehicle number filter if provided
         if ($vehicleNumber) {
             $query->where('vehicle_number', 'like', '%' . $vehicleNumber . '%');
+        }
+
+        // Apply business category filter if provided
+        if ($businessCategory) {
+            $query->where('business_category', $businessCategory);
         }
 
         // Apply warehouse location filter if provided
@@ -49,6 +55,9 @@ class WarehouseTripController extends Controller
 
         if ($vehicleNumber) {
             $totalsQuery->where('vehicle_number', 'like', '%' . $vehicleNumber . '%');
+        }
+        if ($businessCategory) {
+            $totalsQuery->where('business_category', $businessCategory);
         }
         if ($warehouseLocation) {
             $totalsQuery->where(function($q) use ($warehouseLocation) {
@@ -392,12 +401,18 @@ class WarehouseTripController extends Controller
         $dateFrom = $request->get('date_from');
         $dateTo = $request->get('date_to');
         $warehouseLocation = $request->get('warehouse_location');
+        $businessCategory = $request->get('business_category');
 
         $query = WarehouseTrip::with(['vehicle', 'driver', 'customer']);
 
         // Apply vehicle number filter if provided
         if ($vehicleNumber) {
             $query->where('vehicle_number', 'like', '%' . $vehicleNumber . '%');
+        }
+
+        // Apply business category filter if provided
+        if ($businessCategory) {
+            $query->where('business_category', $businessCategory);
         }
 
         // Apply date range filter if provided
@@ -497,12 +512,14 @@ class WarehouseTripController extends Controller
             $dateFrom = $data['date_from'] ?? null;
             $dateTo = $data['date_to'] ?? null;
             $vehicleNumber = $data['vehicle_number'] ?? null;
+            $businessCategory = $data['business_category'] ?? null;
         } else {
             $billingMonth = $request->get('billing_month');
             $warehouseLocation = $request->get('warehouse_location');
             $dateFrom = $request->get('date_from');
             $dateTo = $request->get('date_to');
             $vehicleNumber = $request->get('vehicle_number');
+            $businessCategory = $request->get('business_category');
         }
 
         \Log::info('Generate invoice called', [
@@ -511,6 +528,7 @@ class WarehouseTripController extends Controller
             'date_from' => $dateFrom,
             'date_to' => $dateTo,
             'vehicle_number' => $vehicleNumber,
+            'business_category' => $businessCategory,
             'is_ajax' => $request->ajax(),
             'wants_json' => $request->wantsJson(),
             'all_request_data' => $request->all()
@@ -522,6 +540,11 @@ class WarehouseTripController extends Controller
         // Apply vehicle number filter if provided
         if ($vehicleNumber) {
             $query->where('vehicle_number', 'like', '%' . $vehicleNumber . '%');
+        }
+
+        // Apply business category filter if provided
+        if ($businessCategory) {
+            $query->where('business_category', $businessCategory);
         }
 
         // Apply date range filter if provided
@@ -539,6 +562,9 @@ class WarehouseTripController extends Controller
         } elseif ($vehicleNumber) {
             // If vehicle filter is provided but no date range, don't filter by date or billing_month
             // Just use the vehicle filter
+        } elseif ($businessCategory) {
+            // If business category filter is provided but no date range, don't filter by date or billing_month
+            // Just use the business category filter
         } elseif ($billingMonth) {
             // Only use billing_month if no other filters are provided and billing_month is explicitly set
             $query->byBillingMonth($billingMonth);
@@ -565,6 +591,7 @@ class WarehouseTripController extends Controller
                 'date_from' => $dateFrom,
                 'date_to' => $dateTo,
                 'vehicle_number' => $vehicleNumber,
+                'business_category' => $businessCategory,
                 'billing_month' => $billingMonth
             ]);
 
@@ -574,6 +601,8 @@ class WarehouseTripController extends Controller
                 $errorMessage .= ' for the selected date range';
             } elseif ($vehicleNumber) {
                 $errorMessage .= ' for this vehicle';
+            } elseif ($businessCategory) {
+                $errorMessage .= ' for this business category';
             } elseif ($billingMonth) {
                 $errorMessage .= ' for this billing period';
             }
