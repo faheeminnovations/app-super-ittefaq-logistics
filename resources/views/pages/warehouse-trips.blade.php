@@ -83,7 +83,20 @@
           <label class="form-label">Date To</label>
           <input type="date" class="form-control" id="dateTo" value="{{ request('date_to') }}">
         </div>
-        <div class="col-6 col-md-3">
+        <div class="col-6 col-md-2">
+          <label class="form-label">Business Category</label>
+          <select class="form-select" id="businessCategory">
+            <option value="">All Categories</option>
+            <option value="Open Market Work" {{ request('business_category') === 'Open Market Work' ? 'selected' : '' }}>Open Market Work</option>
+            <option value="Buyer Supply Chain" {{ request('business_category') === 'Buyer Supply Chain' ? 'selected' : '' }}>Buyer Supply Chain</option>
+            <option value="Buyer Breading" {{ request('business_category') === 'Buyer Breading' ? 'selected' : '' }}>Buyer Breading</option>
+            <option value="Buyer Seed Supply" {{ request('business_category') === 'Buyer Seed Supply' ? 'selected' : '' }}>Buyer Seed Supply</option>
+            <option value="Buyer Marketing Development" {{ request('business_category') === 'Buyer Marketing Development' ? 'selected' : '' }}>Buyer Marketing Development</option>
+            <option value="Buyer S.P.R" {{ request('business_category') === 'Buyer S.P.R' ? 'selected' : '' }}>Buyer S.P.R</option>
+            <option value="Syngenta" {{ request('business_category') === 'Syngenta' ? 'selected' : '' }}>Syngenta</option>
+          </select>
+        </div>
+        <div class="col-6 col-md-2">
           <label class="form-label">Warehouse Location</label>
           <select class="form-select" id="warehouseLocation" onchange="changeWarehouseLocation()">
             <option value="">All Warehouses</option>
@@ -92,7 +105,7 @@
             @endforeach
           </select>
         </div>
-        <div class="col-12 col-md-3">
+        <div class="col-12 col-md-2">
           <label class="form-label">Search</label>
           <input type="text" class="form-control" id="searchTrips" placeholder="Search by vehicle, GP#, or delivery point...">
         </div>
@@ -584,6 +597,7 @@
       document.getElementById('dateFrom').value = '';
       document.getElementById('dateTo').value = '';
       document.getElementById('warehouseLocation').value = '';
+      document.getElementById('businessCategory').value = '';
       window.location.href = '?';
     }
 
@@ -686,12 +700,14 @@
     function applyFilters() {
       const vehicleNumber = document.getElementById('vehicleNumber').value;
       const warehouseLocation = document.getElementById('warehouseLocation').value;
+      const businessCategory = document.getElementById('businessCategory').value;
       const dateFrom = document.getElementById('dateFrom').value;
       const dateTo = document.getElementById('dateTo').value;
 
       let params = new URLSearchParams();
       if (vehicleNumber) params.append('vehicle_number', vehicleNumber);
       if (warehouseLocation) params.append('warehouse_location', warehouseLocation);
+      if (businessCategory) params.append('business_category', businessCategory);
       if (dateFrom) params.append('date_from', dateFrom);
       if (dateTo) params.append('date_to', dateTo);
 
@@ -1094,22 +1110,25 @@
       console.log('exportTrips function called');
       const vehicleNumber = document.getElementById('vehicleNumber').value;
       const warehouseLocation = document.getElementById('warehouseLocation').value;
+      const businessCategory = document.getElementById('businessCategory').value;
       const dateFrom = document.getElementById('dateFrom').value;
       const dateTo = document.getElementById('dateTo').value;
 
       let params = new URLSearchParams();
       if (vehicleNumber) params.append('vehicle_number', vehicleNumber);
       if (warehouseLocation) params.append('warehouse_location', warehouseLocation);
+      if (businessCategory) params.append('business_category', businessCategory);
       if (dateFrom) params.append('date_from', dateFrom);
       if (dateTo) params.append('date_to', dateTo);
 
-      console.log('Export called with:', { vehicleNumber, warehouseLocation, dateFrom, dateTo });
+      console.log('Export called with:', { vehicleNumber, warehouseLocation, businessCategory, dateFrom, dateTo });
       window.location.href = `/warehouse-trips/export?${params.toString()}`;
     }
 
     function generateInvoice(invoiceType = 'basic') {
       const vehicleNumber = document.getElementById('vehicleNumber').value;
       const warehouseLocation = document.getElementById('warehouseLocation').value;
+      const businessCategory = document.getElementById('businessCategory').value;
       const dateFrom = document.getElementById('dateFrom').value;
       const dateTo = document.getElementById('dateTo').value;
 
@@ -1123,12 +1142,12 @@
         billingMonth = monthNames[date.getMonth()] + '-' + date.getFullYear();
       }
 
-      console.log('Generate invoice called with:', { billingMonth, warehouseLocation, invoiceType, dateFrom, dateTo, vehicleNumber });
+      console.log('Generate invoice called with:', { billingMonth, warehouseLocation, businessCategory, invoiceType, dateFrom, dateTo, vehicleNumber });
 
       const invoiceTitle = invoiceType === 'with_expenses' ? 'Invoice with Income & Expense' : 'Generate Invoice';
 
       // Check if any filters are applied
-      const hasFilters = vehicleNumber || warehouseLocation || (dateFrom && dateTo);
+      const hasFilters = vehicleNumber || warehouseLocation || businessCategory || (dateFrom && dateTo);
 
       // Show warning only if no filters at all
       if (!hasFilters) {
@@ -1143,7 +1162,7 @@
           cancelButtonText: 'Cancel'
         }).then((result) => {
           if (result.isConfirmed) {
-            proceedWithInvoiceGeneration(null, null, invoiceType, dateFrom, dateTo, vehicleNumber);
+            proceedWithInvoiceGeneration(null, null, invoiceType, dateFrom, dateTo, vehicleNumber, businessCategory);
           }
         });
       } else {
@@ -1154,6 +1173,9 @@
         }
         if (vehicleNumber) {
           confirmText += ` for vehicle ${vehicleNumber}`;
+        }
+        if (businessCategory) {
+          confirmText += ` for ${businessCategory}`;
         }
         if (warehouseLocation) {
           confirmText += ` at ${warehouseLocation}`;
@@ -1171,26 +1193,26 @@
           cancelButtonText: 'Cancel'
         }).then((result) => {
           if (result.isConfirmed) {
-            proceedWithInvoiceGeneration(billingMonth, warehouseLocation, invoiceType, dateFrom, dateTo, vehicleNumber);
+            proceedWithInvoiceGeneration(billingMonth, warehouseLocation, invoiceType, dateFrom, dateTo, vehicleNumber, businessCategory);
           }
         });
       }
     }
 
-    function proceedWithInvoiceGeneration(billingMonth, warehouseLocation, invoiceType, dateFrom, dateTo, vehicleNumber) {
-      console.log('Proceeding with invoice generation:', { billingMonth, warehouseLocation, invoiceType, dateFrom, dateTo, vehicleNumber });
+    function proceedWithInvoiceGeneration(billingMonth, warehouseLocation, invoiceType, dateFrom, dateTo, vehicleNumber, businessCategory) {
+      console.log('Proceeding with invoice generation:', { billingMonth, warehouseLocation, businessCategory, invoiceType, dateFrom, dateTo, vehicleNumber });
 
       const payload = {
         invoice_type: invoiceType
       };
 
       // Only add warehouse_location if it's provided and we have some filter
-      if (warehouseLocation && warehouseLocation !== '' && (dateFrom || dateTo || vehicleNumber || billingMonth)) {
+      if (warehouseLocation && warehouseLocation !== '' && (dateFrom || dateTo || vehicleNumber || billingMonth || businessCategory)) {
         payload.warehouse_location = warehouseLocation;
       }
 
       // Only add billing_month if no date range, no vehicle filter, and billingMonth is set
-      if (!dateFrom && !dateTo && !vehicleNumber && billingMonth) {
+      if (!dateFrom && !dateTo && !vehicleNumber && !businessCategory && billingMonth) {
         payload.billing_month = billingMonth;
       }
 
@@ -1198,6 +1220,7 @@
       if (dateFrom) payload.date_from = dateFrom;
       if (dateTo) payload.date_to = dateTo;
       if (vehicleNumber) payload.vehicle_number = vehicleNumber;
+      if (businessCategory) payload.business_category = businessCategory;
 
       console.log('Payload being sent:', payload);
 
