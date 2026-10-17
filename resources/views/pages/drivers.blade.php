@@ -323,6 +323,12 @@ $(document).ready(function() {
             }
         });
 
+        // Ensure status is always sent - set default if empty
+        var statusValue = document.getElementById('status').value;
+        if (!statusValue || statusValue === '') {
+            formData.set('status', 'on_duty');
+        }
+
         // Log form data for debugging
         console.log('Submitting form with URL:', url);
         console.log('Form data keys:', Array.from(formData.keys()));
