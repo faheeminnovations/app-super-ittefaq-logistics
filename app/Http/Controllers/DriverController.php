@@ -55,17 +55,29 @@ class DriverController extends Controller
 
             $validated = $request->validate($rules);
 
-            // Set default status if not provided
-            if (!isset($validated['status']) || $validated['status'] === null || $validated['status'] === '') {
+            // Force status to be set - this should override any null/empty value
+            $validated['status'] = $validated['status'] ?? 'on_duty';
+            if (empty($validated['status'])) {
                 $validated['status'] = 'on_duty';
             }
 
-            // Remove null values to let database defaults apply
-            $validated = array_filter($validated, function($value) {
-                return $value !== null && $value !== '';
-            });
+            // Remove null values except status
+            $filteredData = [];
+            foreach ($validated as $key => $value) {
+                if ($key === 'status') {
+                    // Always include status
+                    $filteredData[$key] = $value;
+                } elseif ($value !== null && $value !== '') {
+                    $filteredData[$key] = $value;
+                }
+            }
 
-            Driver::create($validated);
+            // Final check - ensure status is set
+            if (!isset($filteredData['status']) || empty($filteredData['status'])) {
+                $filteredData['status'] = 'on_duty';
+            }
+
+            Driver::create($filteredData);
 
             if (request()->ajax() || request()->wantsJson()) {
                 return response()->json(['success' => true, 'message' => 'Driver created successfully.']);
@@ -145,12 +157,18 @@ class DriverController extends Controller
                 $validated['status'] = 'on_duty';
             }
 
-            // Remove null values to let database defaults apply
-            $validated = array_filter($validated, function($value) {
-                return $value !== null && $value !== '';
-            });
+            // Remove null values except status
+            $filteredData = [];
+            foreach ($validated as $key => $value) {
+                if ($key === 'status') {
+                    // Always include status
+                    $filteredData[$key] = $value;
+                } elseif ($value !== null && $value !== '') {
+                    $filteredData[$key] = $value;
+                }
+            }
 
-            $driver->update($validated);
+            $driver->update($filteredData);
 
             if (request()->ajax() || request()->wantsJson()) {
                 return response()->json(['success' => true, 'message' => 'Driver updated successfully.']);
