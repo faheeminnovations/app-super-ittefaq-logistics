@@ -187,11 +187,10 @@
                 <label for="type" class="form-label">Vehicle Type</label>
                 <select class="form-select" name="type" id="type" required>
                   <option value="">Select Type</option>
-                  <option value="Rigid Truck">Rigid Truck</option>
-                  <option value="Artic">Artic</option>
-                  <option value="Van">Van</option>
-                  <option value="Trailer">Trailer</option>
+                  <option value="Mazda truck">Mazda truck</option>
+                  <option value="Shahzor Truck">Shahzor Truck</option>
                   <option value="Pickup">Pickup</option>
+                  <option value="Trailer">Trailer</option>
                   <option value="Other">Other</option>
                 </select>
               </div>
