@@ -250,11 +250,8 @@
     <div class="header">
         <div class="company-name">SUPER ITTEFAQ MINI GOODS TRANSPORT COMPANY</div>
         <div class="company-details">
-            Rizvi Chowk, Bypass Okara Road Depalpur<br>
-            Contact: 0300-6967450<br>
-            Email: zahidafzal5152@gmail.com<br>
-            NTN: 4252472-5<br>
-            VENDOR CODE: 0006781511
+            Rizvi Chowk, Bypass Okara Road Depalpur | Contact: 0300-6967450 | Email: zahidafzal5152@gmail.com<br>
+            NTN: 4252472-5 | VENDOR CODE: 0006781511
         </div>
     </div>
 
