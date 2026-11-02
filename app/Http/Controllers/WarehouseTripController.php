@@ -513,6 +513,132 @@ class WarehouseTripController extends Controller
     }
 
     /**
+     * Generate expense report for warehouse trips.
+     */
+    public function generateExpenseReport(Request $request)
+    {
+        $vehicleNumber = $request->get('vehicle_number');
+        $dateFrom = $request->get('date_from');
+        $dateTo = $request->get('date_to');
+        $warehouseLocation = $request->get('warehouse_location');
+        $businessCategory = $request->get('business_category');
+
+        $query = WarehouseTrip::with(['vehicle', 'driver', 'customer', 'expenseEntries']);
+
+        // Apply vehicle number filter if provided
+        if ($vehicleNumber) {
+            $query->where('vehicle_number', 'like', '%' . $vehicleNumber . '%');
+        }
+
+        // Apply business category filter if provided
+        if ($businessCategory) {
+            $query->where('business_category', $businessCategory);
+        }
+
+        // Apply warehouse location filter if provided
+        if ($warehouseLocation) {
+            $query->where(function($q) use ($warehouseLocation) {
+                $q->where('warehouse_location', $warehouseLocation)
+                  ->orWhereNull('warehouse_location');
+            });
+        }
+
+        // Apply date range filter if provided
+        $query->byDateRange($dateFrom, $dateTo);
+
+        $trips = $query->orderBy('trip_date', 'asc')->get();
+
+        // Create Excel file using PhpSpreadsheet
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // Set company header
+        $sheet->setCellValue('A1', 'SUPER ITTEFAQ MINI GOODS TRANSPORT COMPANY');
+        $sheet->setCellValue('A2', 'Rizvi Chowk, Bypass Okara Road');
+        $sheet->setCellValue('A3', 'Contact Detail: 0300-6967450');
+        $sheet->setCellValue('A4', 'NTN : 4252472-5');
+
+        $dateRange = ($dateFrom && $dateTo) ?
+            Carbon::parse($dateFrom)->format('d M Y') . ' to ' . Carbon::parse($dateTo)->format('d M Y') :
+            'All Time';
+        $sheet->setCellValue('A5', 'Expense Report - ' . $dateRange);
+
+        // Set column headers
+        $sheet->setCellValue('A7', 'Date');
+        $sheet->setCellValue('B7', 'Vhl No');
+        $sheet->setCellValue('C7', 'GP#');
+        $sheet->setCellValue('D7', 'Delivery Point');
+        $sheet->setCellValue('E7', 'Expense Category');
+        $sheet->setCellValue('F7', 'Payment Type');
+        $sheet->setCellValue('G7', 'Amount');
+        $sheet->setCellValue('H7', 'Description');
+
+        // Fill data
+        $row = 8;
+        foreach ($trips as $trip) {
+            if ($trip->expenseEntries->isEmpty()) {
+                // Add a row for trips with no expenses
+                $sheet->setCellValue('A' . $row, $trip->trip_date ? $trip->trip_date->format('d/m/Y') : 'N/A');
+                $sheet->setCellValue('B' . $row, $trip->vehicle_number);
+                $sheet->setCellValue('C' . $row, $trip->gp_number);
+                $sheet->setCellValue('D' . $row, $trip->delivery_point);
+                $sheet->setCellValue('E' . $row, 'No Expenses');
+                $sheet->setCellValue('F' . $row, '-');
+                $sheet->setCellValue('G' . $row, '0.00');
+                $sheet->setCellValue('H' . $row, '-');
+                $row++;
+            } else {
+                // Add rows for each expense entry
+                foreach ($trip->expenseEntries as $expense) {
+                    $sheet->setCellValue('A' . $row, $trip->trip_date ? $trip->trip_date->format('d/m/Y') : 'N/A');
+                    $sheet->setCellValue('B' . $row, $trip->vehicle_number);
+                    $sheet->setCellValue('C' . $row, $trip->gp_number);
+                    $sheet->setCellValue('D' . $row, $trip->delivery_point);
+                    $sheet->setCellValue('E' . $row, ucfirst(str_replace('_', ' ', $expense->expense_category)));
+                    $sheet->setCellValue('F' . $row, ucfirst($expense->payment_type ?? '-'));
+                    $sheet->setCellValue('G' . $row, number_format($expense->amount, 2));
+                    $sheet->setCellValue('H' . $row, $expense->description ?? '-');
+                    $row++;
+                }
+            }
+        }
+
+        // Add totals row
+        $row++;
+        $sheet->setCellValue('A' . $row, 'TOTAL INCOME');
+        $sheet->setCellValue('G' . $row, number_format($trips->sum('total_income'), 2));
+
+        $row++;
+        $sheet->setCellValue('A' . $row, 'TOTAL EXPENSE');
+        $sheet->setCellValue('G' . $row, number_format($trips->sum('total_expense'), 2));
+
+        $row++;
+        $netAmount = $trips->sum('total_income') - $trips->sum('total_expense');
+        $sheet->setCellValue('A' . $row, 'NET AMOUNT (PROFIT/LOSS)');
+        $sheet->setCellValue('G' . $row, number_format($netAmount, 2));
+
+        // Auto-size columns
+        foreach (range('A', 'H') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        // Set headers for download
+        if ($dateFrom && $dateTo) {
+            $filename = "expense_report_" . Carbon::parse($dateFrom)->format('Y-m-d') . '_to_' . Carbon::parse($dateTo)->format('Y-m-d') . ".xlsx";
+        } else {
+            $filename = "expense_report_all_time.xlsx";
+        }
+
+        // Save to temp file
+        $tempFile = tempnam(sys_get_temp_dir(), 'expense_report_');
+        $writer = \PhpOffice\PhpSpreadsheet\IOFactory::createWriter($spreadsheet, 'Xlsx');
+        $writer->save($tempFile);
+
+        // Return file download response
+        return response()->download($tempFile, $filename)->deleteFileAfterSend(true);
+    }
+
+    /**
      * Generate invoice for billing month.
      */
     public function generateInvoice(Request $request)
