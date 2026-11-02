@@ -109,6 +109,16 @@
             .print-btn {
                 display: none;
             }
+            #invoiceNumber, #billingPeriod, #summaryText {
+                border: none !important;
+                background: transparent !important;
+                padding: 5px !important;
+                -webkit-appearance: none;
+                -moz-appearance: none;
+            }
+            #summaryText {
+                resize: none;
+            }
         }
     </style>
 </head>
@@ -122,10 +132,10 @@
 
         <div class="invoice-info">
             <div class="invoice-info-row">
-                <strong>Invoice No :</strong> {{ $invoiceNumber }}                              <strong>Date :</strong> {{ Carbon\Carbon::createFromFormat('Y-m', $billingMonth)->format('F-Y') }}
+                <strong>Invoice No :</strong> <input type="text" id="invoiceNumber" value="{{ $invoiceNumber }}" style="border: 1px solid #ddd; padding: 5px; width: 200px;">                              <strong>Date :</strong> {{ Carbon\Carbon::createFromFormat('Y-m', $billingMonth)->format('F-Y') }}
             </div>
             <div class="invoice-info-row">
-                <strong>Billing Month :</strong> {{ Carbon\Carbon::createFromFormat('Y-m', $billingMonth)->format('F-Y') }}
+                <strong>Billing Period :</strong> <input type="text" id="billingPeriod" value="{{ Carbon\Carbon::createFromFormat('Y-m', $billingMonth)->format('F-Y') }}" style="border: 1px solid #ddd; padding: 5px; width: 200px;">
             </div>
         </div>
 
@@ -173,6 +183,11 @@
                 <strong>Total Freight:</strong>
                 <span>PKR {{ number_format($totalFreight, 0) }}</span>
             </div>
+        </div>
+
+        <div style="margin-top: 20px;">
+            <strong>Summary:</strong>
+            <textarea id="summaryText" rows="3" style="width: 100%; margin-top: 10px; border: 1px solid #ddd; padding: 10px;" placeholder="Enter summary text here..."></textarea>
         </div>
 
         <button class="print-btn" onclick="window.print()">Print Invoice</button>
