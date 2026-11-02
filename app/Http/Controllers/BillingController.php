@@ -424,13 +424,16 @@ class BillingController extends Controller
             // Calculate totals
             $totalFreight = $billings->sum('freight') ?? 0;
             $totalKm = $billings->sum('km_covered') ?? 0;
+            
+            $companySettings = \App\Models\CompanySettings::getCurrent();
 
             return view('pages.invoice', compact(
                 'billings',
                 'billingMonth',
                 'invoiceNumber',
                 'totalFreight',
-                'totalKm'
+                'totalKm',
+                'companySettings'
             ));
         } catch (\Exception $e) {
             return response()->json([

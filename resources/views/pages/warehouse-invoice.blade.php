@@ -200,7 +200,7 @@
             box-shadow: none;
         }
 
-        .km-input, .rate-input, .required-km-input {
+        .km-input, .rate-input {
             border: none !important;
             background: transparent !important;
             padding: 5px !important;
@@ -208,7 +208,7 @@
             -moz-appearance: none;
         }
 
-        #invoiceNumber, #summaryText {
+        #invoiceNumber, #summaryText, #vendorCode {
             border: none !important;
             background: transparent !important;
             padding: 5px !important;
@@ -228,7 +228,7 @@
         <div class="company-name">{{ $companySettings->company_name ?? 'SUPER ITTEFAQ MINI GOODS TRANSPORT COMPANY' }}</div>
         <div class="company-details">
             {{ $companySettings->address ?? 'Rizvi Chowk, Bypass Okara Road Depalpur' }} | Contact: {{ $companySettings->contact_phone ?? '0300-6967450' }} | Email: {{ $companySettings->contact_email ?? 'zahidafzal5152@gmail.com' }}<br>
-            NTN: {{ $companySettings->ntn ?? '4252472-5' }} | VENDOR CODE: {{ $companySettings->vendor_code ?? '0006781511' }}
+            NTN: {{ $companySettings->ntn ?? '4252472-5' }} | VENDOR CODE: <input type="text" id="vendorCode" value="{{ $companySettings->vendor_code ?? '0006781511' }}" style="border: 1px solid #ddd; padding: 5px; width: 120px;">
         </div>
     </div>
 
@@ -256,7 +256,6 @@
                 <th>GP#</th>
                 <th style="width: 25%;">Delivery Point</th>
                 <th>Vehicle Type</th>
-                <th>Required KM</th>
                 <th>KM</th>
                 <th>Rate</th>
                 <th>Freight</th>
@@ -271,7 +270,6 @@
                 <td>{{ $trip->gp_number }}</td>
                 <td>{{ $trip->delivery_point }}</td>
                 <td>{{ $trip->vehicle_type }}</td>
-                <td><input type="number" step="0.01" value="{{ $trip->required_km ? number_format($trip->required_km, 2) : '' }}" class="required-km-input" data-trip-id="{{ $trip->id }}" style="width: 80px; padding: 5px; border: 1px solid #ddd; border-radius: 4px;" onchange="updateInvoiceRequiredKm(this)" placeholder="-"></td>
                 <td><input type="number" step="0.01" value="{{ number_format($trip->kilometers, 2) }}" class="km-input" data-trip-id="{{ $trip->id }}" style="width: 80px; padding: 5px; border: 1px solid #ddd; border-radius: 4px;" oninput="updateFreight(this)"></td>
                 <td><input type="number" step="0.01" value="{{ number_format($trip->rate_per_km, 2) }}" class="rate-input" data-trip-id="{{ $trip->id }}" style="width: 80px; padding: 5px; border: 1px solid #ddd; border-radius: 4px;" oninput="updateFreight(this)"></td>
                 <td class="freight-cell">{{ number_format($trip->freight, 2) }}</td>
@@ -280,7 +278,7 @@
         </tbody>
         <tfoot>
             <tr class="total-row">
-                <td colspan="6" style="text-align: right;"><strong>TOTAL:</strong></td>
+                <td colspan="5" style="text-align: right;"><strong>TOTAL:</strong></td>
                 <td>-</td>
                 <td><strong id="totalKm">{{ number_format($totalKm, 2) }}</strong></td>
                 <td>-</td>

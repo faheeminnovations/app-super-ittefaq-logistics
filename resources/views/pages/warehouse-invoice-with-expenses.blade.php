@@ -242,27 +242,43 @@
             border: none;
             box-shadow: none;
         }
+
+        .km-input, .rate-input {
+            border: none !important;
+            background: transparent !important;
+            padding: 5px !important;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+        }
+
+        #invoiceNumber, #summaryText, #vendorCode {
+            border: none !important;
+            background: transparent !important;
+            padding: 5px !important;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+        }
+
+        #summaryText {
+            resize: none;
+        }
     }
 </style>
 
 <div class="invoice-container">
     <!-- Header -->
     <div class="header">
-        <div class="company-name">SUPER ITTEFAQ MINI GOODS TRANSPORT COMPANY</div>
+        <div class="company-name">{{ $companySettings->company_name ?? 'SUPER ITTEFAQ MINI GOODS TRANSPORT COMPANY' }}</div>
         <div class="company-details">
-            Rizvi Chowk, Bypass Okara Road Depalpur | Contact: 0300-6967450 | Email: zahidafzal5152@gmail.com<br>
-            NTN: 4252472-5 | VENDOR CODE: 0006781511
+            {{ $companySettings->address ?? 'Rizvi Chowk, Bypass Okara Road Depalpur' }} | Contact: {{ $companySettings->contact_phone ?? '0300-6967450' }} | Email: {{ $companySettings->contact_email ?? 'zahidafzal5152@gmail.com' }}<br>
+            NTN: {{ $companySettings->ntn ?? '4252472-5' }} | VENDOR CODE: <input type="text" id="vendorCode" value="{{ $companySettings->vendor_code ?? '0006781511' }}" style="border: 1px solid #ddd; padding: 5px; width: 120px;">
         </div>
     </div>
 
     <!-- Invoice Information -->
     <div class="invoice-info">
         <div>
-            <div class="invoice-number">Invoice # {{ $invoiceNumber }}</div>
-            <div class="billing-info">
-                <strong>Billing Period:</strong> {{ $billingMonth ? $billingMonth : 'All Time' }}<br>
-                <strong>Warehouse:</strong> {{ $warehouseLocation ?? 'All Warehouses' }}
-            </div>
+            <div class="invoice-number">{{ $companySettings->warehouse_invoice_label ?? 'Warehouse Invoice' }} # <input type="text" id="invoiceNumber" value="{{ $invoiceNumber }}" style="border: 1px solid #ddd; padding: 5px; width: 200px;"></div>
         </div>
         <div style="text-align: right;">
             <div class="billing-info">
@@ -280,7 +296,6 @@
                 <th>Sr</th>
                 <th>Date</th>
                 <th>Vehicle No</th>
-                <th>Freight Bill No</th>
                 <th>GP#</th>
                 <th style="width: 25%;">Delivery Point</th>
                 <th>Vehicle Type</th>
@@ -295,7 +310,6 @@
                 <td>{{ $index + 1 }}</td>
                 <td>{{ $trip->trip_date ? $trip->trip_date->format('d/m/Y') : 'N/A' }}</td>
                 <td>{{ $trip->vehicle_number }}</td>
-                <td>{{ $trip->freight_bill_no ?? '-' }}</td>
                 <td>{{ $trip->gp_number }}</td>
                 <td>{{ $trip->delivery_point }}</td>
                 <td>{{ $trip->vehicle_type }}</td>
@@ -307,7 +321,8 @@
         </tbody>
         <tfoot>
             <tr class="total-row">
-                <td colspan="7" style="text-align: right;"><strong>TOTAL:</strong></td>
+                <td colspan="5" style="text-align: right;"><strong>TOTAL:</strong></td>
+                <td>-</td>
                 <td><strong id="totalKm">{{ number_format($totalKm, 2) }}</strong></td>
                 <td>-</td>
                 <td><strong id="totalFreight">{{ number_format($totalFreight, 2) }}</strong></td>
@@ -418,8 +433,11 @@
             <li>Total Expense: {{ number_format($totalExpense ?? 0, 2) }}</li>
             <li>Net Amount: {{ number_format($netAmount ?? ($totalFreight - ($totalExpense ?? 0)), 2) }}</li>
             <li>Average Rate per KM: {{ $totalKm > 0 ? number_format($totalFreight / $totalKm, 2) : '0.00' }}</li>
-            <li>Warehouse Location: {{ $warehouseLocation ?? 'All Warehouses' }}</li>
         </ul>
+        <div style="margin-top: 15px;">
+            <strong>Summary Text:</strong>
+            <textarea id="summaryText" rows="3" style="width: 100%; margin-top: 10px; border: 1px solid #ddd; padding: 10px;" placeholder="Enter summary text here..."></textarea>
+        </div>
     </div>
     
     <!-- Signature Section -->
@@ -441,3 +459,72 @@
         <p>&copy; {{ date('Y') }} Super Ittefaq Mini Goods / Super Ittefaq Logistics</p>
     </div>
 </div>
+
+<script>
+function updateInvoiceRequiredKm(input) {
+    const tripId = input.getAttribute('data-trip-id');
+    const value = input.value;
+    
+    fetch(`/warehouse-trips/${tripId}/update-required-km`, {
+        method: 'POST',
+        headers: {
+            'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+            required_km: value
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            input.style.backgroundColor = '#d4edda';
+            setTimeout(() => {
+                input.style.backgroundColor = '';
+            }, 1000);
+        } else {
+            alert('Failed to update Required KM: ' + (data.message || 'Unknown error'));
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Failed to update Required KM');
+    });
+}
+
+function updateFreight(input) {
+    const row = input.closest('tr');
+    const kmInput = row.querySelector('.km-input');
+    const rateInput = row.querySelector('.rate-input');
+    const freightCell = row.querySelector('.freight-cell');
+    
+    const km = parseFloat(kmInput.value) || 0;
+    const rate = parseFloat(rateInput.value) || 0;
+    const freight = km * rate;
+    
+    freightCell.textContent = freight.toFixed(2);
+    updateTotals();
+}
+
+function updateTotals() {
+    let totalKm = 0;
+    let totalFreight = 0;
+    
+    const rows = document.querySelectorAll('tbody tr');
+    rows.forEach(row => {
+        const kmInput = row.querySelector('.km-input');
+        const rateInput = row.querySelector('.rate-input');
+        
+        if (kmInput && rateInput) {
+            const km = parseFloat(kmInput.value) || 0;
+            const rate = parseFloat(rateInput.value) || 0;
+            totalKm += km;
+            totalFreight += km * rate;
+        }
+    });
+    
+    document.getElementById('totalKm').textContent = totalKm.toFixed(2);
+    document.getElementById('totalFreight').textContent = totalFreight.toFixed(2);
+}
+</script>

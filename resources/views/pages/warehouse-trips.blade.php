@@ -21,6 +21,9 @@
         <button class="btn btn-info btn-sm" onclick="generateInvoice('with_expenses')" id="invoiceBtnWithExpenses">
           <i class="bi bi-file-earmark-text me-1"></i> Invoice w/ Exp
         </button>
+        <button class="btn btn-warning btn-sm" onclick="generateExpenseReport()" id="expenseReportBtn">
+          <i class="bi bi-file-earmark-spreadsheet me-1"></i> Expenses Report
+        </button>
       </div>
     </div>
 
@@ -71,19 +74,12 @@
     <!-- Filter Section -->
     <div class="panel mb-3">
       <div class="row">
-        <div class="col-6 col-md-2">
+        <div class="col-6 col-md-3">
           <label class="form-label">Vhl No</label>
           <input type="text" class="form-control" id="vehicleNumber" value="{{ request('vehicle_number') }}" placeholder="Vehicle Number">
         </div>
-        <div class="col-6 col-md-2">
-          <label class="form-label">Date From</label>
-          <input type="date" class="form-control" id="dateFrom" value="{{ request('date_from') }}">
-        </div>
-        <div class="col-6 col-md-2">
-          <label class="form-label">Date To</label>
-          <input type="date" class="form-control" id="dateTo" value="{{ request('date_to') }}">
-        </div>
-        <div class="col-6 col-md-2">
+        
+        <div class="col-6 col-md-3">
           <label class="form-label">Business Category</label>
           <select class="form-select" id="businessCategory">
             <option value="">All Categories</option>
@@ -96,7 +92,7 @@
             <option value="Syngenta" {{ request('business_category') === 'Syngenta' ? 'selected' : '' }}>Syngenta</option>
           </select>
         </div>
-        <div class="col-6 col-md-2">
+        <div class="col-6 col-md-3">
           <label class="form-label">Warehouse Location</label>
           <select class="form-select" id="warehouseLocation" onchange="changeWarehouseLocation()">
             <option value="">All Warehouses</option>
@@ -105,17 +101,29 @@
             @endforeach
           </select>
         </div>
-        <div class="col-12 col-md-2">
+        <div class="col-6 col-md-3">
+          <label class="form-label">Date From</label>
+          <input type="date" class="form-control" id="dateFrom" value="{{ request('date_from') }}">
+        </div>
+        <div class="col-6 col-md-3">
+          <label class="form-label">Date To</label>
+          <input type="date" class="form-control" id="dateTo" value="{{ request('date_to') }}">
+        </div>
+        <div class="col-6 col-md-3">
           <label class="form-label">Search</label>
           <input type="text" class="form-control" id="searchTrips" placeholder="Search by vehicle, GP#, or delivery point...">
         </div>
-      </div>
-      <div class="row mt-2">
-        <div class="col-12 text-end">
+        
+        <div class="col-4 col-md-2 d-flex align-items-end">
           <button class="btn btn-secondary" onclick="applyFilters()" id="applyFiltersBtn" style="pointer-events: auto !important; opacity: 1 !important;">Apply Filters</button>
+        </div>
+        <div class="col-2 col-md-2 d-flex align-items-end">
           <button class="btn btn-outline-secondary" onclick="clearFilters()" id="clearFiltersBtn" style="pointer-events: auto !important; opacity: 1 !important;">Clear Filters</button>
         </div>
-      </div>
+      </div> 
+      <!-- <div class="row">
+        
+      </div> -->
     </div>
 
     <!-- Excel-like Table -->
@@ -248,7 +256,7 @@
       <div class="modal-dialog modal-xl">
         <div class="modal-content">
           <div class="modal-header">
-            <h5 class="modal-title">Warehouse Invoice</h5>
+            <h5 class="modal-title">{{ $companySettings->warehouse_invoice_label ?? 'Warehouse Invoice' }}</h5>
             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
           </div>
           <div class="modal-body" id="invoiceContent">
@@ -1279,17 +1287,19 @@
       const invoiceContentDiv = document.getElementById('invoiceContent');
       const clonedContent = invoiceContentDiv.cloneNode(true);
 
-      // Replace input fields with their current values for printing
-      clonedContent.querySelectorAll('input.km-input').forEach(input => {
+      // Replace all input fields with their current values for printing
+      clonedContent.querySelectorAll('input').forEach(input => {
         const span = document.createElement('span');
-        span.textContent = input.value;
+        span.textContent = input.value || '-';
         input.parentNode.replaceChild(span, input);
       });
 
-      clonedContent.querySelectorAll('input.rate-input').forEach(input => {
-        const span = document.createElement('span');
-        span.textContent = input.value;
-        input.parentNode.replaceChild(span, input);
+      // Replace textarea with its value for printing
+      clonedContent.querySelectorAll('textarea').forEach(textarea => {
+        const div = document.createElement('div');
+        div.textContent = textarea.value || '';
+        div.style.whiteSpace = 'pre-wrap';
+        textarea.parentNode.replaceChild(div, textarea);
       });
 
       const invoiceContent = clonedContent.innerHTML;
