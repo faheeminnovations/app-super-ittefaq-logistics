@@ -109,33 +109,23 @@
             .print-btn {
                 display: none;
             }
-            #invoiceNumber, #billingPeriod, #summaryText {
-                border: none !important;
-                background: transparent !important;
-                padding: 5px !important;
-                -webkit-appearance: none;
-                -moz-appearance: none;
-            }
-            #summaryText {
-                resize: none;
-            }
         }
     </style>
 </head>
 <body>
     <div class="invoice-container">
         <div class="company-header">
-            <div class="company-name">SUPER ITTEFAQ MINI GOODS TRANSPORT COMPANY</div>
-            <div class="company-address">Rizvi Chowk, Bypass Okara Road Depalpur | Contact: 0300-6967450 | Email: zahidafzal5152@gmail.com</div>
-            <div class="company-info">NTN: 4252472-5 | Vendor Code: 0006781511</div>
+            <div class="company-name">{{ $companySettings->company_name ?? 'SUPER ITTEFAQ MINI GOODS TRANSPORT COMPANY' }}</div>
+            <div class="company-address">{{ $companySettings->address ?? 'Rizvi Chowk, Bypass Okara Road Depalpur' }} | Contact: {{ $companySettings->contact_phone ?? '0300-6967450' }} | Email: {{ $companySettings->contact_email ?? 'zahidafzal5152@gmail.com' }}</div>
+            <div class="company-info">NTN: {{ $companySettings->ntn ?? '4252472-5' }} | Vendor Code: {{ $companySettings->vendor_code ?? '0006781511' }}</div>
         </div>
 
         <div class="invoice-info">
             <div class="invoice-info-row">
-                <strong>Invoice No :</strong> <input type="text" id="invoiceNumber" value="{{ $invoiceNumber }}" style="border: 1px solid #ddd; padding: 5px; width: 200px;">                              <strong>Date :</strong> {{ Carbon\Carbon::createFromFormat('Y-m', $billingMonth)->format('F-Y') }}
+                <strong>Invoice Type:</strong> {{ $companySettings->internal_invoice_label ?? 'Internal' }} Invoice                              <strong>Invoice No :</strong> {{ $invoiceNumber }}
             </div>
             <div class="invoice-info-row">
-                <strong>Billing Period :</strong> <input type="text" id="billingPeriod" value="{{ Carbon\Carbon::createFromFormat('Y-m', $billingMonth)->format('F-Y') }}" style="border: 1px solid #ddd; padding: 5px; width: 200px;">
+                <strong>Date :</strong> {{ Carbon\Carbon::createFromFormat('Y-m', $billingMonth)->format('F-Y') }}                              <strong>Billing Month :</strong> {{ Carbon\Carbon::createFromFormat('Y-m', $billingMonth)->format('F-Y') }}
             </div>
         </div>
 
@@ -148,6 +138,7 @@
                     <th class="gp-col">GP#</th>
                     <th class="delivery-col">Drop/Delivery Point</th>
                     <th class="vhl-col">Vhl</th>
+                    <th class="req-km-col">Req KM</th>
                     <th class="km-col">Km</th>
                     <th class="rate-col">Rate</th>
                     <th class="frt-col">FRT</th>
@@ -162,6 +153,7 @@
                     <td class="gp-col">{{ $billing->gp_number ?? '' }}</td>
                     <td class="delivery-col">{{ $billing->delivery_point ?? '' }}</td>
                     <td class="vhl-col">{{ strtoupper($billing->vehicle_type ?? '') }}</td>
+                    <td class="req-km-col">{{ $billing->required_km ? number_format($billing->required_km, 0) : '-' }}</td>
                     <td class="km-col">{{ number_format($billing->km_covered ?? 0, 0) }}</td>
                     <td class="rate-col">{{ number_format($billing->rate ?? 0, 0) }}</td>
                     <td class="frt-col">{{ number_format($billing->freight ?? 0, 0) }}</td>
@@ -183,11 +175,6 @@
                 <strong>Total Freight:</strong>
                 <span>PKR {{ number_format($totalFreight, 0) }}</span>
             </div>
-        </div>
-
-        <div style="margin-top: 20px;">
-            <strong>Summary:</strong>
-            <textarea id="summaryText" rows="3" style="width: 100%; margin-top: 10px; border: 1px solid #ddd; padding: 10px;" placeholder="Enter summary text here..."></textarea>
         </div>
 
         <button class="print-btn" onclick="window.print()">Print Invoice</button>

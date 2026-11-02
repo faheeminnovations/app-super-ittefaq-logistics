@@ -81,6 +81,18 @@ class WarehouseTripController extends Controller
         $totalExpense = $allTrips->sum('total_expense');
         $netAmount = $totalIncome - $totalExpense;
 
+        // Calculate expense categories
+        $expenseCategories = [];
+        foreach ($allTrips as $trip) {
+            foreach ($trip->expenseEntries as $expense) {
+                $category = $expense->category ?? 'other';
+                if (!isset($expenseCategories[$category])) {
+                    $expenseCategories[$category] = 0;
+                }
+                $expenseCategories[$category] += $expense->amount;
+            }
+        }
+
         return view('pages.warehouse-trips', [
             'trips' => $trips,
             'warehouseLocation' => $warehouseLocation,
@@ -95,6 +107,7 @@ class WarehouseTripController extends Controller
             'netAmount' => $netAmount,
             'totalTrips' => $allTrips->count(),
             'billingMonth' => date('F-Y'),
+            'expenseCategories' => $expenseCategories,
         ]);
     }
 
@@ -673,6 +686,7 @@ class WarehouseTripController extends Controller
         
         // Return invoice view or JSON response
         if ($request->ajax() || $request->wantsJson()) {
+            $companySettings = \App\Models\CompanySettings::getCurrent();
             $html = view($viewName, [
                 'trips' => $trips,
                 'billingMonth' => $billingMonth,
@@ -685,6 +699,7 @@ class WarehouseTripController extends Controller
                 'expenseCategories' => $expenseCategories,
                 'expenseEntries' => $expenseEntries,
                 'invoiceNumber' => $invoiceNumber,
+                'companySettings' => $companySettings,
             ])->render();
             
             \Log::info('Returning JSON response for invoice');
@@ -696,6 +711,7 @@ class WarehouseTripController extends Controller
             ]);
         }
         
+        $companySettings = \App\Models\CompanySettings::getCurrent();
         return view($viewName, [
             'trips' => $trips,
             'billingMonth' => $billingMonth,
@@ -707,6 +723,7 @@ class WarehouseTripController extends Controller
             'netAmount' => $netAmount,
             'expenseCategories' => $expenseCategories,
             'invoiceNumber' => $invoiceNumber,
+            'companySettings' => $companySettings,
         ]);
     }
 }
