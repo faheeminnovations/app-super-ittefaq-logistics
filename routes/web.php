@@ -113,6 +113,7 @@ Route::middleware(['auth', 'role:admin,dispatcher,manager'])->group(function () 
     // Warehouse Trip routes
     Route::get('/warehouse-trips/{id}/edit-data', [WarehouseTripController::class, 'getEditData'])->name('warehouse-trips.edit-data');
     Route::get('/warehouse-trips/export', [WarehouseTripController::class, 'export'])->name('warehouse-trips.export');
+    Route::get('/warehouse-trips/expense-report', [WarehouseTripController::class, 'generateExpenseReport'])->name('warehouse-trips.expense-report');
     Route::match(['get', 'post'], '/warehouse-trips/generate-invoice', [WarehouseTripController::class, 'generateInvoice'])->name('warehouse-trips.generate-invoice');
     Route::resource('warehouse-trips', WarehouseTripController::class);
     

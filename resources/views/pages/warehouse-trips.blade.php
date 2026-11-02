@@ -1280,6 +1280,25 @@
       });
     }
 
+    function generateExpenseReport() {
+      console.log('generateExpenseReport function called');
+      const vehicleNumber = document.getElementById('vehicleNumber').value;
+      const warehouseLocation = document.getElementById('warehouseLocation').value;
+      const businessCategory = document.getElementById('businessCategory').value;
+      const dateFrom = document.getElementById('dateFrom').value;
+      const dateTo = document.getElementById('dateTo').value;
+
+      let params = new URLSearchParams();
+      if (vehicleNumber) params.append('vehicle_number', vehicleNumber);
+      if (warehouseLocation) params.append('warehouse_location', warehouseLocation);
+      if (businessCategory) params.append('business_category', businessCategory);
+      if (dateFrom) params.append('date_from', dateFrom);
+      if (dateTo) params.append('date_to', dateTo);
+
+      console.log('Expense report called with:', { vehicleNumber, warehouseLocation, businessCategory, dateFrom, dateTo });
+      window.location.href = `/warehouse-trips/expense-report?${params.toString()}`;
+    }
+
     function printInvoice() {
       console.log('printInvoice function called');
 
