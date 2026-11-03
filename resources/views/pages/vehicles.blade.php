@@ -189,6 +189,7 @@
                   <option value="">Select Type</option>
                   <option value="Mazda truck">Mazda truck</option>
                   <option value="Shahzor Truck">Shahzor Truck</option>
+                  <option value="Forland C19">Forland C19</option>
                   <option value="Pickup">Pickup</option>
                   <option value="Trailer">Trailer</option>
                   <option value="Other">Other</option>
