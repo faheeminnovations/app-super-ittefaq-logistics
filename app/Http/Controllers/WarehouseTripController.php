@@ -39,10 +39,7 @@ class WarehouseTripController extends Controller
 
         // Apply warehouse location filter if provided
         if ($warehouseLocation) {
-            $query->where(function($q) use ($warehouseLocation) {
-                $q->where('warehouse_location', $warehouseLocation)
-                  ->orWhereNull('warehouse_location');
-            });
+            $query->where('warehouse_location', $warehouseLocation);
         }
 
         // Apply date range filter if provided
@@ -60,10 +57,7 @@ class WarehouseTripController extends Controller
             $totalsQuery->where('business_category', $businessCategory);
         }
         if ($warehouseLocation) {
-            $totalsQuery->where(function($q) use ($warehouseLocation) {
-                $q->where('warehouse_location', $warehouseLocation)
-                  ->orWhereNull('warehouse_location');
-            });
+            $totalsQuery->where('warehouse_location', $warehouseLocation);
         }
         $totalsQuery->byDateRange($dateFrom, $dateTo);
 
@@ -434,10 +428,7 @@ class WarehouseTripController extends Controller
 
             // Apply warehouse location filter only when date range is provided
             if ($warehouseLocation) {
-                $query->where(function($q) use ($warehouseLocation) {
-                    $q->where('warehouse_location', $warehouseLocation)
-                      ->orWhereNull('warehouse_location');
-                });
+                $query->where('warehouse_location', $warehouseLocation);
             }
         } elseif ($vehicleNumber) {
             // If vehicle filter is provided but no date range, don't filter by date
@@ -537,10 +528,7 @@ class WarehouseTripController extends Controller
 
         // Apply warehouse location filter if provided
         if ($warehouseLocation) {
-            $query->where(function($q) use ($warehouseLocation) {
-                $q->where('warehouse_location', $warehouseLocation)
-                  ->orWhereNull('warehouse_location');
-            });
+            $query->where('warehouse_location', $warehouseLocation);
         }
 
         // Apply date range filter if provided
@@ -693,10 +681,7 @@ class WarehouseTripController extends Controller
 
             // Apply warehouse location filter only when date range is provided
             if ($warehouseLocation) {
-                $query->where(function($q) use ($warehouseLocation) {
-                    $q->where('warehouse_location', $warehouseLocation)
-                      ->orWhereNull('warehouse_location');
-                });
+                $query->where('warehouse_location', $warehouseLocation);
             }
         } elseif ($vehicleNumber) {
             // If vehicle filter is provided but no date range, don't filter by date or billing_month
@@ -710,10 +695,7 @@ class WarehouseTripController extends Controller
 
             // Apply warehouse location filter only when using billing month (no date range)
             if ($warehouseLocation) {
-                $query->where(function($q) use ($warehouseLocation) {
-                    $q->where('warehouse_location', $warehouseLocation)
-                      ->orWhereNull('warehouse_location');
-                });
+                $query->where('warehouse_location', $warehouseLocation);
             }
         }
         // If billingMonth is null and no other filters, return all records without any date filter
@@ -794,7 +776,8 @@ class WarehouseTripController extends Controller
         // Generate invoice number
         $invoicePrefix = $billingMonth ? strtoupper(substr($billingMonth, 0, 3)) : 'ALL';
         $invoiceYear = $billingMonth ? substr($billingMonth, -4) : date('Y');
-        $invoiceNumber = 'INV-' . $invoicePrefix . '-' . $invoiceYear . '-' . str_pad(count($trips), 4, '0', STR_PAD_LEFT);
+        $warehouseSuffix = $warehouseLocation ? '-' . strtoupper(substr($warehouseLocation, 0, 3)) : '';
+        $invoiceNumber = 'INV-' . $invoicePrefix . '-' . $invoiceYear . $warehouseSuffix . '-' . str_pad(count($trips), 4, '0', STR_PAD_LEFT);
         
         \Log::info('Invoice data prepared', [
             'trips_count' => $trips->count(),
