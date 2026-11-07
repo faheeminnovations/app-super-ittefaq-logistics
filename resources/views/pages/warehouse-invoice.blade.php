@@ -193,31 +193,89 @@
         body {
             background: white;
             padding: 0;
+            margin: 0;
         }
 
         .invoice-container {
             border: none;
             box-shadow: none;
+            padding: 10px;
+            margin: 0;
+            max-width: 100%;
+        }
+
+        .header {
+            padding-bottom: 10px;
+            margin-bottom: 10px;
+        }
+
+        .company-name {
+            font-size: 16px;
+        }
+
+        .company-details {
+            font-size: 11px;
+        }
+
+        .invoice-info {
+            margin-bottom: 10px;
+        }
+
+        .invoice-number {
+            font-size: 13px;
+            display: block !important;
+            visibility: visible !important;
+        }
+
+        .billing-info {
+            font-size: 11px;
+        }
+
+        table {
+            font-size: 10px;
+            width: 100%;
+        }
+
+        th {
+            padding: 5px 3px;
+            font-size: 10px;
+        }
+
+        td {
+            padding: 4px 2px;
+            font-size: 10px;
         }
 
         .km-input, .rate-input {
             border: none !important;
             background: transparent !important;
-            padding: 5px !important;
+            padding: 2px !important;
+            font-size: 10px !important;
+            width: 50px !important;
             -webkit-appearance: none;
             -moz-appearance: none;
+            appearance: none;
         }
 
-        #invoiceNumber, #summaryText, #vendorCode {
+        #invoiceNumber, #vendorCode {
             border: none !important;
             background: transparent !important;
-            padding: 5px !important;
-            -webkit-appearance: none;
-            -moz-appearance: none;
+            padding: 2px !important;
+            font-size: 10px !important;
         }
 
-        #summaryText {
-            resize: none;
+        .signature-section {
+            margin-top: 20px;
+        }
+
+        .signature-line {
+            margin-top: 40px;
+        }
+
+        .footer {
+            margin-top: 15px;
+            padding-top: 10px;
+            font-size: 9px;
         }
     }
 </style>
@@ -235,7 +293,10 @@
     <!-- Invoice Information -->
     <div class="invoice-info">
         <div>
-            <div class="invoice-number">{{ $companySettings->warehouse_invoice_label ?? 'Warehouse Invoice' }} # <input type="text" id="invoiceNumber" value="{{ $invoiceNumber }}" style="border: 1px solid #ddd; padding: 5px; width: 200px;"></div>
+            <div class="invoice-number" id="invoiceLabel" style="font-size: 20px; font-weight: bold; color: #0066cc;">{{ $companySettings->warehouse_invoice_label ?? 'Warehouse Invoice' }} - {{ $invoiceNumber }}</div>
+            @if(isset($warehouseLocation) && $warehouseLocation && $warehouseLocation !== '')
+            <div style="font-size: 16px; font-weight: bold; margin-top: 5px;">{{ $warehouseLocation }}</div>
+            @endif
         </div>
         <div style="text-align: right;">
             <div class="billing-info">
@@ -272,7 +333,7 @@
                 <td>{{ $trip->vehicle_type }}</td>
                 <td><input type="number" step="0.01" value="{{ number_format($trip->kilometers, 2) }}" class="km-input" data-trip-id="{{ $trip->id }}" style="width: 80px; padding: 5px; border: 1px solid #ddd; border-radius: 4px;" oninput="updateFreight(this)"></td>
                 <td><input type="number" step="0.01" value="{{ number_format($trip->rate_per_km, 2) }}" class="rate-input" data-trip-id="{{ $trip->id }}" style="width: 80px; padding: 5px; border: 1px solid #ddd; border-radius: 4px;" oninput="updateFreight(this)"></td>
-                <td class="freight-cell">{{ number_format($trip->freight, 2) }}</td>
+                <td class="freight-cell" data-freight="{{ number_format($trip->freight, 2) }}">{{ number_format($trip->freight, 2) }}</td>
             </tr>
             @endforeach
         </tbody>
@@ -287,22 +348,7 @@
         </tfoot>
     </table>
     </div>
-    
-    <!-- Summary -->
-    <div style="margin-bottom: 20px;">
-        <strong>Summary:</strong>
-        <ul style="margin-top: 10px;">
-            <li>Total Trips: {{ $trips->count() }}</li>
-            <li>Total Kilometers: {{ number_format($totalKm, 2) }}</li>
-            <li>Total Freight: {{ number_format($totalFreight, 2) }}</li>
-            <li>Average Rate per KM: {{ $totalKm > 0 ? number_format($totalFreight / $totalKm, 2) : '0.00' }}</li>
-        </ul>
-        <div style="margin-top: 15px;">
-            <strong>Summary Text:</strong>
-            <textarea id="summaryText" rows="3" style="width: 100%; margin-top: 10px; border: 1px solid #ddd; padding: 10px;" placeholder="Enter summary text here..."></textarea>
-        </div>
-    </div>
-    
+
     <!-- Signature Section -->
     <div class="signature-section">
         <div class="signature-box">

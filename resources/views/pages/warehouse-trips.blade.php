@@ -1214,8 +1214,8 @@
         invoice_type: invoiceType
       };
 
-      // Only add warehouse_location if it's provided and we have some filter
-      if (warehouseLocation && warehouseLocation !== '' && (dateFrom || dateTo || vehicleNumber || billingMonth || businessCategory)) {
+      // Add warehouse_location if it's provided
+      if (warehouseLocation && warehouseLocation !== '') {
         payload.warehouse_location = warehouseLocation;
       }
 
@@ -1302,15 +1302,43 @@
     function printInvoice() {
       console.log('printInvoice function called');
 
-      // Clone the invoice content to preserve current state
       const invoiceContentDiv = document.getElementById('invoiceContent');
+
+      if (!invoiceContentDiv) {
+        console.error('invoiceContent div not found');
+        alert('Invoice content not found. Please try again.');
+        return;
+      }
+
+      console.log('Invoice content div found');
+
+      // Clone the invoice content to preserve current state
       const clonedContent = invoiceContentDiv.cloneNode(true);
+
+      // Extract invoice number and vendor code for print header
+      const invoiceNumberInput = invoiceContentDiv.querySelector('#invoiceNumber');
+      const vendorCodeInput = invoiceContentDiv.querySelector('#vendorCode');
+      const invoiceNumber = invoiceNumberInput ? invoiceNumberInput.value : '';
+      const vendorCode = vendorCodeInput ? vendorCodeInput.value : '';
+      const currentDate = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit', year: 'numeric' });
+
+      // Set print window title with invoice number
+      const windowTitle = 'Warehouse Invoice - ' + invoiceNumber;
 
       // Replace all input fields with their current values for printing
       clonedContent.querySelectorAll('input').forEach(input => {
         const span = document.createElement('span');
-        span.textContent = input.value || '-';
+        const value = input.value || input.defaultValue || '-';
+        span.textContent = value;
+        span.style.fontWeight = input.id === 'invoiceNumber' || input.id === 'vendorCode' ? 'bold' : 'normal';
         input.parentNode.replaceChild(span, input);
+      });
+
+      // Ensure freight cells have their values properly set
+      clonedContent.querySelectorAll('.freight-cell').forEach(cell => {
+        const freightValue = cell.getAttribute('data-freight') || cell.textContent;
+        cell.textContent = freightValue;
+        console.log('Set freight cell to:', freightValue);
       });
 
       // Replace textarea with its value for printing
@@ -1331,30 +1359,34 @@
         return;
       }
 
-      var htmlContent = '<!DOCTYPE html><html><head><title>Warehouse Invoice</title>';
-      htmlContent += '<style>body{font-family:Arial,sans-serif;margin:20px;background:#f0f0f0}';
-      htmlContent += '.invoice-container{max-width:900px;margin:0 auto;background:white;padding:30px;border:1px solid #ddd;box-shadow:0 0 10px rgba(0,0,0,0.1)}';
-      htmlContent += '.header{text-align:center;border-bottom:2px solid #333;padding-bottom:20px;margin-bottom:20px}';
-      htmlContent += '.company-name{font-size:24px;font-weight:bold;color:#0066cc;margin-bottom:5px}';
-      htmlContent += '.company-details{font-size:14px;color:#666;margin-bottom:10px}';
-      htmlContent += '.invoice-info{display:flex;justify-content:space-between;margin-bottom:20px}';
-      htmlContent += '.invoice-number{font-size:18px;font-weight:bold}';
-      htmlContent += '.billing-info{font-size:14px}';
-      htmlContent += 'table{width:100%;border-collapse:collapse;margin-bottom:20px}';
-      htmlContent += 'th{background:#0066cc;color:white;padding:12px;text-align:left;font-weight:bold;border:1px solid #0055aa}';
-      htmlContent += 'td{padding:10px;border:1px solid #ddd}';
+      var htmlContent = '<!DOCTYPE html><html><head><title>' + windowTitle + '</title>';
+      htmlContent += '<style>body{font-family:Arial,sans-serif;margin:0;padding:0;background:#f0f0f0}';
+      htmlContent += '.invoice-container{max-width:100%;margin:0 auto;background:white;padding:10px;border:none;box-shadow:none}';
+      htmlContent += '.header{text-align:center;border-bottom:2px solid #333;padding-bottom:10px;margin-bottom:10px}';
+      htmlContent += '.company-name{font-size:16px;font-weight:bold;color:#0066cc;margin-bottom:5px}';
+      htmlContent += '.company-details{font-size:11px;color:#666;margin-bottom:10px}';
+      htmlContent += '.invoice-info{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}';
+      htmlContent += '.invoice-number{font-size:16px;font-weight:bold;color:#0066cc;display:block;visibility:visible}';
+      htmlContent += '#invoiceLabel{font-size:16px;font-weight:bold;color:#0066cc;display:block;visibility:visible}';
+      htmlContent += '.billing-info{font-size:11px;text-align:right}';
+      htmlContent += 'table{width:100%;border-collapse:collapse;margin-bottom:20px;font-size:10px}';
+      htmlContent += 'th{background:#0066cc;color:white;padding:5px 3px;text-align:left;font-weight:bold;border:1px solid #0055aa;font-size:10px}';
+      htmlContent += 'td{padding:4px 2px;border:1px solid #ddd;font-size:10px}';
       htmlContent += '.total-row{background:#f0f8ff;font-weight:bold}';
-      htmlContent += '.footer{margin-top:30px;padding-top:20px;border-top:1px solid #ddd;text-align:center;font-size:12px;color:#666}';
-      htmlContent += '.signature-section{margin-top:40px;display:flex;justify-content:space-between}';
+      htmlContent += '.footer{margin-top:15px;padding-top:10px;border-top:1px solid #ddd;text-align:center;font-size:9px;color:#666}';
+      htmlContent += '.signature-section{margin-top:20px;display:flex;justify-content:space-between}';
       htmlContent += '.signature-box{width:200px;text-align:center}';
-      htmlContent += '.signature-line{border-top:1px solid #333;margin-top:60px;padding-top:5px}';
+      htmlContent += '.signature-line{border-top:1px solid #333;margin-top:40px;padding-top:5px}';
       htmlContent += '.print-btn{position:fixed;top:20px;right:20px;padding:10px 20px;background:#0066cc;color:white;border:none;border-radius:5px;cursor:pointer;font-size:16px;z-index:1000}';
       htmlContent += '.print-btn:hover{background:#0055aa}';
-      htmlContent += '@media print{body{background:white;padding:0}.invoice-container{border:none;box-shadow:none}.print-btn{display:none}}';
+      htmlContent += '@media print{body{background:white;padding:0;margin:0}.invoice-container{border:none;box-shadow:none;padding:10px}.print-btn{display:none}}';
       htmlContent += '</style></head><body>';
       htmlContent += '<button class="print-btn" onclick="window.print()">🖨️ Print</button>';
+      htmlContent += '<div style="text-align:center;margin-bottom:10px;font-size:12px;font-weight:bold;">';
+      htmlContent += 'Date: ' + currentDate + ' | VENDOR CODE: ' + vendorCode;
+      htmlContent += '</div>';
       htmlContent += '<div class="invoice-container">' + invoiceContent + '</div>';
-      htmlContent += '<script>window.onload=function(){setTimeout(function(){window.print()},500)}<\/script>';
+      htmlContent += '<script>setTimeout(function(){window.print()},500);<\/script>';
       htmlContent += '</body></html>';
 
       printWindow.document.write(htmlContent);
